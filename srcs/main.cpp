@@ -15,52 +15,61 @@
 #include "errors/Errors.hpp"
 #include <iostream>
 
-#include <sys/stat.h>
-
 #include <fstream>
 
-int main(int argc, char **argv)
+int parse_arguments(int argc)
 {
     if (argc != 2)
     {
-        std::cout << "Error: " << std::endl;
+        std::cerr << "Error:" << std::endl;
         return ERROR_ARGS;
     }
+    return SUCCESS;
+}
 
-    // Step 1: Step 1: Check if the file exists
-    // stat() returns 0 on success, -1 if the file does not exist
-    struct stat buffer;
-    int status;
+int parse_file(const std::string &str)
+{
+    // .c_str() is required in C++98 because std::ifstream's constructor
+    // only accepts const char*, not std::string (fixed in C++11)
+    std::ifstream file(str.c_str());
 
-    if ((status = stat(argv[1], &buffer)) != 0)
+    if (file.is_open() == false)
     {
-        std::cout << "Error: " << std::endl;
-        return ERROR;
-    };
-
-    // Step 2: Open the file and verify it is not empty
-    std::ifstream file(argv[1]);
-    if (!file.is_open())
-    {
-        std::cout << "Error: " << std::endl;
+        std::cerr << "Error: file don't exist" << std::endl;
         return ERROR;
     }
 
     // peek() returns EOF immediately if the file contains no data
-    // See: https://stackoverflow.com/questions/2390912/checking-for-an-empty-file-in-c
+    // https://stackoverflow.com/questions/2390912/checking-for-an-empty-file-in-c
     if (file.peek() == std::ifstream::traits_type::eof())
     {
-        std::cout << "Error: " << std::endl;
-        file.close();
+        std::cerr << "Error: file is empty" << std::endl;
         return ERROR;
     }
 
-    // Step 3: Read and print each line of the file
     std::string line;
+
     while (std::getline(file, line))
         std::cout << line << "\n";
+    
+    // https://cplusplus.com/reference/fstream/ifstream/close/
+    // No need to call file.close() explicitly.
+    // "Note that any open file is automatically closed when the 
+    // ifstream object is destroyed."
 
-    file.close();
+    return SUCCESS;
+}
+
+int main(int argc, char **argv)
+{
+    int result;
+
+    // TO DO: try/catch 
+    if ((result = parse_arguments(argc)) != SUCCESS)
+		return result;
+
+    if ((result = parse_file(argv[1])) != SUCCESS)
+        return result;
 
     return 0;
 }
