@@ -21,18 +21,20 @@
 #include <vector>
 
 
-typedef enum Token{
+typedef enum Token
+{
     
 } ;
 
-class Lexer {
+class Lexer
+{
   
 private:
 public:
 
-            Lexer();
-            Lexer( Lexer const & other );
-            ~Lexer();
+    Lexer();
+    Lexer( Lexer const & other );
+    ~Lexer();
     Lexer & operator=( Lexer const & other);
 
 };
