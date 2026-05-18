@@ -1,14 +1,16 @@
 NAME = webserv
 
 SRC = \
-	main.cpp \
-	Lexer.cpp
+	srcs/main.cpp \
+	srcs/parser/Parser.cpp \
+	#srcs/lexer/Lexer.cpp
 
 OBJ = $(SRC:.cpp=.o)
 DEPS = $(SRC:.cpp=.d)
 
 CXX = c++
-CXXFLAGS = -Wall -Werror -Wextra -std=c++98 -MMD -MD
+CXXFLAGS = -Wall -Werror -Wextra -std=c++98
+# CXXFLAGS = -Wall -Werror -Wextra -std=c++98 -MMD -MD
 
 all: $(NAME)
 
