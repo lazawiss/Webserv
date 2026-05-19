@@ -1,0 +1,10 @@
+http {
+
+    server {
+        listen      8080;
+        server_name localhost;
+        root        /data/html;//absolut path toward static file: la page que l'on veut afficher
+        index       index.html;//le static file: en langage html
+    }   
+
+}
