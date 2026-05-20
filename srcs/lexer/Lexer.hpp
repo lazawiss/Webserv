@@ -10,21 +10,31 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#pragma once 
+#ifndef LEXER_HPP
+# define LEXER_HPP
 
-#include <iostream>
-#include <string>
-#include <fstream>
-#include <stdexcept>
-#include <map>
-#include <list>
-#include <vector>
+# include <fstream>
+# include <iostream>
+# include <list>
+# include <map>
+# include <stdexcept>
+# include <string>
+# include <vector>
 
-
-typedef enum Token
+typedef enum TokenType
 {
-    
-} ;
+    Word,
+    RBracket,
+    LBracket,
+    Semicolon,
+    End
+} TokenType;
+
+struct Token
+{
+    std::string value;
+    TokenType type;
+};
 
 class Lexer
 {
@@ -38,3 +48,5 @@ public:
     Lexer & operator=( Lexer const & other);
 
 };
+
+#endif
