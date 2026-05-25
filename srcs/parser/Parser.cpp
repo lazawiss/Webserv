@@ -1,5 +1,5 @@
 #include "Parser.hpp"
-#include "Lexer.hpp"
+#include "../lexer/Lexer.hpp"
 
 int parse_file(const std::string &str)
 {
@@ -36,7 +36,7 @@ int parse_file(const std::string &str)
                 allTokens.push_back(lineTokens[i]);
         }
     }
-    allTokens.push_back(Token(End, '\0'));
+    allTokens.push_back(Token(End, ""));
 
     
     // https://cplusplus.com/reference/fstream/ifstream/close/

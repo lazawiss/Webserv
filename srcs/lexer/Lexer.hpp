@@ -6,7 +6,7 @@
 /*   By: andikim <andikim@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/05 17:45:54 by lzannis           #+#    #+#             */
-/*   Updated: 2026/05/25 15:23:46 by andikim          ###   ########.fr       */
+/*   Updated: 2026/05/25 17:45:42 by andikim          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,8 +34,8 @@ typedef enum TokenType
 
 struct Token // struct is like class but always public in C++
 {
-    std::string value;
     TokenType type;
+    std::string value;
 
     Token (TokenType t, const std::string& v): type(t), value(v)
     {};
