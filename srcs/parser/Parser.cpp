@@ -1,4 +1,5 @@
 #include "Parser.hpp"
+#include "Lexer.hpp"
 
 int parse_file(const std::string &str)
 {
@@ -21,10 +22,22 @@ int parse_file(const std::string &str)
     }
 
     std::string line;
+    std::vector<Token> allTokens;
 
     while (std::getline(file, line))
+    {
         std::cout << line << "\n";
-        // lexer.tokenize(line);  # MARQUE
+        Lexer lexer(line);
+        std::vector<Token> lineTokens = lexer.tokenize(line);
+
+        for (size_t i = 0; i < lineTokens.size(); i++)
+        {
+            if (lineTokens[i].type != End)
+                allTokens.push_back(lineTokens[i]);
+        }
+    }
+    allTokens.push_back(Token(End, '\0'));
+
     
     // https://cplusplus.com/reference/fstream/ifstream/close/
     // No need to call file.close() explicitly.

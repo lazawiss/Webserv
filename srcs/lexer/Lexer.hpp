@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Lexer.hpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: andikim <andikim@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/05 17:45:54 by lzannis           #+#    #+#             */
-/*   Updated: 2026/05/05 17:49:42 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/05/25 15:19:17 by andikim          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,10 +27,12 @@ typedef enum TokenType
     RBracket,
     LBracket,
     Semicolon,
+    Hashtag,
+    Unknown,
     End
 } TokenType;
 
-struct Token
+struct Token // struct is like class but always public in C++
 {
     std::string value;
     TokenType type;
@@ -38,14 +40,16 @@ struct Token
 
 class Lexer
 {
-  
 private:
-public:
+    std::string input; 
+    size_t position;
 
-    Lexer();
-    Lexer( Lexer const & other );
+    public:
+    Lexer(const std::string& text);
+    Lexer(Lexer const& other);
     ~Lexer();
-    Lexer & operator=( Lexer const & other);
+    Lexer& operator=(Lexer const& other);
+    std::vector<Token> tokenize(std::string &line);
 
 };
 

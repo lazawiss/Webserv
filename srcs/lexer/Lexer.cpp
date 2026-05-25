@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Lexer.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: andikim <andikim@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/05 17:48:42 by lzannis           #+#    #+#             */
-/*   Updated: 2026/05/05 17:48:56 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/05/25 15:18:48 by andikim          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,11 +15,21 @@
 /**
  * @section Constructors & Destructors
  * ---------------------------------------------------------------------------
- * Default constructor initializes _value to ...
- * Destructor frees allocated resources.
- */
+*/
 
-Lexer::Lexer() {}
+Lexer::Lexer(const std::string& text) : input(text), position(0) {}
+
+Lexer::Lexer(Lexer const& other) : input(other.input), position(other.position)
+{}
+
+Lexer& Lexer::operator=(Lexer const& other){
+    if (this != &other)
+    {
+        input = other.input;
+        position = other.position;
+    }
+    return *this;
+}
 
 Lexer::~Lexer() {}
 
@@ -54,26 +64,62 @@ Lexer::~Lexer() {}
 // the call to tokenize(). Feel free to add more error types to the
 // enum, such as ERROR_LEXER.
 
+// RESPONSE ANDI
+// No need for error no? Because all will be taken by lexer?
+
 /**
  * @brief Splits a line of source code into a vector of tokens.
  * ---------------------------------------------------------------------------
  * 
  * 
  */
-std::vector<Token> tokenize(std::string &linefromSourceCode)
-{ // returns a vector of tokens
-    std::vector<Token> tokens;
-    std::vector<std::string> src = split(lineFromSourceCode);
-    while (!src.empty())
+
+static bool isSign(char c)
+{
+    return c == '{' || c == '}' || c == ';' || c == '#';
+}
+
+static TokenType charToType(char c)
+{
+    switch (c)
     {
-        // take each "words" and categorize them;
-        // are they words? are they ";" what are they?
-        // note: check to make sure that all pieces of config file are resumed in enum
-        // note2: make sure that config file does not have other separators without meaning
-        // note3: how many spaces can we have between elements for it to still be valid? only 0 or
-        // unlimited?
+        case '{' : return LBracket;
+        case '}': return RBracket;
+        case ';': return Semicolon;
+        case '#': return Hashtag;
+        default: return Unknown;
     }
-    return tokens; 
+}
+ 
+std::vector<Token> Lexer::tokenize(std::string &line)
+{
+    std::vector<Token> tokens;
+    size_t pos = 0;
+
+    while (pos < line.size())
+    {
+        char c = line[pos];
+
+        if (std::isspace(c))
+        {
+            pos++;
+            continue;
+        }
+        if (!isSign(c) && !std::isspace(c))
+        {
+            std::string word;
+            while (pos < line.size() && !isSign(c) && !std::isspace(c))
+            {
+                word += line[pos++];
+            }
+            tokens.push_back(Token(Word, word));
+            continue;
+        }
+        tokens.push_back(Token(charToType(c), std::string(1, c)));
+        pos++;
+    }
+    tokens.push_back(Token(End, ""));
+    return tokens;
 }
 
 /**
@@ -82,11 +128,11 @@ std::vector<Token> tokenize(std::string &linefromSourceCode)
  * 
  * 
  */
-std::vector<std::string> split(const std::string &lineFromSourceCode)
-{
-    std::vector<std::string> words; // vector that dynamically adds words
-    // look for the space where there is a " " and then have each strchr string
-    return words;
-}
+// std::vector<std::string> split(const std::string &lineFromSourceCode)
+// {
+//     std::vector<std::string> words; // vector that dynamically adds words
+//     // look for the space where there is a " " and then have each strchr string
+//     return words;
+// }
 
 // https://medium.com/@tharunappu2004/writing-a-lexer-in-c-a-step-by-step-guide-a1d5c55ac04d
