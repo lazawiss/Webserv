@@ -3,7 +3,7 @@ NAME = webserv
 SRC = \
 	srcs/main.cpp \
 	srcs/parser/Parser.cpp \
-	#srcs/lexer/Lexer.cpp
+	srcs/lexer/Lexer.cpp \
 
 OBJ = $(SRC:.cpp=.o)
 DEPS = $(SRC:.cpp=.d)
