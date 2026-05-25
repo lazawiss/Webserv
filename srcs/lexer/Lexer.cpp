@@ -6,7 +6,7 @@
 /*   By: andikim <andikim@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/05 17:48:42 by lzannis           #+#    #+#             */
-/*   Updated: 2026/05/25 15:18:48 by andikim          ###   ########.fr       */
+/*   Updated: 2026/05/25 18:59:24 by andikim          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -98,24 +98,23 @@ std::vector<Token> Lexer::tokenize(std::string &line)
 
     while (pos < line.size())
     {
-        char c = line[pos];
-
-        if (std::isspace(c))
+        if (std::isspace(line[pos]))
         {
             pos++;
             continue;
         }
-        if (!isSign(c) && !std::isspace(c))
+        if (!isSign(line[pos]) && !std::isspace(line[pos]))
         {
             std::string word;
-            while (pos < line.size() && !isSign(c) && !std::isspace(c))
+            while (pos < line.size() && !isSign(line[pos]) && !std::isspace(line[pos]))
             {
-                word += line[pos++];
+                word += line[pos];
+                pos++;
             }
             tokens.push_back(Token(Word, word));
             continue;
         }
-        tokens.push_back(Token(charToType(c), std::string(1, c)));
+        tokens.push_back(Token(charToType(line[pos]), std::string(1, line[pos])));
         pos++;
     }
     tokens.push_back(Token(End, ""));
