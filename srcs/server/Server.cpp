@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/21 14:35:15 by lzannis           #+#    #+#             */
-/*   Updated: 2026/05/22 18:11:37 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/05/25 18:58:09 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -151,10 +151,10 @@ void    Server::readingSocket(){
         socklen_t peer_addr_len = sizeof(peer_addr);
 
         int clientfd = accept(_sockfd, (struct sockaddr *) &peer_addr, &peer_addr_len );
-        std::cout << clientfd << std::endl;
+        std::cout << "clientfd:" << clientfd << std::endl;
         ssize_t n_read = read(clientfd, buf, BUF_SIZE);
 
-        std::cout << n_read << std::endl;
+        std::cout << "n_read:" << n_read << std::endl;
         if (n_read == -1)
             continue;
         
