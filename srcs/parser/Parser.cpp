@@ -9,9 +9,9 @@ static std::string tokenTypeToString(TokenType type)
         case LBracket: return "LBracket";
         case RBracket: return "RBracket";
         case Semicolon: return "Semicolon";
-        case Unknown: return "Unknown";
         case Hashtag: return "Hashtag";
         case End: return "End";
+        default: return "Unknown";
     }
 }
 
