@@ -12,126 +12,90 @@
 
 #include "Lexer.hpp"
 
-/**
- * @section Constructors & Destructors
- * ---------------------------------------------------------------------------
+/*
+** ============================================================================
+** Constructors & Destructor
+** ============================================================================
 */
 
-Lexer::Lexer(const std::string& text) : input(text), position(0) {}
+Lexer::Lexer(const std::string &line) : _line(line) {}
 
-Lexer::Lexer(Lexer const& other) : input(other.input), position(other.position)
-{}
+Lexer::Lexer(Lexer const& other) : _line(other._line) {}
 
-Lexer& Lexer::operator=(Lexer const& other){
+Lexer& Lexer::operator=(Lexer const& other)
+{
     if (this != &other)
     {
-        input = other.input;
-        position = other.position;
+        _line = other._line;
     }
     return *this;
 }
 
 Lexer::~Lexer() {}
 
+/*
+** ============================================================================
+** Static helpers (only visible in this file)
+** ============================================================================
+*/
 
-// Lexer should:
-// recognize and categorize various elements in source code
-// RETURNS VECTOR OF TOKENS
+static enum TokenType charToType(char c)
+{
+    switch (c)
+    {
+        case '{': return LBracket;
+        case '}': return RBracket;
+        case ';': return Semicolon;
+        case '#': return Hashtag;
 
-// each line should be checked by getline and then used to split up all characters;
-// check by looking at the iterator where the next separator is
-// each cut string (strchr???) can then be something and we classify
-// do this until the config file is done
-
-// when file is read, we do a get next line to it
-// each line goes through tokenize
-// when it returns to the og fucntion (first)
-
-// std::vector<std::vector> first(std::ifstream file)
-// {
-//     std::vector configFile;
-
-//     // read each line via getline 
-//     // send to tokenize
-//     // add each newly tokenized to vector configFile;
-//     return (configFile);
-// }
-
-
-// MARQUE DELPHINE
-// This function is no longer needed in Lexer.cpp ⬆️.
-// getline() is now called directly in Parser.cpp, which also handles
-// the call to tokenize(). Feel free to add more error types to the
-// enum, such as ERROR_LEXER.
-
-// RESPONSE ANDI
-// No need for error no? Because all will be taken by lexer?
-
-/**
- * @brief Splits a line of source code into a vector of tokens.
- * ---------------------------------------------------------------------------
- * 
- * 
- */
+        default:  return Unknown;
+    }
+}
 
 static bool isSign(char c)
 {
     return c == '{' || c == '}' || c == ';' || c == '#';
 }
 
-static TokenType charToType(char c)
-{
-    switch (c)
-    {
-        case '{' : return LBracket;
-        case '}': return RBracket;
-        case ';': return Semicolon;
-        case '#': return Hashtag;
-        default: return Unknown;
-    }
-}
+/*
+** ============================================================================
+** Tokenize
+** ============================================================================
+*/
  
-std::vector<Token> Lexer::tokenize(std::string &line)
+/*
+** Splits _line into a list of tokens.
+** Three cases at each character:
+**   1. whitespace  -> skip
+**   2. sign        -> push a sign token
+**   3. other       -> accumulate until next whitespace or sign -> Word token
+** An End token is always appended at the end of the vector.
+*/
+std::vector<Token> Lexer::tokenize()
 {
     std::vector<Token> tokens;
-    size_t pos = 0;
+    size_t i = 0;
 
-    while (pos < line.size())
+    while (i < _line.size())
     {
-        if (std::isspace(line[pos]))
+        if (std::isspace(static_cast<unsigned char>(_line[i])))
+            i++;
+        else if (isSign(_line[i]))
         {
-            pos++;
-            continue;
+            tokens.push_back(Token(charToType(_line[i]), std::string(1, _line[i])));
+            i++;
         }
-        if (!isSign(line[pos]) && !std::isspace(line[pos]))
+        else
         {
-            std::string word;
-            while (pos < line.size() && !isSign(line[pos]) && !std::isspace(line[pos]))
-            {
-                word += line[pos];
-                pos++;
-            }
-            tokens.push_back(Token(Word, word));
-            continue;
+            size_t start = i;
+
+            while (i < _line.size() && !isSign(_line[i])
+                   && !std::isspace(static_cast<unsigned char>(_line[i])))
+                i++;
+            tokens.push_back(Token(Word, _line.substr(start, i - start)));
         }
-        tokens.push_back(Token(charToType(line[pos]), std::string(1, line[pos])));
-        pos++;
     }
+
     tokens.push_back(Token(End, ""));
     return tokens;
 }
-
-/**
- * @brief
- * ---------------------------------------------------------------------------
- * 
- * 
- */
-// std::vector<std::string> split(const std::string &lineFromSourceCode)
-// {
-//     std::vector<std::string> words; // vector that dynamically adds words
-//     // look for the space where there is a " " and then have each strchr string
-//     return words;
-// }
-
-// https://medium.com/@tharunappu2004/writing-a-lexer-in-c-a-step-by-step-guide-a1d5c55ac04d
