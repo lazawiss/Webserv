@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/21 14:35:15 by lzannis           #+#    #+#             */
-/*   Updated: 2026/05/26 19:37:43 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/05/26 20:50:35 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -162,7 +162,7 @@ void    Server::readingSocket(){
         int clientfd = accept(_sockfd, (struct sockaddr *) &peer_addr, &peer_addr_len );
         std::cout << "clientfd:" << clientfd << std::endl;
 
-        // should fork() here
+        // should fork() here : ONLY FORK() FOR CGI
         ssize_t n_read = read(clientfd, buf, BUF_SIZE); // read HTTP requests
 
         std::cout << "n_read:" << n_read << std::endl;
