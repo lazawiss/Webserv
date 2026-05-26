@@ -32,7 +32,7 @@ int parse_file(const std::string &str)
 {
     // .c_str() is required in C++98 because std::ifstream's constructor
     // only accepts const char*, not std::string (fixed in C++11)
-    std::ifstream file(str.c_str());
+    std::ifstream file(str.c_str()); 
 
     if (file.is_open() == false)
     {

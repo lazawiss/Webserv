@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/21 14:35:15 by lzannis           #+#    #+#             */
-/*   Updated: 2026/05/26 16:58:17 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/05/26 19:37:43 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -155,6 +155,7 @@ void    Server::readingSocket(){
         
         struct sockaddr_storage peer_addr;
         char                    buf[BUF_SIZE];
+
         
         socklen_t peer_addr_len = sizeof(peer_addr);
 
@@ -182,9 +183,21 @@ void    Server::readingSocket(){
         // Parse request
         if (request.find("GET / HTTP/1.1") != std::string::npos){ // same as EOF
             
-            std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<html><body>Hello from C++!</body></html>";
-            
-            
+            char    buffer[BUF_SIZE];
+
+            // std::ifstream file("data/html/index.html".c_str());
+            int indexfd = open("data/html/index.html", O_RDONLY);
+            ssize_t n_read_index = read(indexfd, buffer, BUF_SIZE);
+            std::cout << "n_read_index:" << n_read_index << std::endl;
+            if (n_read_index == -1){
+                std::cerr << strerror(errno) << std::endl;
+                close(indexfd);
+                continue;
+            }
+
+            // std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<html><body>Hello from C++!</body></html>";
+            std::string response = std::string(buffer, n_read_index);
+
             if (send(clientfd, response.c_str(), response.size(), 0))
                 std::cout << "Error sending response" << std::endl;
         } 
