@@ -1,0 +1,124 @@
+# ╔══════════════════════════════════════════════════════╗
+# ║              WEBSERV - Configuration File            ║
+# ╚══════════════════════════════════════════════════════╝
+
+# ─────────────────────────────────────────
+#  SERVEUR 1 — Site principal (port 8080)
+# ─────────────────────────────────────────
+server {
+    listen       0.0.0.0:8080;       # interface:port
+    server_name  localhost;           # virtual host (optionnel)
+
+    # Taille maximale du body d'une requête client (en octets)
+    client_max_body_size 10M;
+
+    # Pages d'erreur personnalisées
+    error_page 400 /errors/400.html;
+    error_page 403 /errors/403.html;
+    error_page 404 /errors/404.html;
+    error_page 405 /errors/405.html;
+    error_page 413 /errors/413.html;
+    error_page 500 /errors/500.html;
+
+    # ── Route racine ─────────────────────────────────────
+    location / {
+        root            /var/www/html;   # dossier racine des fichiers
+        index           index.html;      # fichier par défaut si répertoire
+        methods         GET POST;        # méthodes HTTP acceptées
+        autoindex       off;             # désactive le listing de répertoire
+    }
+
+    # ── Route avec listing activé ─────────────────────────
+    location /files {
+        root            /var/www/html;
+        methods         GET;
+        autoindex       on;              # active le listing de répertoire
+        index           index.html;
+    }
+
+    # ── Route avec alias de chemin ────────────────────────
+    # /kapouet/pouic/toto/pouet → /tmp/www/pouic/toto/pouet
+    location /kapouet {
+        root            /tmp/www;
+        methods         GET;
+        autoindex       off;
+        index           index.html;
+    }
+
+    # ── Upload de fichiers ────────────────────────────────
+    location /upload {
+        methods         POST DELETE;
+        upload_store    /var/www/uploads; # dossier de stockage des uploads
+        client_max_body_size 50M;         # override local (uploads plus lourds)
+    }
+
+    # ── Redirection HTTP ──────────────────────────────────
+    location /old-page {
+        return          301 /new-page;   # redirection permanente
+    }
+
+    location /google {
+        return          302 https://www.google.com; # redirection externe
+    }
+
+    # ── CGI Python ────────────────────────────────────────
+    location /cgi-bin/python {
+        root            /var/www/cgi-bin;
+        methods         GET POST;
+        cgi_extension   .py  /usr/bin/python3;
+        index           index.py;
+    }
+
+    # ── CGI PHP ───────────────────────────────────────────
+    location /cgi-bin/php {
+        root            /var/www/cgi-bin;
+        methods         GET POST;
+        cgi_extension   .php /usr/bin/php-cgi;
+        index           index.php;
+    }
+}
+
+# ─────────────────────────────────────────
+#  SERVEUR 2 — Second virtual host (port 8081)
+# ─────────────────────────────────────────
+server {
+    listen       0.0.0.0:8081;
+    server_name  second.localhost;
+
+    client_max_body_size 1M;
+
+    error_page 404 /errors/404.html;
+    error_page 500 /errors/500.html;
+
+    location / {
+        root        /var/www/site2;
+        index       index.html;
+        methods     GET;
+        autoindex   off;
+    }
+
+    location /api {
+        root        /var/www/site2;
+        methods     GET POST DELETE;
+        autoindex   off;
+    }
+}
+
+# ─────────────────────────────────────────
+#  SERVEUR 3 — Même port, autre interface
+# ─────────────────────────────────────────
+server {
+    listen       127.0.0.1:8080;     # même port, mais interface différente
+    server_name  internal.localhost;
+
+    client_max_body_size 5M;
+
+    error_page 404 /errors/404.html;
+
+    location / {
+        root        /var/www/internal;
+        index       index.html;
+        methods     GET;
+        autoindex   off;
+    }
+}

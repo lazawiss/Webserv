@@ -1,4 +1,32 @@
 #include "Parser.hpp"
+#include "../lexer/Lexer.hpp"
+
+static std::string tokenTypeToString(TokenType type)
+{
+    switch(type)
+    {
+        case Word: return "Word";
+        case LBracket: return "LBracket";
+        case RBracket: return "RBracket";
+        case Semicolon: return "Semicolon";
+        case Hashtag: return "Hashtag";
+        case End: return "End";
+        default: return "Unknown";
+    }
+}
+
+void print_token_chain(std::vector <Token> tokens)
+{
+    for (size_t i = 0; i < tokens.size(); i++)
+    {
+        std::cout
+            << tokenTypeToString(tokens[i].type)
+            << " => "
+            << tokens[i].value
+            << std::endl;
+    }
+    return ;
+}
 
 int parse_file(const std::string &str)
 {
@@ -21,10 +49,22 @@ int parse_file(const std::string &str)
     }
 
     std::string line;
+    std::vector<Token> allTokens;
 
     while (std::getline(file, line))
+    {
         std::cout << line << "\n";
-        // lexer.tokenize(line);  # MARQUE
+        Lexer lexer(line);
+        std::vector<Token> lineTokens = lexer.tokenize(line);
+
+        for (size_t i = 0; i < lineTokens.size(); i++)
+        {
+            if (lineTokens[i].type != End)
+                allTokens.push_back(lineTokens[i]);
+        }
+    }
+    allTokens.push_back(Token(End, ""));
+    print_token_chain(allTokens);
     
     // https://cplusplus.com/reference/fstream/ifstream/close/
     // No need to call file.close() explicitly.
