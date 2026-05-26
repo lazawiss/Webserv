@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/21 14:35:15 by lzannis           #+#    #+#             */
-/*   Updated: 2026/05/26 16:27:41 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/05/26 16:58:17 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -160,6 +160,8 @@ void    Server::readingSocket(){
 
         int clientfd = accept(_sockfd, (struct sockaddr *) &peer_addr, &peer_addr_len );
         std::cout << "clientfd:" << clientfd << std::endl;
+
+        // should fork() here
         ssize_t n_read = read(clientfd, buf, BUF_SIZE); // read HTTP requests
 
         std::cout << "n_read:" << n_read << std::endl;
@@ -168,19 +170,24 @@ void    Server::readingSocket(){
             close(clientfd);
             continue;
         }
+        std::string request = std::string(buf, n_read);
+        std::cout << "Request: " << request << std::endl;
         
-        std::cout << "Request: " << std::string(buf, n_read) << std::endl;
-        
-        // char host[NI_MAXHOST], service[NI_MAXSERV];
-
         int s = getsockname(clientfd, (struct sockaddr *) &peer_addr, &peer_addr_len);
         if (clientfd == 0)
             std::cout << "Received " << static_cast<long>(n_read) << "bytes from " << peer_addr.ss_family << ":" << std::endl;
         else
             std::cout << "getnameinfo: " << gai_strerror(s) << std::endl;
-
-        if (send(clientfd, buf, n_read, 0))
-            std::cout << "Error sending response" << std::endl;
+            
+        // Parse request
+        if (request.find("GET / HTTP/1.1") != std::string::npos){ // same as EOF
+            
+            std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<html><body>Hello from C++!</body></html>";
+            
+            
+            if (send(clientfd, response.c_str(), response.size(), 0))
+                std::cout << "Error sending response" << std::endl;
+        } 
 
         close(clientfd);
 

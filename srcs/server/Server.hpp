@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/21 14:12:24 by lzannis           #+#    #+#             */
-/*   Updated: 2026/05/26 15:26:44 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/05/26 16:50:34 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <algorithm>
 #include <stdexcept>
 #include <errno.h>
 #include <netdb.h>
