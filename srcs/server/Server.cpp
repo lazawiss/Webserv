@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/21 14:35:15 by lzannis           #+#    #+#             */
-/*   Updated: 2026/05/25 18:58:09 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/05/26 16:27:41 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,9 +43,9 @@ Server & Server::operator=( Server const & other ){
     return *this;
 }
 
+// Configure _hints : check if we need to take protocol from config file
 struct addrinfo &    Server::initHints(){
     
-    // Configure hints
     memset(&_hints, 0, sizeof _hints);
     _hints.ai_family = AF_UNSPEC;  // IPv4 or IPv6
     _hints.ai_socktype = SOCK_STREAM;  // TCP
@@ -58,9 +58,10 @@ struct addrinfo &    Server::initHints(){
    return _hints;
 }
 
+// getaddrinfo initialise struct _res out of struct _hints
 bool    Server::initRes(){
     
-    // Resolve "localhost" on port 8080
+    // Resolve "localhost" on port 8080 : first 2 args will come from config file 
     int status = getaddrinfo("localhost", "8080", &_hints, &_res);
     if (status != 0) {
         std::cout << "getaddrinfo: " << gai_strerror(status) << "ports" << std::endl;
@@ -69,6 +70,7 @@ bool    Server::initRes(){
     return true;
 }
 
+//show IPv4/IPv6 in a human-readable numeric form
 void    Server::findAddress(){
 
     char            ipstr[INET6_ADDRSTRLEN];
@@ -96,6 +98,7 @@ void    Server::findAddress(){
     }
 }
 
+// Create socket & bind it. If failed close socket 
 bool    Server::loopBindingSocket(){
 
      /* getaddrinfo() returns a list of address structures.
@@ -120,6 +123,7 @@ bool    Server::loopBindingSocket(){
     return false;
 }
 
+// check if _p still exist & listen : put socket in passiv mode, ready for connection 
 bool    Server::listeningSocket(){
     
     // if (_res)
@@ -141,22 +145,31 @@ bool    Server::listeningSocket(){
     return true;
 }
 
+// main loop event : 
+// accept : create dynamically a new connected socket for each new client, return a new int fd
+// 
+// getsockname : returns current socket address
 void    Server::readingSocket(){
     
     for(;;){
         
         struct sockaddr_storage peer_addr;
-        char            buf[BUF_SIZE];
+        char                    buf[BUF_SIZE];
         
         socklen_t peer_addr_len = sizeof(peer_addr);
 
         int clientfd = accept(_sockfd, (struct sockaddr *) &peer_addr, &peer_addr_len );
         std::cout << "clientfd:" << clientfd << std::endl;
-        ssize_t n_read = read(clientfd, buf, BUF_SIZE);
+        ssize_t n_read = read(clientfd, buf, BUF_SIZE); // read HTTP requests
 
         std::cout << "n_read:" << n_read << std::endl;
-        if (n_read == -1)
+        if (n_read == -1){
+            std::cerr << strerror(errno) << std::endl;
+            close(clientfd);
             continue;
+        }
+        
+        std::cout << "Request: " << std::string(buf, n_read) << std::endl;
         
         // char host[NI_MAXHOST], service[NI_MAXSERV];
 

@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/21 14:12:24 by lzannis           #+#    #+#             */
-/*   Updated: 2026/05/22 16:58:32 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/05/26 15:26:44 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,7 @@
 
 #define BUF_SIZE 500
 #define MY_SOCK_PATH "home/lzannis/Projets/Weberv/data/html/index.html"
-#define LISTEN_BACKLOG 50
+#define LISTEN_BACKLOG 50 //max connections accepted by socket
 
 class Server {
 
