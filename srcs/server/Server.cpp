@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/21 14:35:15 by lzannis           #+#    #+#             */
-/*   Updated: 2026/05/27 19:07:37 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/05/27 19:59:03 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,7 @@ Server::Server() : _sockfd(0){
     if (listeningSocket() == false)
         throw std::logic_error("Error listeningSocket");
     readingSocket();
+    kill(-1, 0);
 
 }
 
@@ -60,8 +61,8 @@ struct addrinfo &    Server::initHints(){
     
     memset(&_hints, 0, sizeof _hints);
     _hints.ai_family = AF_UNSPEC;  // IPv4 or IPv6
-    // _hints.ai_socktype = SOCK_STREAM;  // TCP
-    _hints.ai_socktype = SOCK_DGRAM; // Datagram socket
+    _hints.ai_socktype = SOCK_STREAM;  // TCP
+    // _hints.ai_socktype = SOCK_DGRAM; // Datagram socket
    _hints.ai_flags = AI_PASSIVE; // For wildcard IP address
    _hints.ai_protocol = 0; //Any protocol
    _hints.ai_canonname = NULL;
@@ -241,4 +242,27 @@ void    Server::readingSocket(){
         
 //     return true;
          
+// }
+
+// int   Server::sigint_handler(int sig){
+
+    
+//     if (sig == 0 || sig == 130){
+//         sig == 130;
+        
+        
+//     }
+//     return sig;
+// }
+
+// void    Server::setupSignals(){
+    
+//     signal(SIGINT, sigint_handler);
+//     signal(SIGQUIT, SIG_IGN);
+// }
+
+// void    Server::setupSignalsFork(){
+    
+//     signal(SIGINT, sigint_handler);
+//     signal(SIGQUIT, SIG_DFL);
 // }

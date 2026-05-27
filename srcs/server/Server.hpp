@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/21 14:12:24 by lzannis           #+#    #+#             */
-/*   Updated: 2026/05/27 18:58:19 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/05/27 19:57:44 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,6 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <cstring>
-#include <string>
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -66,5 +65,8 @@ public:
     bool                listeningSocket();
     void                readingSocket();
     
+    // int                 sigint_handler(int sig);
+    // void                setupSignals();
+    // void                setupSignalsFork();
 
 };
