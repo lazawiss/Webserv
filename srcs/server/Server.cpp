@@ -6,21 +6,27 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/21 14:35:15 by lzannis           #+#    #+#             */
-/*   Updated: 2026/05/26 20:50:35 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/05/27 19:07:37 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 
+/*
+** ============================================================================
+** Constructors & Destructor
+** ============================================================================
+*/
+
 Server::Server() : _sockfd(0){
     
     initHints();
     if (initRes() == false)
-        throw std::exception();
+        throw std::logic_error("Error initRes");
     if (loopBindingSocket() == false)
-        throw std::exception();
+        throw std::logic_error("Error loopBindingSocket");
     if (listeningSocket() == false)
-        throw std::exception();
+        throw std::logic_error("Error listeningSocket");
     readingSocket();
 
 }
@@ -43,13 +49,19 @@ Server & Server::operator=( Server const & other ){
     return *this;
 }
 
+/*
+** ============================================================================
+** Exec
+** ============================================================================
+*/
+
 // Configure _hints : check if we need to take protocol from config file
 struct addrinfo &    Server::initHints(){
     
     memset(&_hints, 0, sizeof _hints);
     _hints.ai_family = AF_UNSPEC;  // IPv4 or IPv6
-    _hints.ai_socktype = SOCK_STREAM;  // TCP
-    // hints.ai_socktype = SOCK_DGRAM; // Datagram socket
+    // _hints.ai_socktype = SOCK_STREAM;  // TCP
+    _hints.ai_socktype = SOCK_DGRAM; // Datagram socket
    _hints.ai_flags = AI_PASSIVE; // For wildcard IP address
    _hints.ai_protocol = 0; //Any protocol
    _hints.ai_canonname = NULL;
@@ -206,3 +218,27 @@ void    Server::readingSocket(){
 
     }
 }
+
+/*
+** ============================================================================
+** Signals
+** ============================================================================
+*/
+
+// bool    Server::getInput( std::string & buf ){
+
+//     if (!std::getline( std::cin, buf )){
+
+//         if (std::cin.eof()){
+            
+//             std::cin.clear();
+//             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+//         }
+//         exit(EXIT_SUCCESS);
+//     }
+//     if (buf.empty())
+//         return false;
+        
+//     return true;
+         
+// }

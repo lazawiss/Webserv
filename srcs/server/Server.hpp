@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/21 14:12:24 by lzannis           #+#    #+#             */
-/*   Updated: 2026/05/26 19:24:05 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/05/27 18:58:19 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
+#include <unistd.h>
 #include <cstring>
 #include <string>
 #include <arpa/inet.h>
@@ -31,6 +32,10 @@
 #include <cstdlib>
 #include <ctime>
 #include <cstdio>
+#include <csignal>
+#include <limits>
+
+
 
 #define BUF_SIZE 500
 #define MY_SOCK_PATH "home/lzannis/Projets/Weberv/data/html/index.html"
@@ -61,6 +66,5 @@ public:
     bool                listeningSocket();
     void                readingSocket();
     
-
 
 };

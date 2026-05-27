@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/05 17:44:47 by lzannis           #+#    #+#             */
-/*   Updated: 2026/05/22 17:11:03 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/05/27 18:59:40 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,8 +55,14 @@ int main(int argc, char **argv)
     if ((result = parse_file(argv[1])) != SUCCESS)
         return result;
 
-    Server server;
-
+    Server      server;
+    
+    // std::string buf;
+    // std::string str1("stop"); //fast shutdown
+    // std::string str2("quit"); // graceful shutdown
+    // std::string str3("reload"); // reloading config file
+    // std::string str4("reopen"); // reopen log files
+        
     // server.findAddress();
 
     return 0;
