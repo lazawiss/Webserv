@@ -15,8 +15,6 @@
 
 # include <fstream>
 # include <iostream>
-# include <list>
-# include <map>
 # include <stdexcept>
 # include <string>
 # include <vector>
@@ -29,31 +27,32 @@ typedef enum TokenType
     Semicolon,
     Hashtag,
     Unknown,
-    End
-} TokenType;
 
-struct Token // struct is like class but always public in C++
+    End
+
+}   TokenType;
+
+struct Token
 {
-    TokenType type;
+    TokenType   type;
     std::string value;
 
-    Token (TokenType t, const std::string& v): type(t), value(v)
-    {};
+    Token (TokenType t, const std::string& v): type(t), value(v) {};
 };
 
 class Lexer
 {
 private:
-    std::string input; 
-    size_t position;
+    std::string _line;
 
-    public:
-    Lexer(const std::string& text);
-    Lexer(Lexer const& other);
+public:
+    Lexer(const std::string &line);
+
+    Lexer(Lexer const &ref);
+    Lexer& operator=(Lexer const &ref);
     ~Lexer();
-    Lexer& operator=(Lexer const& other);
-    std::vector<Token> tokenize(std::string &line);
 
+    std::vector<Token> tokenize();
 };
 
 #endif

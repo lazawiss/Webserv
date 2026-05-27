@@ -5,13 +5,14 @@ static std::string tokenTypeToString(TokenType type)
 {
     switch(type)
     {
-        case Word: return "Word";
-        case LBracket: return "LBracket";
-        case RBracket: return "RBracket";
+        case Word:      return "Word";
+        case LBracket:  return "LBracket";
+        case RBracket:  return "RBracket";
         case Semicolon: return "Semicolon";
-        case Hashtag: return "Hashtag";
-        case End: return "End";
-        default: return "Unknown";
+        case Hashtag:   return "Hashtag";
+        case End:       return "End";
+
+        default:        return "Unknown";
     }
 }
 
@@ -28,10 +29,13 @@ void print_token_chain(std::vector <Token> tokens)
     return ;
 }
 
+/*
+** Opens and validates the config file, then tokenizes its content
+** line by line into a single token chain.
+** Returns SUCCESS if the file was parsed correctly, ERROR otherwise.
+*/
 int parse_file(const std::string &str)
 {
-    // .c_str() is required in C++98 because std::ifstream's constructor
-    // only accepts const char*, not std::string (fixed in C++11)
     std::ifstream file(str.c_str());
 
     if (file.is_open() == false)
@@ -40,8 +44,6 @@ int parse_file(const std::string &str)
         return ERROR;
     }
 
-    // peek() returns EOF immediately if the file contains no data
-    // https://stackoverflow.com/questions/2390912/checking-for-an-empty-file-in-c
     if (file.peek() == std::ifstream::traits_type::eof())
     {
         std::cerr << "Error: file '" << str << "' is empty" << std::endl;
@@ -55,7 +57,7 @@ int parse_file(const std::string &str)
     {
         std::cout << line << "\n";
         Lexer lexer(line);
-        std::vector<Token> lineTokens = lexer.tokenize(line);
+        std::vector<Token> lineTokens = lexer.tokenize();
 
         for (size_t i = 0; i < lineTokens.size(); i++)
         {
@@ -63,13 +65,9 @@ int parse_file(const std::string &str)
                 allTokens.push_back(lineTokens[i]);
         }
     }
+
     allTokens.push_back(Token(End, ""));
     print_token_chain(allTokens);
-    
-    // https://cplusplus.com/reference/fstream/ifstream/close/
-    // No need to call file.close() explicitly.
-    // "Note that any open file is automatically closed when the 
-    // ifstream object is destroyed."
 
     return SUCCESS;
 }
