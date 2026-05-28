@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/21 14:12:24 by lzannis           #+#    #+#             */
-/*   Updated: 2026/05/27 19:57:44 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/05/28 18:09:06 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,6 @@
 #include <vector>
 #include <algorithm>
 #include <stdexcept>
-#include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
 #include <unistd.h>
@@ -31,9 +30,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <cstdio>
-#include <csignal>
 #include <limits>
-
 
 
 #define BUF_SIZE 500
@@ -46,10 +43,14 @@ private:
 
     struct addrinfo _hints, *_res, *_p;
     int             _sockfd;
+    static int      _sig;
+
     
 protected:
 public:
     
+    static volatile sig_atomic_t    _quit;
+
                         Server();
                         Server( Server const & src );
                         ~Server();
@@ -63,10 +64,9 @@ public:
             
     bool                loopBindingSocket();
     bool                listeningSocket();
-    void                readingSocket();
+    bool                readingSocket();
     
-    // int                 sigint_handler(int sig);
-    // void                setupSignals();
-    // void                setupSignalsFork();
+    void                setupSignals();
+    void                setupSignalsFork();
 
 };

@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/21 14:35:15 by lzannis           #+#    #+#             */
-/*   Updated: 2026/05/27 19:59:03 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/05/28 18:10:59 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,14 +27,14 @@ Server::Server() : _sockfd(0){
         throw std::logic_error("Error loopBindingSocket");
     if (listeningSocket() == false)
         throw std::logic_error("Error listeningSocket");
-    readingSocket();
-    kill(-1, 0);
+    if (readingSocket() == false)
+        throw std::logic_error("Error readingSocket");
+    // kill(-1, 0);
 
 }
 
-Server::Server( Server const & src ){
+Server::Server( Server const & src ) : _sockfd(src._sockfd){
     
-    *this = src;
 }
 
 Server::~Server(){
@@ -46,7 +46,7 @@ Server::~Server(){
 Server & Server::operator=( Server const & other ){
 
     if (this != &other)
-        *this = other;
+        this->_sockfd = other._sockfd;
     return *this;
 }
 
@@ -162,9 +162,13 @@ bool    Server::listeningSocket(){
 // accept : create dynamically a new connected socket for each new client, return a new int fd
 // 
 // getsockname : returns current socket address
-void    Server::readingSocket(){
+bool    Server::readingSocket(){
     
-    for(;;){
+    setupSignals();
+
+    std::cout << "_quit:" << _quit << std::endl;
+
+    while(_quit != 1){
         
         struct sockaddr_storage peer_addr;
         char                    buf[BUF_SIZE];
@@ -218,6 +222,9 @@ void    Server::readingSocket(){
         close(clientfd);
 
     }
+
+    return false;
+
 }
 
 /*
@@ -226,43 +233,42 @@ void    Server::readingSocket(){
 ** ============================================================================
 */
 
-// bool    Server::getInput( std::string & buf ){
 
-//     if (!std::getline( std::cin, buf )){
+static void  sigintHandler(int _sig){
 
-//         if (std::cin.eof()){
-            
-//             std::cin.clear();
-//             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-//         }
-//         exit(EXIT_SUCCESS);
-//     }
-//     if (buf.empty())
-//         return false;
-        
-//     return true;
-         
-// }
+    write(STDERR_FILENO, "Signal received\n", 16);
+    if (_sig == SIGTERM || _sig == SIGINT){
+        Server::_quit = 1;
+    }
+    fprintf(stderr, "sigintHANdler _quit: %d \n", Server::_quit);
+    exit(_sig);
+}
 
-// int   Server::sigint_handler(int sig){
-
+void    Server::setupSignals(){
     
-//     if (sig == 0 || sig == 130){
-//         sig == 130;
-        
-        
-//     }
-//     return sig;
-// }
+    signal(SIGINT, sigintHandler);
+    signal(SIGTERM, sigintHandler);
+    signal(SIGHUP, sigintHandler);
+    signal(SIGQUIT, SIG_IGN);
+}
 
-// void    Server::setupSignals(){
-    
-//     signal(SIGINT, sigint_handler);
-//     signal(SIGQUIT, SIG_IGN);
-// }
+static void sigHandlerFork(int _sig){
 
-// void    Server::setupSignalsFork(){
+    // std::cout << "Signal received: " << _sig << std::endl;
     
-//     signal(SIGINT, sigint_handler);
-//     signal(SIGQUIT, SIG_DFL);
-// }
+    if (_sig == SIGTERM || _sig == SIGINT){
+
+        Server::_quit = 0;
+    }
+    
+    // exit(_sig);
+}
+
+void    Server::setupSignalsFork(){
+    
+    signal(SIGINT, sigHandlerFork);
+    signal(SIGQUIT, SIG_DFL);
+}
+
+volatile sig_atomic_t Server::_quit = 0;
+int Server::_sig = 0;
