@@ -12,6 +12,9 @@
 
 #include "Lexer.hpp"
 
+static enum TokenType charToType(char c);
+static bool isSign(char c);
+
 /*
 ** ============================================================================
 ** Lexer - Constructors & Destructor

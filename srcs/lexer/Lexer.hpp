@@ -67,7 +67,4 @@ public:
     std::vector<Token> tokenize();
 };
 
-static enum TokenType charToType(char c);
-static bool isSign(char c);
-
 #endif
