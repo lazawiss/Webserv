@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/21 14:12:24 by lzannis           #+#    #+#             */
-/*   Updated: 2026/05/28 18:09:06 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/05/31 20:08:17 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,6 +25,7 @@
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/epoll.h>
 #include <csignal>
 #include <cerrno>
 #include <cstdlib>
@@ -36,6 +37,7 @@
 #define BUF_SIZE 500
 #define MY_SOCK_PATH "home/lzannis/Projets/Weberv/data/html/index.html"
 #define LISTEN_BACKLOG 50 //max connections accepted by socket
+#define MAX_EVENTS 10
 
 class Server {
 
@@ -44,6 +46,9 @@ private:
     struct addrinfo _hints, *_res, *_p;
     int             _sockfd;
     static int      _sig;
+
+    // Lexer   lexer;
+    // Parser parser;
 
     
 protected:
@@ -64,6 +69,8 @@ public:
             
     bool                loopBindingSocket();
     bool                listeningSocket();
+    int                 setnonblocking( int fd );
+    void                do_use_fd( int fd );
     bool                readingSocket();
     
     void                setupSignals();

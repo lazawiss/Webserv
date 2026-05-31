@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/21 14:35:15 by lzannis           #+#    #+#             */
-/*   Updated: 2026/05/28 18:10:59 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/05/31 20:18:21 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,6 +41,8 @@ Server::~Server(){
     
     if (_res)
         freeaddrinfo(_res);
+    if (_sockfd)
+        close(_sockfd);
 }
     
 Server & Server::operator=( Server const & other ){
@@ -158,6 +160,73 @@ bool    Server::listeningSocket(){
     return true;
 }
 
+// Source - https://stackoverflow.com/a/73879155
+// Posted by selbie
+// Retrieved 2026-05-28, License - CC BY-SA 4.0
+
+int Server::setnonblocking( int fd ){
+    
+    int result;
+    int flags;
+
+    flags = fcntl(fd, F_GETFL, 0);
+
+    if (flags == -1)
+    {
+        return -1;  // error
+    }
+
+    flags |= O_NONBLOCK;
+
+    result = fcntl(fd , F_SETFL , flags);
+    return result;
+}
+
+void    Server::do_use_fd(  int fd ){
+    
+    char                    buf[BUF_SIZE];
+
+    // should fork() here : ONLY FORK() FOR CGI
+    ssize_t n_read = read(fd, buf, BUF_SIZE); // read HTTP requests
+    
+    std::cout << "n_read:" << n_read << std::endl;
+    if (n_read == -1){
+        std::cerr << strerror(errno) << std::endl;
+        close(fd);
+        return;
+    }
+    std::string request = std::string(buf, n_read);
+    std::cout << "Request: " << request << std::endl;
+    
+    // int s = getsockname(fd, (struct sockaddr *) &peer_addr, &peer_addr_len);
+    // if (fd == 0)
+    // std::cout << "Received " << static_cast<long>(n_read) << "bytes from " << peer_addr.ss_family << ":" << std::endl;
+    // else
+    // std::cout << "getnameinfo: " << gai_strerror(s) << std::endl;
+    
+    // Parse request
+    if (request.find("GET / HTTP/1.1") != std::string::npos){ // same as EOF
+        
+        char    buffer[BUF_SIZE];
+        
+        // std::ifstream file("data/html/index.html".c_str());
+        int indexfd = open("data/html/index.html", O_RDONLY);
+        ssize_t n_read_index = read(indexfd, buffer, BUF_SIZE);
+        std::cout << "n_read_index:" << n_read_index << std::endl;
+        if (n_read_index == -1){
+            std::cerr << strerror(errno) << std::endl;
+            close(indexfd);
+            return;
+        }
+        
+        // std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<html><body>Hello from C++!</body></html>";
+        std::string response = std::string(buffer, n_read_index);
+        
+        if (send(fd, response.c_str(), response.size(), 0))
+        std::cout << "Error sending response" << std::endl;
+    } 
+}
+
 // main loop event : 
 // accept : create dynamically a new connected socket for each new client, return a new int fd
 // 
@@ -168,60 +237,116 @@ bool    Server::readingSocket(){
 
     std::cout << "_quit:" << _quit << std::endl;
 
+    struct epoll_event ev, events[MAX_EVENTS];
+
+    int epollfd = epoll_create(sizeof ev);
+    if (epollfd == -1){
+        std::cerr << "epollfd:" << epollfd << " " << strerror(errno) << std::endl;
+        return false;
+    }
+
+    ev.events = EPOLLIN;
+    ev.data.fd = _sockfd;
+    if (epoll_ctl(epollfd, EPOLL_CTL_ADD, _sockfd, &ev) == -1){
+        std::cerr << strerror(errno) << std::endl;
+        return false;
+    }
+    
+
     while(_quit != 1){
         
-        struct sockaddr_storage peer_addr;
-        char                    buf[BUF_SIZE];
-
+        int nfds = epoll_wait(epollfd, events, MAX_EVENTS, 100);
         
-        socklen_t peer_addr_len = sizeof(peer_addr);
-
-        int clientfd = accept(_sockfd, (struct sockaddr *) &peer_addr, &peer_addr_len );
-        std::cout << "clientfd:" << clientfd << std::endl;
-
-        // should fork() here : ONLY FORK() FOR CGI
-        ssize_t n_read = read(clientfd, buf, BUF_SIZE); // read HTTP requests
-
-        std::cout << "n_read:" << n_read << std::endl;
-        if (n_read == -1){
+        // std::cout << "nfds:" << nfds << std::endl;
+        if (nfds == -1){
             std::cerr << strerror(errno) << std::endl;
-            close(clientfd);
-            continue;
-        }
-        std::string request = std::string(buf, n_read);
-        std::cout << "Request: " << request << std::endl;
-        
-        int s = getsockname(clientfd, (struct sockaddr *) &peer_addr, &peer_addr_len);
-        if (clientfd == 0)
-            std::cout << "Received " << static_cast<long>(n_read) << "bytes from " << peer_addr.ss_family << ":" << std::endl;
-        else
-            std::cout << "getnameinfo: " << gai_strerror(s) << std::endl;
-            
-        // Parse request
-        if (request.find("GET / HTTP/1.1") != std::string::npos){ // same as EOF
-            
-            char    buffer[BUF_SIZE];
-
-            // std::ifstream file("data/html/index.html".c_str());
-            int indexfd = open("data/html/index.html", O_RDONLY);
-            ssize_t n_read_index = read(indexfd, buffer, BUF_SIZE);
-            std::cout << "n_read_index:" << n_read_index << std::endl;
-            if (n_read_index == -1){
-                std::cerr << strerror(errno) << std::endl;
-                close(indexfd);
-                continue;
-            }
-
-            // std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<html><body>Hello from C++!</body></html>";
-            std::string response = std::string(buffer, n_read_index);
-
-            if (send(clientfd, response.c_str(), response.size(), 0))
-                std::cout << "Error sending response" << std::endl;
+            return false;
         } 
-
-        close(clientfd);
+        for ( int n = 0; n < nfds; ++n){
+            
+            struct sockaddr_storage peer_addr;
+            socklen_t               peer_addr_len = sizeof(peer_addr);
+            
+            if (events[n].data.fd == _sockfd){
+                
+                int clientfd = accept(_sockfd, (struct sockaddr *) &peer_addr, &peer_addr_len );
+                std::cout << "clientfd:" << clientfd << std::endl;
+                if (clientfd == -1){
+                    std::cerr << strerror(errno) << std::endl;
+                    return false;
+                }
+                if (setnonblocking(clientfd) < 0){
+                    std::cerr << strerror(errno) << std::endl;
+                    return false;
+                }
+                ev.events = EPOLLIN | EPOLLET;
+                ev.data.fd = clientfd;
+                if (epoll_ctl(epollfd,EPOLL_CTL_ADD,clientfd, &ev) == -1){
+                    std::cerr << strerror(errno) << std::endl;
+                    return false;
+                }
+            }
+            else
+                do_use_fd(events[n].data.fd);
+                    
+        }
 
     }
+
+        // while(_quit != 1){
+        
+    //     struct sockaddr_storage peer_addr;
+    //     char                    buf[BUF_SIZE];
+
+        
+    //     socklen_t peer_addr_len = sizeof(peer_addr);
+
+    //     int clientfd = accept(_sockfd, (struct sockaddr *) &peer_addr, &peer_addr_len );
+    //     std::cout << "clientfd:" << clientfd << std::endl;
+
+    //     // should fork() here : ONLY FORK() FOR CGI
+    //     ssize_t n_read = read(clientfd, buf, BUF_SIZE); // read HTTP requests
+
+    //     std::cout << "n_read:" << n_read << std::endl;
+    //     if (n_read == -1){
+    //         std::cerr << strerror(errno) << std::endl;
+    //         close(clientfd);
+    //         continue;
+    //     }
+    //     std::string request = std::string(buf, n_read);
+    //     std::cout << "Request: " << request << std::endl;
+        
+    //     int s = getsockname(clientfd, (struct sockaddr *) &peer_addr, &peer_addr_len);
+    //     if (clientfd == 0)
+    //         std::cout << "Received " << static_cast<long>(n_read) << "bytes from " << peer_addr.ss_family << ":" << std::endl;
+    //     else
+    //         std::cout << "getnameinfo: " << gai_strerror(s) << std::endl;
+            
+    //     // Parse request
+    //     if (request.find("GET / HTTP/1.1") != std::string::npos){ // same as EOF
+            
+    //         char    buffer[BUF_SIZE];
+
+    //         // std::ifstream file("data/html/index.html".c_str());
+    //         int indexfd = open("data/html/index.html", O_RDONLY);
+    //         ssize_t n_read_index = read(indexfd, buffer, BUF_SIZE);
+    //         std::cout << "n_read_index:" << n_read_index << std::endl;
+    //         if (n_read_index == -1){
+    //             std::cerr << strerror(errno) << std::endl;
+    //             close(indexfd);
+    //             continue;
+    //         }
+
+    //         // std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<html><body>Hello from C++!</body></html>";
+    //         std::string response = std::string(buffer, n_read_index);
+
+    //         if (send(clientfd, response.c_str(), response.size(), 0))
+    //             std::cout << "Error sending response" << std::endl;
+    //     } 
+
+    //     close(clientfd);
+
+    // }
 
     return false;
 
@@ -254,7 +379,7 @@ void    Server::setupSignals(){
 
 static void sigHandlerFork(int _sig){
 
-    // std::cout << "Signal received: " << _sig << std::endl;
+    write(STDERR_FILENO, "Signal received\n", 16);
     
     if (_sig == SIGTERM || _sig == SIGINT){
 
