@@ -14,7 +14,7 @@
 
 /*
 ** ============================================================================
-** Constructors & Destructor
+** Lexer - Constructors & Destructor
 ** ============================================================================
 */
 
@@ -33,43 +33,20 @@ Lexer& Lexer::operator=(Lexer const& other)
 
 Lexer::~Lexer() {}
 
-/*
-** ============================================================================
-** Static helpers (only visible in this file)
-** ============================================================================
-*/
-
-static enum TokenType charToType(char c)
-{
-    switch (c)
-    {
-        case '{': return LBracket;
-        case '}': return RBracket;
-        case ';': return Semicolon;
-        case '#': return Hashtag;
-
-        default:  return Unknown;
-    }
-}
-
-static bool isSign(char c)
-{
-    return c == '{' || c == '}' || c == ';' || c == '#';
-}
 
 /*
 ** ============================================================================
-** Tokenize
+** Lexer – Member functions
 ** ============================================================================
 */
  
-/*
-** Splits _line into a list of tokens.
-** Three cases at each character:
-**   1. whitespace  -> skip
-**   2. sign        -> push a sign token
-**   3. other       -> accumulate until next whitespace or sign -> Word token
-** An End token is always appended at the end of the vector.
+/**
+ * @brief Splits _line into a list of tokens.
+ *
+ * Skips whitespace, stops at '#' (line comment), emits sign tokens
+ * for punctuation, and accumulates consecutive characters into Word tokens.
+ *
+ * @return A vector of tokens terminated by an End token.
 */
 std::vector<Token> Lexer::tokenize()
 {
@@ -79,10 +56,20 @@ std::vector<Token> Lexer::tokenize()
     while (i < _line.size())
     {
         if (std::isspace(static_cast<unsigned char>(_line[i])))
+        {
             i++;
+        }
         else if (isSign(_line[i]))
         {
-            tokens.push_back(Token(charToType(_line[i]), std::string(1, _line[i])));
+            if (_line[i] == '#')
+            {
+                while (i < _line.size() && _line[i] != '\n')
+                    i++;
+                break;
+            }
+            tokens.push_back(Token(charToType(_line[i]),
+                std::string(1, _line[i])));
+
             i++;
         }
         else
@@ -97,5 +84,33 @@ std::vector<Token> Lexer::tokenize()
     }
 
     tokens.push_back(Token(End, ""));
+
     return tokens;
 }
+
+/**
+ * @brief Maps a sign character to its corresponding TokenType.
+ *
+ * @param c The character to convert.
+ * @return The matching TokenType, or Unknown if unrecognized.
+ */
+static enum TokenType charToType(char c)
+{
+    switch (c)
+    {
+        case '{': return LBracket;
+        case '}': return RBracket;
+        case ';': return Semicolon;
+        case '#': return Hashtag;
+
+        default:  return Unknown;
+    }
+}
+/**
+ * @brief Returns true if c is a recognized sign character.
+ */
+static bool isSign(char c)
+{
+    return c == '{' || c == '}' || c == ';' || c == '#';
+}
+

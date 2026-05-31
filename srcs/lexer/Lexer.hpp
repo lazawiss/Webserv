@@ -19,6 +19,12 @@
 # include <string>
 # include <vector>
 
+/*
+** ============================================================================
+** Lexer - Enums & structs
+** ============================================================================
+*/
+
 typedef enum TokenType
 {
     Word,
@@ -40,6 +46,12 @@ struct Token
     Token (TokenType t, const std::string& v): type(t), value(v) {};
 };
 
+/*
+** ============================================================================
+** Lexer - Class
+** ============================================================================
+*/
+
 class Lexer
 {
 private:
@@ -54,5 +66,8 @@ public:
 
     std::vector<Token> tokenize();
 };
+
+static enum TokenType charToType(char c);
+static bool isSign(char c);
 
 #endif
