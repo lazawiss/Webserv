@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/21 14:35:15 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/02 16:43:45 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/02 17:20:56 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -172,11 +172,8 @@ int Server::setnonblocking( int fd ){
     int flags;
 
     flags = fcntl(fd, F_GETFL, 0);
-
     if (flags == -1)
-    {
-        return -1;  // error
-    }
+        return -1;
 
     flags |= O_NONBLOCK;
 
@@ -192,7 +189,7 @@ int Server::setnonblocking( int fd ){
 // might become more than one big function ?
 bool    Server::do_use_fd(  int fd ){
     
-    char                    buf[BUF_SIZE];
+    char    buf[BUF_SIZE];
 
     // read request :
     ssize_t n_read = read(fd, buf, BUF_SIZE); // read HTTP requests
@@ -229,14 +226,13 @@ bool    Server::do_use_fd(  int fd ){
         
         char    buffer[BUF_SIZE];
         
-        // std::ifstream file("data/html/index.html".c_str());
         int indexfd = open("data/html/index.html", O_RDONLY);
         ssize_t n_read_index = read(indexfd, buffer, BUF_SIZE);
         close(indexfd);
         std::cout << "n_read_index:" << n_read_index << std::endl;
         if (n_read_index == -1){
             std::cerr << "Reading of html file failed: " << strerror(errno) << std::endl;
-            close(indexfd);
+            close(fd);
             return false;
         }
     // should fork() here : ONLY FORK() FOR CGI
@@ -245,8 +241,12 @@ bool    Server::do_use_fd(  int fd ){
         // std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<html><body>Hello from C++!</body></html>";
         std::string response = std::string(buffer, n_read_index);
         
-        if (send(fd, response.c_str(), response.size(), 0) < 0)
+        if (send(fd, response.c_str(), response.size(), 0) < 0){
+            
             std::cerr << "Error sending response: " << strerror(errno) << std::endl;
+            close(fd);
+            return false;
+        }
     }
 
     return true;
@@ -302,7 +302,6 @@ bool    Server::readingSocket(){
                 std::cout << "clientfd:" << clientfd << std::endl;
                 if (clientfd == -1){
                     std::cerr << strerror(errno) << std::endl;
-                    close(clientfd);
                     break;
                 }
                 if (setnonblocking(clientfd) < 0){
@@ -315,7 +314,6 @@ bool    Server::readingSocket(){
                 if (epoll_ctl(epollfd,EPOLL_CTL_ADD,clientfd, &ev) == -1){
                     std::cerr << "Call to epoll_ctl(2) failed: "<< strerror(errno) << std::endl;
                     close(clientfd);
-                    close(epollfd);
                     break;
                 }
             }
