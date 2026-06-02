@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/21 14:35:15 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/02 12:02:58 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/02 16:43:45 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -190,22 +190,33 @@ int Server::setnonblocking( int fd ){
 // answer : send response
 // CGI >> fork 
 // might become more than one big function ?
-void    Server::do_use_fd(  int fd ){
+bool    Server::do_use_fd(  int fd ){
     
     char                    buf[BUF_SIZE];
 
-    // should fork() here : ONLY FORK() FOR CGI
     // read request :
     ssize_t n_read = read(fd, buf, BUF_SIZE); // read HTTP requests
     
     std::cout << "n_read:" << n_read << std::endl;
     if (n_read == -1){
-        std::cerr << strerror(errno) << std::endl;
-        close(fd);
-        return;
+        if (errno == EAGAIN || errno == EWOULDBLOCK) // FOR PORTABILITY
+            return true;
+        else{
+            
+            std::cerr << " Do_use_fd : Error reading from fd "<< fd << strerror(errno) << std::endl;
+            close(fd);
+            return false;
+        }
     }
+    else if (n_read == 0){
+        
+        std::cout << "Client closed connection : "<< fd << std::endl;
+        close(fd);
+        return false;
+    }
+    
     std::string request = std::string(buf, n_read);
-    std::cout << "Request: " << request << std::endl;
+    std::cout << "Request on fd " << fd << ": " << request << std::endl;
     
     // int s = getsockname(fd, (struct sockaddr *) &peer_addr, &peer_addr_len);
     // if (fd == 0)
@@ -221,19 +232,24 @@ void    Server::do_use_fd(  int fd ){
         // std::ifstream file("data/html/index.html".c_str());
         int indexfd = open("data/html/index.html", O_RDONLY);
         ssize_t n_read_index = read(indexfd, buffer, BUF_SIZE);
+        close(indexfd);
         std::cout << "n_read_index:" << n_read_index << std::endl;
         if (n_read_index == -1){
-            std::cerr << strerror(errno) << std::endl;
+            std::cerr << "Reading of html file failed: " << strerror(errno) << std::endl;
             close(indexfd);
-            return;
+            return false;
         }
+    // should fork() here : ONLY FORK() FOR CGI
+        
     // send response  
         // std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<html><body>Hello from C++!</body></html>";
         std::string response = std::string(buffer, n_read_index);
         
-        if (send(fd, response.c_str(), response.size(), 0))
-        std::cout << "Error sending response" << std::endl;
-    } 
+        if (send(fd, response.c_str(), response.size(), 0) < 0)
+            std::cerr << "Error sending response: " << strerror(errno) << std::endl;
+    }
+
+    return true;
 }
 
 // main loop event : 
@@ -257,7 +273,8 @@ bool    Server::readingSocket(){
     ev.events = EPOLLIN;
     ev.data.fd = _sockfd;
     if (epoll_ctl(epollfd, EPOLL_CTL_ADD, _sockfd, &ev) == -1){
-        std::cerr << strerror(errno) << std::endl;
+        std::cerr << "Call to epoll_ctl(1) failed: "<< strerror(errno) << std::endl;
+        close(epollfd);
         return false;
     }
  
@@ -268,8 +285,11 @@ bool    Server::readingSocket(){
         
         // std::cout << "nfds:" << nfds << std::endl;
         if (nfds == -1){
-            std::cerr << strerror(errno) << std::endl;
-            return false;
+            if (errno == EINTR)
+                continue;
+            std::cerr << "Error epoll_wait " << nfds << ": "<< strerror(errno) << std::endl;
+            close(epollfd);
+            break;
         } 
         for ( int n = 0; n < nfds; ++n){
             
@@ -282,21 +302,28 @@ bool    Server::readingSocket(){
                 std::cout << "clientfd:" << clientfd << std::endl;
                 if (clientfd == -1){
                     std::cerr << strerror(errno) << std::endl;
-                    return false;
+                    close(clientfd);
+                    break;
                 }
                 if (setnonblocking(clientfd) < 0){
                     std::cerr << strerror(errno) << std::endl;
-                    return false;
+                    close(clientfd);
+                    break;
                 }
-                ev.events = EPOLLIN | EPOLLET;
+                ev.events = EPOLLIN | EPOLLET; // EPOLLET>>EAGAIN
                 ev.data.fd = clientfd;
                 if (epoll_ctl(epollfd,EPOLL_CTL_ADD,clientfd, &ev) == -1){
-                    std::cerr << strerror(errno) << std::endl;
-                    return false;
+                    std::cerr << "Call to epoll_ctl(2) failed: "<< strerror(errno) << std::endl;
+                    close(clientfd);
+                    close(epollfd);
+                    break;
                 }
             }
-            else
-                do_use_fd(events[n].data.fd);
+            else{
+                
+                if(do_use_fd(events[n].data.fd) == false)
+                    break;
+            }
                     
         }
 
@@ -357,7 +384,8 @@ bool    Server::readingSocket(){
 
     // }
 
-    return false;
+    close(epollfd);
+    return true;
 
 }
 
@@ -375,7 +403,7 @@ static void  sigintHandler(int _sig){
         Server::_quit = 1;
     }
     fprintf(stderr, "sigintHANdler _quit: %d \n", Server::_quit);
-    exit(_sig);
+    // exit(_sig);
 }
 
 void    Server::setupSignals(){

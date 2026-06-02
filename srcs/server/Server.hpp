@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/21 14:12:24 by lzannis           #+#    #+#             */
-/*   Updated: 2026/05/31 20:08:17 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/02 16:39:22 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -70,7 +70,7 @@ public:
     bool                loopBindingSocket();
     bool                listeningSocket();
     int                 setnonblocking( int fd );
-    void                do_use_fd( int fd );
+    bool                do_use_fd( int fd );
     bool                readingSocket();
     
     void                setupSignals();
