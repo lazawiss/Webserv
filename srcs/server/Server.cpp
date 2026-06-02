@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/21 14:35:15 by lzannis           #+#    #+#             */
-/*   Updated: 2026/05/31 20:18:21 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/02 12:02:58 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,11 +38,13 @@ Server::Server( Server const & src ) : _sockfd(src._sockfd){
 }
 
 Server::~Server(){
-    
+
+    std::cout << "Destructor Server" << std::endl;
     if (_res)
         freeaddrinfo(_res);
     if (_sockfd)
         close(_sockfd);
+    
 }
     
 Server & Server::operator=( Server const & other ){
@@ -163,7 +165,7 @@ bool    Server::listeningSocket(){
 // Source - https://stackoverflow.com/a/73879155
 // Posted by selbie
 // Retrieved 2026-05-28, License - CC BY-SA 4.0
-
+//set flags for fcntl():
 int Server::setnonblocking( int fd ){
     
     int result;
@@ -182,11 +184,18 @@ int Server::setnonblocking( int fd ){
     return result;
 }
 
+// open dialogue with client:
+// read request
+// parse request
+// answer : send response
+// CGI >> fork 
+// might become more than one big function ?
 void    Server::do_use_fd(  int fd ){
     
     char                    buf[BUF_SIZE];
 
     // should fork() here : ONLY FORK() FOR CGI
+    // read request :
     ssize_t n_read = read(fd, buf, BUF_SIZE); // read HTTP requests
     
     std::cout << "n_read:" << n_read << std::endl;
@@ -218,7 +227,7 @@ void    Server::do_use_fd(  int fd ){
             close(indexfd);
             return;
         }
-        
+    // send response  
         // std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<html><body>Hello from C++!</body></html>";
         std::string response = std::string(buffer, n_read_index);
         
@@ -239,7 +248,7 @@ bool    Server::readingSocket(){
 
     struct epoll_event ev, events[MAX_EVENTS];
 
-    int epollfd = epoll_create(sizeof ev);
+    int epollfd = epoll_create(sizeof ev); //instantiate epoll 
     if (epollfd == -1){
         std::cerr << "epollfd:" << epollfd << " " << strerror(errno) << std::endl;
         return false;
@@ -251,8 +260,8 @@ bool    Server::readingSocket(){
         std::cerr << strerror(errno) << std::endl;
         return false;
     }
-    
-
+ 
+// epoll loop :
     while(_quit != 1){
         
         int nfds = epoll_wait(epollfd, events, MAX_EVENTS, 100);
@@ -292,8 +301,8 @@ bool    Server::readingSocket(){
         }
 
     }
-
-        // while(_quit != 1){
+//basic server loop:
+    // while(_quit != 1){
         
     //     struct sockaddr_storage peer_addr;
     //     char                    buf[BUF_SIZE];
