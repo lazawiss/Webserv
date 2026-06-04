@@ -1,16 +1,17 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Server.hpp                                         :+:      :+:    :+:   */
+/*   EpollLoop.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/05/21 14:12:24 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/04 15:44:12 by lzannis          ###   ########.fr       */
+/*   Created: 2026/06/04 13:27:21 by lzannis           #+#    #+#             */
+/*   Updated: 2026/06/04 15:44:28 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#pragma once
+
+# pragma once
 
 #include <iostream>
 #include <string>
@@ -32,44 +33,28 @@
 #include <ctime>
 #include <cstdio>
 #include <limits>
-#include "SignalManager.hpp"
+// #include "Server.hpp"
 #include "ListenerManager.hpp"
-#include "EpollLoop.hpp"
+
+class Server;
 
 
-
-#define BUF_SIZE 500
-#define MY_SOCK_PATH "home/lzannis/Projets/Weberv/data/html/index.html"
-#define LISTEN_BACKLOG 50 //max connections accepted by socket
-#define MAX_EVENTS 10
-
-class SignalManager;
-class EpollLoop;
-
-
-class Server {
+class EpollLoop {
 
 private:
 
-    // Lexer   lexer;
-    // Parser parser;
-    
-    SignalManager   _signalManager;
-    ListenerManager _listenermanager;
-    EpollLoop       _epollloop;
-
-    
 protected:
+
 public:
-    
-    static volatile sig_atomic_t    _quit;
 
-                Server();
-                Server( Server const & src );
-                ~Server();
-    Server &    operator=( Server const & other );
+                EpollLoop();
+                EpollLoop( EpollLoop const & src );
+                ~EpollLoop();
+    EpollLoop & operator=( EpollLoop const & other );
 
-    void        start();
-    void        run();
+    int         setnonblocking( int fd );
+    bool        do_use_fd( int fd );
+    bool        readingSocket( ListenerManager const & listen );
+
 
 };

@@ -6,11 +6,14 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/21 14:35:15 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/02 17:20:56 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/04 15:34:29 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
+#include "SignalManager.hpp"
+#include "ListenerManager.hpp"
+#include "EpollLoop.hpp"
 
 /*
 ** ============================================================================
@@ -18,417 +21,52 @@
 ** ============================================================================
 */
 
-Server::Server() : _sockfd(0){
-    
-    initHints();
-    if (initRes() == false)
-        throw std::logic_error("Error initRes");
-    if (loopBindingSocket() == false)
-        throw std::logic_error("Error loopBindingSocket");
-    if (listeningSocket() == false)
-        throw std::logic_error("Error listeningSocket");
-    if (readingSocket() == false)
-        throw std::logic_error("Error readingSocket");
-    // kill(-1, 0);
+Server::Server(){
 
 }
 
-Server::Server( Server const & src ) : _sockfd(src._sockfd){
+Server::Server( Server const & src ){
     
+    *this = src;
 }
 
 Server::~Server(){
 
     std::cout << "Destructor Server" << std::endl;
-    if (_res)
-        freeaddrinfo(_res);
-    if (_sockfd)
-        close(_sockfd);
     
 }
     
 Server & Server::operator=( Server const & other ){
 
     if (this != &other)
-        this->_sockfd = other._sockfd;
+        *this = other;
+
     return *this;
+
 }
 
-/*
-** ============================================================================
-** Exec
-** ============================================================================
-*/
-
-// Configure _hints : check if we need to take protocol from config file
-struct addrinfo &    Server::initHints(){
+void    Server::start(){
     
-    memset(&_hints, 0, sizeof _hints);
-    _hints.ai_family = AF_UNSPEC;  // IPv4 or IPv6
-    _hints.ai_socktype = SOCK_STREAM;  // TCP
-    // _hints.ai_socktype = SOCK_DGRAM; // Datagram socket
-   _hints.ai_flags = AI_PASSIVE; // For wildcard IP address
-   _hints.ai_protocol = 0; //Any protocol
-   _hints.ai_canonname = NULL;
-   _hints.ai_addr = NULL;//struct 
-   _hints.ai_next = NULL;//
-   return _hints;
-}
+    _listenermanager.initHints();
+    if (_listenermanager.initRes() == false)
+        throw std::logic_error("Error initRes");
+    if (_listenermanager.loopBindingSocket() == false)
+        throw std::logic_error("Error loopBindingSocket");
+    if (_listenermanager.listeningSocket() == false)
+        throw std::logic_error("Error listeningSocket");
 
-// getaddrinfo initialise struct _res out of struct _hints
-bool    Server::initRes(){
+}
     
-    // Resolve "localhost" on port 8080 : first 2 args will come from config file 
-    int status = getaddrinfo("localhost", "8080", &_hints, &_res);
-    if (status != 0) {
-        std::cout << "getaddrinfo: " << gai_strerror(status) << "ports" << std::endl;
-        return false;
-    }
-    return true;
-}
+void    Server::run(){
+         
+    _signalManager.setupSignals();
 
-//show IPv4/IPv6 in a human-readable numeric form
-void    Server::findAddress(){
-
-    char            ipstr[INET6_ADDRSTRLEN];
-
-     // Iterate through the linked list of results
-    std::cout << "IP addresses for localhost:\n" << std::endl;
-    for (_p = _res; _p != NULL; _p = _p->ai_next) {
-        void *addr;
-        std::string ipver;
-
-        // Get the pointer to the address based on family
-        if (_p->ai_family == AF_INET) {  // IPv4
-            struct sockaddr_in *ipv4 = (struct sockaddr_in *)_p->ai_addr;
-            addr = &(ipv4->sin_addr);
-            ipver = "IPv4";
-        } else {  // IPv6
-            struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *)_p->ai_addr;
-            addr = &(ipv6->sin6_addr);
-            ipver = "IPv6";
-        }
-    
-        // Convert binary IP to human-readable string
-        inet_ntop(_p->ai_family, addr, ipstr, sizeof ipstr);
-        std::cout << ipver <<": " << ipstr << std::endl;
-    }
-}
-
-// Create socket & bind it. If failed close socket 
-bool    Server::loopBindingSocket(){
-
-     /* getaddrinfo() returns a list of address structures.
-       Try each address until we successfully bind(2).
-       If socket(2) (or bind(2)) fails, we (close the socket
-       and) try the next address. */
-
-    for (_p = _res; _p != NULL; _p = _p->ai_next) {
+    if (_epollloop.readingSocket( _listenermanager ) == false){
         
-        _sockfd = socket(_p->ai_family, _p->ai_socktype, _p->ai_protocol);
-        if (_sockfd == -1){
-            std::cout << "Error socket" << std::endl;
-            return false;
-        }
-        if (bind(_sockfd, _p->ai_addr, _p->ai_addrlen) == 0){
-            std::cout << "Bind" << std::endl;
-            return true;
-        }
-        close(_sockfd);
+        throw std::logic_error("Error readingSocket");
     }
     
-    return false;
 }
 
-// check if _p still exist & listen : put socket in passiv mode, ready for connection 
-bool    Server::listeningSocket(){
-    
-    // if (_res)
-    //     freeaddrinfo(_res); //no longer needed
-
-    if (_p == NULL){ //no address succeeded
-        std::cout << "Could not bind" << std::endl;
-        return false;
-    }
-
-    if (listen(_sockfd,LISTEN_BACKLOG) == -1){ //no address succeeded
-        std::cout << "Could not listen" << std::endl;
-        return false;
-    }
-    
-    std::cout << "Listen" << std::endl;
-    std::cout << "Serveur en écoute sur http://localhost:8080" << std::endl;
-    
-    return true;
-}
-
-// Source - https://stackoverflow.com/a/73879155
-// Posted by selbie
-// Retrieved 2026-05-28, License - CC BY-SA 4.0
-//set flags for fcntl():
-int Server::setnonblocking( int fd ){
-    
-    int result;
-    int flags;
-
-    flags = fcntl(fd, F_GETFL, 0);
-    if (flags == -1)
-        return -1;
-
-    flags |= O_NONBLOCK;
-
-    result = fcntl(fd , F_SETFL , flags);
-    return result;
-}
-
-// open dialogue with client:
-// read request
-// parse request
-// answer : send response
-// CGI >> fork 
-// might become more than one big function ?
-bool    Server::do_use_fd(  int fd ){
-    
-    char    buf[BUF_SIZE];
-
-    // read request :
-    ssize_t n_read = read(fd, buf, BUF_SIZE); // read HTTP requests
-    
-    std::cout << "n_read:" << n_read << std::endl;
-    if (n_read == -1){
-        if (errno == EAGAIN || errno == EWOULDBLOCK) // FOR PORTABILITY
-            return true;
-        else{
-            
-            std::cerr << " Do_use_fd : Error reading from fd "<< fd << strerror(errno) << std::endl;
-            close(fd);
-            return false;
-        }
-    }
-    else if (n_read == 0){
-        
-        std::cout << "Client closed connection : "<< fd << std::endl;
-        close(fd);
-        return false;
-    }
-    
-    std::string request = std::string(buf, n_read);
-    std::cout << "Request on fd " << fd << ": " << request << std::endl;
-    
-    // int s = getsockname(fd, (struct sockaddr *) &peer_addr, &peer_addr_len);
-    // if (fd == 0)
-    // std::cout << "Received " << static_cast<long>(n_read) << "bytes from " << peer_addr.ss_family << ":" << std::endl;
-    // else
-    // std::cout << "getnameinfo: " << gai_strerror(s) << std::endl;
-    
-    // Parse request
-    if (request.find("GET / HTTP/1.1") != std::string::npos){ // same as EOF
-        
-        char    buffer[BUF_SIZE];
-        
-        int indexfd = open("data/html/index.html", O_RDONLY);
-        ssize_t n_read_index = read(indexfd, buffer, BUF_SIZE);
-        close(indexfd);
-        std::cout << "n_read_index:" << n_read_index << std::endl;
-        if (n_read_index == -1){
-            std::cerr << "Reading of html file failed: " << strerror(errno) << std::endl;
-            close(fd);
-            return false;
-        }
-    // should fork() here : ONLY FORK() FOR CGI
-        
-    // send response  
-        // std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<html><body>Hello from C++!</body></html>";
-        std::string response = std::string(buffer, n_read_index);
-        
-        if (send(fd, response.c_str(), response.size(), 0) < 0){
-            
-            std::cerr << "Error sending response: " << strerror(errno) << std::endl;
-            close(fd);
-            return false;
-        }
-    }
-
-    return true;
-}
-
-// main loop event : 
-// accept : create dynamically a new connected socket for each new client, return a new int fd
-// 
-// getsockname : returns current socket address
-bool    Server::readingSocket(){
-    
-    setupSignals();
-
-    std::cout << "_quit:" << _quit << std::endl;
-
-    struct epoll_event ev, events[MAX_EVENTS];
-
-    int epollfd = epoll_create(sizeof ev); //instantiate epoll 
-    if (epollfd == -1){
-        std::cerr << "epollfd:" << epollfd << " " << strerror(errno) << std::endl;
-        return false;
-    }
-
-    ev.events = EPOLLIN;
-    ev.data.fd = _sockfd;
-    if (epoll_ctl(epollfd, EPOLL_CTL_ADD, _sockfd, &ev) == -1){
-        std::cerr << "Call to epoll_ctl(1) failed: "<< strerror(errno) << std::endl;
-        close(epollfd);
-        return false;
-    }
- 
-// epoll loop :
-    while(_quit != 1){
-        
-        int nfds = epoll_wait(epollfd, events, MAX_EVENTS, 100);
-        
-        // std::cout << "nfds:" << nfds << std::endl;
-        if (nfds == -1){
-            if (errno == EINTR)
-                continue;
-            std::cerr << "Error epoll_wait " << nfds << ": "<< strerror(errno) << std::endl;
-            close(epollfd);
-            break;
-        } 
-        for ( int n = 0; n < nfds; ++n){
-            
-            struct sockaddr_storage peer_addr;
-            socklen_t               peer_addr_len = sizeof(peer_addr);
-            
-            if (events[n].data.fd == _sockfd){
-                
-                int clientfd = accept(_sockfd, (struct sockaddr *) &peer_addr, &peer_addr_len );
-                std::cout << "clientfd:" << clientfd << std::endl;
-                if (clientfd == -1){
-                    std::cerr << strerror(errno) << std::endl;
-                    break;
-                }
-                if (setnonblocking(clientfd) < 0){
-                    std::cerr << strerror(errno) << std::endl;
-                    close(clientfd);
-                    break;
-                }
-                ev.events = EPOLLIN | EPOLLET; // EPOLLET>>EAGAIN
-                ev.data.fd = clientfd;
-                if (epoll_ctl(epollfd,EPOLL_CTL_ADD,clientfd, &ev) == -1){
-                    std::cerr << "Call to epoll_ctl(2) failed: "<< strerror(errno) << std::endl;
-                    close(clientfd);
-                    break;
-                }
-            }
-            else{
-                
-                if(do_use_fd(events[n].data.fd) == false)
-                    break;
-            }
-                    
-        }
-
-    }
-//basic server loop:
-    // while(_quit != 1){
-        
-    //     struct sockaddr_storage peer_addr;
-    //     char                    buf[BUF_SIZE];
-
-        
-    //     socklen_t peer_addr_len = sizeof(peer_addr);
-
-    //     int clientfd = accept(_sockfd, (struct sockaddr *) &peer_addr, &peer_addr_len );
-    //     std::cout << "clientfd:" << clientfd << std::endl;
-
-    //     // should fork() here : ONLY FORK() FOR CGI
-    //     ssize_t n_read = read(clientfd, buf, BUF_SIZE); // read HTTP requests
-
-    //     std::cout << "n_read:" << n_read << std::endl;
-    //     if (n_read == -1){
-    //         std::cerr << strerror(errno) << std::endl;
-    //         close(clientfd);
-    //         continue;
-    //     }
-    //     std::string request = std::string(buf, n_read);
-    //     std::cout << "Request: " << request << std::endl;
-        
-    //     int s = getsockname(clientfd, (struct sockaddr *) &peer_addr, &peer_addr_len);
-    //     if (clientfd == 0)
-    //         std::cout << "Received " << static_cast<long>(n_read) << "bytes from " << peer_addr.ss_family << ":" << std::endl;
-    //     else
-    //         std::cout << "getnameinfo: " << gai_strerror(s) << std::endl;
-            
-    //     // Parse request
-    //     if (request.find("GET / HTTP/1.1") != std::string::npos){ // same as EOF
-            
-    //         char    buffer[BUF_SIZE];
-
-    //         // std::ifstream file("data/html/index.html".c_str());
-    //         int indexfd = open("data/html/index.html", O_RDONLY);
-    //         ssize_t n_read_index = read(indexfd, buffer, BUF_SIZE);
-    //         std::cout << "n_read_index:" << n_read_index << std::endl;
-    //         if (n_read_index == -1){
-    //             std::cerr << strerror(errno) << std::endl;
-    //             close(indexfd);
-    //             continue;
-    //         }
-
-    //         // std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<html><body>Hello from C++!</body></html>";
-    //         std::string response = std::string(buffer, n_read_index);
-
-    //         if (send(clientfd, response.c_str(), response.size(), 0))
-    //             std::cout << "Error sending response" << std::endl;
-    //     } 
-
-    //     close(clientfd);
-
-    // }
-
-    close(epollfd);
-    return true;
-
-}
-
-/*
-** ============================================================================
-** Signals
-** ============================================================================
-*/
-
-
-static void  sigintHandler(int _sig){
-
-    write(STDERR_FILENO, "Signal received\n", 16);
-    if (_sig == SIGTERM || _sig == SIGINT){
-        Server::_quit = 1;
-    }
-    fprintf(stderr, "sigintHANdler _quit: %d \n", Server::_quit);
-    // exit(_sig);
-}
-
-void    Server::setupSignals(){
-    
-    signal(SIGINT, sigintHandler);
-    signal(SIGTERM, sigintHandler);
-    signal(SIGHUP, sigintHandler);
-    signal(SIGQUIT, SIG_IGN);
-}
-
-static void sigHandlerFork(int _sig){
-
-    write(STDERR_FILENO, "Signal received\n", 16);
-    
-    if (_sig == SIGTERM || _sig == SIGINT){
-
-        Server::_quit = 0;
-    }
-    
-    // exit(_sig);
-}
-
-void    Server::setupSignalsFork(){
-    
-    signal(SIGINT, sigHandlerFork);
-    signal(SIGQUIT, SIG_DFL);
-}
 
 volatile sig_atomic_t Server::_quit = 0;
-int Server::_sig = 0;

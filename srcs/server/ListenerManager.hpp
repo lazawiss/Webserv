@@ -1,16 +1,18 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Server.hpp                                         :+:      :+:    :+:   */
+/*   ListenerManager.hpp                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/05/21 14:12:24 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/04 15:44:12 by lzannis          ###   ########.fr       */
+/*   Created: 2026/06/04 13:27:13 by lzannis           #+#    #+#             */
+/*   Updated: 2026/06/04 15:00:08 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+
 #pragma once
+
 
 #include <iostream>
 #include <string>
@@ -25,51 +27,40 @@
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/epoll.h>
 #include <csignal>
 #include <cerrno>
 #include <cstdlib>
 #include <ctime>
 #include <cstdio>
 #include <limits>
-#include "SignalManager.hpp"
-#include "ListenerManager.hpp"
-#include "EpollLoop.hpp"
 
 
-
-#define BUF_SIZE 500
-#define MY_SOCK_PATH "home/lzannis/Projets/Weberv/data/html/index.html"
-#define LISTEN_BACKLOG 50 //max connections accepted by socket
-#define MAX_EVENTS 10
-
-class SignalManager;
-class EpollLoop;
-
-
-class Server {
+class ListenerManager {
 
 private:
 
-    // Lexer   lexer;
-    // Parser parser;
-    
-    SignalManager   _signalManager;
-    ListenerManager _listenermanager;
-    EpollLoop       _epollloop;
-
-    
 protected:
+
+    struct addrinfo _hints, *_res, *_p;
+    int             _sockfd;
+
 public:
+
+                        ListenerManager();
+                        ListenerManager( ListenerManager const & src );
+                        ~ListenerManager();
+    ListenerManager &   operator=( ListenerManager const & other );
+
+    int                 getSockfd() const;
     
-    static volatile sig_atomic_t    _quit;
+    struct addrinfo &   initHints();
+    bool                initRes();
+                
+    void                findAddress();
+            
+    bool                loopBindingSocket();
+    bool                listeningSocket();
 
-                Server();
-                Server( Server const & src );
-                ~Server();
-    Server &    operator=( Server const & other );
-
-    void        start();
-    void        run();
 
 };
+

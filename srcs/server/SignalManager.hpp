@@ -1,16 +1,17 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Server.hpp                                         :+:      :+:    :+:   */
+/*   SignalManager.hpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/05/21 14:12:24 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/04 15:44:12 by lzannis          ###   ########.fr       */
+/*   Created: 2026/06/04 13:27:30 by lzannis           #+#    #+#             */
+/*   Updated: 2026/06/04 15:43:24 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#pragma once
+
+# pragma once
 
 #include <iostream>
 #include <string>
@@ -24,52 +25,33 @@
 #include <cstring>
 #include <arpa/inet.h>
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/epoll.h>
 #include <csignal>
 #include <cerrno>
 #include <cstdlib>
 #include <ctime>
 #include <cstdio>
 #include <limits>
-#include "SignalManager.hpp"
-#include "ListenerManager.hpp"
-#include "EpollLoop.hpp"
+// #include "Server.hpp"
 
+class Server;
 
-
-#define BUF_SIZE 500
-#define MY_SOCK_PATH "home/lzannis/Projets/Weberv/data/html/index.html"
-#define LISTEN_BACKLOG 50 //max connections accepted by socket
-#define MAX_EVENTS 10
-
-class SignalManager;
-class EpollLoop;
-
-
-class Server {
+class SignalManager {
 
 private:
 
-    // Lexer   lexer;
-    // Parser parser;
-    
-    SignalManager   _signalManager;
-    ListenerManager _listenermanager;
-    EpollLoop       _epollloop;
-
+    static int      _sig;
     
 protected:
+
 public:
-    
-    static volatile sig_atomic_t    _quit;
 
-                Server();
-                Server( Server const & src );
-                ~Server();
-    Server &    operator=( Server const & other );
+                    SignalManager();
+                    SignalManager( SignalManager const & src );
+                    ~SignalManager();
+    SignalManager & operator=( SignalManager const & other );
 
-    void        start();
-    void        run();
+        
+    void            setupSignals();
+    void            setupSignalsFork();
 
 };

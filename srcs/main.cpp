@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/05 17:44:47 by lzannis           #+#    #+#             */
-/*   Updated: 2026/05/27 18:59:40 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/04 15:19:17 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,13 +57,16 @@ int main(int argc, char **argv)
 
     Server      server;
     
-    // std::string buf;
-    // std::string str1("stop"); //fast shutdown
-    // std::string str2("quit"); // graceful shutdown
-    // std::string str3("reload"); // reloading config file
-    // std::string str4("reopen"); // reopen log files
+    try{
         
-    // server.findAddress();
-
+        server.start();
+        
+        server.run();
+    }
+    catch(std::logic_error & e){
+        
+        std::cerr << e.what() << std::endl;
+    }
+  
     return 0;
 }

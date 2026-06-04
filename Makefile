@@ -4,7 +4,11 @@ SRC = \
 	srcs/main.cpp \
 	srcs/parser/Parser.cpp \
 	srcs/lexer/Lexer.cpp \
-	srcs/server/Server.cpp
+	srcs/server/Server.cpp \
+	srcs/server/SignalManager.cpp \
+	srcs/server/ListenerManager.cpp \
+	srcs/server/EpollLoop.cpp
+
 
 
 OBJ = $(SRC:.cpp=.o)
