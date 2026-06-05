@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/05 15:22:33 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/05 15:40:15 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,7 +73,6 @@ int EpollLoop::setnonblocking( int fd ){
 // parse request
 // answer : send response
 // CGI >> fork 
-// might become more than one big function ?
 bool    EpollLoop::do_use_fd(  int fd ){
     
     char    buf[BUF_SIZE];
@@ -144,11 +143,6 @@ bool    EpollLoop::do_use_fd(  int fd ){
         // std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<html><body>Hello from C++!</body></html>";
     std::string response = std::string(HTTPparser.getBuffer().c_str(), HTTPparser.getNReadIndex());
 
-    std::cout << HTTPparser.getBuffer() << std::endl;
-    std::cout << HTTPparser.getNReadIndex() << std::endl;
-
-        
-    std::cout << "Response:" << response << std::endl;
     ResponseWriter  responseWriter( response, fd);
 
     if (responseWriter.sendResponse() == false){
@@ -156,7 +150,8 @@ bool    EpollLoop::do_use_fd(  int fd ){
         close(fd);
         return false;
     }
-
+    
+    close(fd);
     return true;
 }
 

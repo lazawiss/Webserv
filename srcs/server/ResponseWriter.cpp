@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:46:22 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/05 15:11:47 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/05 15:41:04 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,8 +52,6 @@ ResponseWriter &    ResponseWriter::operator=( ResponseWriter const & other ){
 
 bool ResponseWriter::sendResponse(){
     
-    std::cout << "_Response:" << _response << std::endl;
-
     if (send(_fd, _response.c_str(), _response.size(), 0) < 0)
         return false;
             
