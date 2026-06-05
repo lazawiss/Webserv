@@ -1,16 +1,16 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ListenerManager.hpp                                :+:      :+:    :+:   */
+/*   HTTPParser.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/06/04 13:27:13 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/04 17:10:49 by lzannis          ###   ########.fr       */
+/*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
+/*   Updated: 2026/06/05 15:19:38 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#pragma once
+# pragma once
 
 #include <iostream>
 #include <string>
@@ -25,6 +25,7 @@
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/epoll.h>
 #include <csignal>
 #include <cerrno>
 #include <cstdlib>
@@ -32,40 +33,33 @@
 #include <cstdio>
 #include <limits>
 
+#define BUF_SIZE 500
 
-class ListenerManager {
+
+class HTTPParser {
 
 private:
 
-protected:
+    std::string _request;
+    char        _buffer[BUF_SIZE];
+    ssize_t     _n_read_index;
 
-    struct addrinfo _hints, *_res, *_p;
-    int             _sockfd;
-    std::string     _node;
-    std::string     _service;
-    
-    
+protected:
 
 public:
 
-                        ListenerManager();
-                        ListenerManager( ListenerManager const & src );
-                        ~ListenerManager();
-    ListenerManager &   operator=( ListenerManager const & other );
+                    HTTPParser( std::string request);
+                    HTTPParser( HTTPParser const & src );    
+                    ~HTTPParser();    
+    HTTPParser &    operator=( HTTPParser const & other );
 
-    int                 getSockfd() const;
-    std::string         getNode() const;
-    std::string         getService() const;
+    std::string     getBuffer() const;
+    int             getNReadIndex() const;
 
-    
-    struct addrinfo &   initHints();
-    bool                initRes();
-                
-    void                findAddress();
-            
-    bool                loopBindingSocket();
-    bool                listeningSocket();
 
+    bool            findMethods();
+    bool            findPath();
+    bool            findHeaders();
+    bool            findCGI();
 
 };
-

@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 14:31:24 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/04 15:00:58 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/04 17:19:16 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,15 +15,17 @@
 
 /*
 ** ============================================================================
-** Constructors & Destructor
+** Constructors & Destructor & Getters
 ** ============================================================================
 */
 
-ListenerManager::  ListenerManager() : _sockfd(0){
+ListenerManager::  ListenerManager() : _sockfd(0), _node("localhost"), _service("8080"){
     
+    std::cout << "Constructor ListenerManager" << std::endl;
+
 }
 
-ListenerManager::ListenerManager( ListenerManager const & src ) : _sockfd(src._sockfd){
+ListenerManager::ListenerManager( ListenerManager const & src ) : _sockfd(src._sockfd), _node(src._node), _service(src._service){
     
 }
 
@@ -38,8 +40,13 @@ ListenerManager::~ListenerManager(){
 
 ListenerManager &   ListenerManager::operator=( ListenerManager const & other ){
     
-    if (this != &other)
+    if (this != &other){
+        
         this->_sockfd = other._sockfd;
+        this->_node = other._node;
+        this->_service = other._service;
+
+    }
     return *this;
 }
 
@@ -49,6 +56,15 @@ int ListenerManager::getSockfd() const{
     return _sockfd;
 }
 
+std::string ListenerManager::getNode() const{
+    
+    return _node;
+}
+
+std::string ListenerManager:: getService() const{
+    
+    return _service;
+}
 
 /*
 ** ============================================================================
@@ -75,7 +91,7 @@ struct addrinfo &    ListenerManager::initHints(){
 bool    ListenerManager::initRes(){
     
     // Resolve "localhost" on port 8080 : first 2 args will come from config file 
-    int status = getaddrinfo("localhost", "8080", &_hints, &_res);
+    int status = getaddrinfo(_node.c_str(), _service.c_str(), &_hints, &_res);
     if (status != 0) {
         std::cout << "getaddrinfo: " << gai_strerror(status) << "ports" << std::endl;
         return false;

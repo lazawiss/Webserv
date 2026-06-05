@@ -6,10 +6,9 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:27:21 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/04 15:44:28 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/04 18:25:19 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-
 
 # pragma once
 
@@ -33,8 +32,10 @@
 #include <ctime>
 #include <cstdio>
 #include <limits>
-// #include "Server.hpp"
 #include "ListenerManager.hpp"
+#include "HTTPParser.hpp"
+#include "ResponseWriter.hpp"
+
 
 class Server;
 
@@ -43,6 +44,7 @@ class EpollLoop {
 
 private:
 
+    
 protected:
 
 public:

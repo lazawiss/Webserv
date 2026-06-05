@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/21 14:35:15 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/04 15:34:29 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/04 17:18:23 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,8 @@
 */
 
 Server::Server(){
+
+    std::cout << "Constructor Server" << std::endl;
 
 }
 

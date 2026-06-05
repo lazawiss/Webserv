@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/04 15:45:50 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/05 15:22:33 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 #include "EpollLoop.hpp"
 #include "Server.hpp"
 #include "ListenerManager.hpp"
+#include "ResponseWriter.hpp"
 
 
 
@@ -108,31 +109,52 @@ bool    EpollLoop::do_use_fd(  int fd ){
     // std::cout << "getnameinfo: " << gai_strerror(s) << std::endl;
     
     // Parse request
-    if (request.find("GET / HTTP/1.1") != std::string::npos){ // same as EOF
+    HTTPParser HTTPparser(request);
+    
+    if (HTTPparser.findMethods() == false){
+         std::cerr << "Reading of html file failed: " << strerror(errno) << std::endl;
+        close(fd);
+        return false;
+    }
+    // if (request.find("GET / HTTP/1.1") != std::string::npos){ // same as EOF
         
-        char    buffer[BUF_SIZE];
+    //     char        buffer[BUF_SIZE];
+
+    //     int indexfd = open("data/html/index.html", O_RDONLY);
+    //     ssize_t n_read_index = read(indexfd, buffer, BUF_SIZE);
+    //     close(indexfd);
+    //     std::cout << "n_read_index:" << n_read_index << std::endl;
+    //     if (n_read_index == -1){
+    //         std::cerr << "Reading of html file failed: " << strerror(errno) << std::endl;
+    //         close(fd);
+    //         return false;
+    //     }
+    //     std::string response = std::string(buffer,n_read_index);
+    //     if (send(fd, response.c_str(), response.size(), 0) < 0){
+            
+    //         std::cerr << "Error sending response: " << strerror(errno) << std::endl;
+    //         // close(_fd);
+    //         return false;
+    //     }
         
-        int indexfd = open("data/html/index.html", O_RDONLY);
-        ssize_t n_read_index = read(indexfd, buffer, BUF_SIZE);
-        close(indexfd);
-        std::cout << "n_read_index:" << n_read_index << std::endl;
-        if (n_read_index == -1){
-            std::cerr << "Reading of html file failed: " << strerror(errno) << std::endl;
-            close(fd);
-            return false;
-        }
+    // }
     // should fork() here : ONLY FORK() FOR CGI
         
     // send response  
         // std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<html><body>Hello from C++!</body></html>";
-        std::string response = std::string(buffer, n_read_index);
+    std::string response = std::string(HTTPparser.getBuffer().c_str(), HTTPparser.getNReadIndex());
+
+    std::cout << HTTPparser.getBuffer() << std::endl;
+    std::cout << HTTPparser.getNReadIndex() << std::endl;
+
         
-        if (send(fd, response.c_str(), response.size(), 0) < 0){
-            
-            std::cerr << "Error sending response: " << strerror(errno) << std::endl;
-            close(fd);
-            return false;
-        }
+    std::cout << "Response:" << response << std::endl;
+    ResponseWriter  responseWriter( response, fd);
+
+    if (responseWriter.sendResponse() == false){
+        std::cerr << "Error sending response: " << strerror(errno) << std::endl;
+        close(fd);
+        return false;
     }
 
     return true;
