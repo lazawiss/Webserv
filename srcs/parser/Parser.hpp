@@ -2,6 +2,7 @@
 # define PARSER_HPP
 
 # include "../errors/Errors.hpp"
+# include "../lexer/Lexer.hpp"
 
 # include <fstream>
 # include <iostream>
