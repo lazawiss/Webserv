@@ -6,16 +6,17 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/05 20:22:34 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/07 16:52:49 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # pragma once
 
-#include <iostream>
-#include <istream>
-#include <ios>
+#include "../lexer/Lexer.hpp"
 
+#include <iostream>
+#include <fstream>
+#include <sstream>
 #include <string>
 #include <map>
 #include <vector>
@@ -36,6 +37,7 @@
 #include <cstdio>
 #include <limits>
 
+
 #define BUF_SIZE 8000
 
 
@@ -43,25 +45,27 @@ class HTTPParser {
 
 private:
 
-    std::string _request;
+    std::vector<Token> _allTokens;
     std::string _root;
     std::string _index;
     std::string _error;
     char        _buffer[BUF_SIZE];
     ssize_t     _n_read_index;
+    
 
 protected:
 
 public:
 
-                    HTTPParser( std::string request);
+                    HTTPParser( std::vector<Token> allTokens );
                     HTTPParser( HTTPParser const & src );    
                     ~HTTPParser();    
     HTTPParser &    operator=( HTTPParser const & other );
 
     std::string     getBuffer() const;
     int             getNReadIndex() const;
-
+    
+    // bool            isTokenWord( Token const & t );
 
     bool            findMethods();
     bool            findPath();

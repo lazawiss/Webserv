@@ -6,11 +6,15 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/21 14:12:24 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/05 17:47:08 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/07 14:04:14 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
+
+#include "SignalManager.hpp"
+#include "ListenerManager.hpp"
+#include "EpollLoop.hpp"
 
 #include <iostream>
 #include <string>
@@ -32,9 +36,6 @@
 #include <ctime>
 #include <cstdio>
 #include <limits>
-#include "SignalManager.hpp"
-#include "ListenerManager.hpp"
-#include "EpollLoop.hpp"
 
 
 

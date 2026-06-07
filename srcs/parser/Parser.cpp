@@ -34,6 +34,40 @@ void print_token_chain(std::vector <Token> tokens)
 ** line by line into a single token chain.
 ** Returns SUCCESS if the file was parsed correctly, ERROR otherwise.
 */
+std::vector<Token>   HTTPparse_file(const std::string &str)
+{
+
+    // if (file.peek() == std::ifstream::traits_type::eof())
+    // {
+    //     std::cerr << "Error: file '" << str << "' is empty" << std::endl;
+    //     throw std::logic_error("File is empty");
+    // }
+
+
+    std::istringstream iss(str);
+    std::string line;
+    std::vector<Token> allTokens;
+
+    while (std::getline(iss, line))
+    {
+        std::cout << line << "\n";
+        Lexer lexer(line);
+        std::vector<Token> lineTokens = lexer.tokenize();
+
+        for (size_t i = 0; i < lineTokens.size(); i++)
+        {
+            if (lineTokens[i].type != End)
+                allTokens.push_back(lineTokens[i]);
+        }
+    }
+
+    allTokens.push_back(Token(End, ""));
+    print_token_chain(allTokens);
+    
+
+    return allTokens;
+}
+
 int parse_file(const std::string &str)
 {
     std::ifstream file(str.c_str());
@@ -68,6 +102,7 @@ int parse_file(const std::string &str)
 
     allTokens.push_back(Token(End, ""));
     print_token_chain(allTokens);
+
 
     return SUCCESS;
 }

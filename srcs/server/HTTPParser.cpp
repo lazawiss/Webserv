@@ -6,11 +6,12 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/07 11:33:38 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/07 16:34:31 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "HTTPParser.hpp"
+#include "../lexer/Lexer.hpp"
 
 /*
 ** ============================================================================
@@ -18,11 +19,11 @@
 ** ============================================================================
 */
 
-HTTPParser:: HTTPParser( std::string request) : _request(request), _root("data/html"), _index("index.html"), _error("404.html"), _buffer(""), _n_read_index(0){
+HTTPParser:: HTTPParser( std::vector<Token> allTokens ) : _allTokens(allTokens), _root("data/html"), _index("index.html"), _error("404.html"), _buffer(""), _n_read_index(0){
     
 }
 
-HTTPParser::HTTPParser( HTTPParser const & src ) : _request(src._request), _root(src._root), _index(src._index), _error(src._error), _n_read_index(src._n_read_index){
+HTTPParser::HTTPParser( HTTPParser const & src ) : _allTokens(src._allTokens), _root(src._root), _index(src._index), _error(src._error), _n_read_index(src._n_read_index){
     
      _buffer[BUF_SIZE] = src._buffer[BUF_SIZE];
 }
@@ -35,7 +36,7 @@ HTTPParser &    HTTPParser::operator=( HTTPParser const & other ){
 
     if (this != &other ){
 
-        this->_request = other._request;
+        this->_allTokens = other._allTokens;
         this->_root = other._root;
         this->_index = other._index;
         this->_error = other._error;
@@ -46,6 +47,7 @@ HTTPParser &    HTTPParser::operator=( HTTPParser const & other ){
     
     return *this;
 }
+
 
 std::string HTTPParser::getBuffer() const{
 
@@ -63,30 +65,37 @@ int HTTPParser::getNReadIndex() const{
 ** ============================================================================
 */
 
+static bool isTokenWord( Token const & t ){
+    
+    return t.type == Word;
+}
+
 bool    HTTPParser::findMethods(){
     
-    if (_request.size() > BUF_SIZE){
+    std::vector<Token>::iterator found;
+    
+    // found = find(_allTokens.begin(), _allTokens.end(),"WORD");
+    if (_allTokens.size() > BUF_SIZE){
         
         std::string file = getFile414(); 
         if (answerFile(file) == false)
             return false;
-        
     }
-    std::string line;
     
-    if (_request.find("GET / HTTP/1.1") != std::string::npos){ // same as EOF
+    found = find_if(_allTokens.begin(), _allTokens.end(), isTokenWord);
+    if (found != _allTokens.end()){ // same as EOF
         
         std::string file = getFile200(); 
         if (answerFile(file) == false)
             return false;
     }
     
-    if (_request.find("GET / HTTP/1.1") != std::string::npos){ // same as EOF
+    // if (_request.find("GET / HTTP/1.1") != std::string::npos){ // same as EOF
         
-        std::string file = getFile200(); 
-        if (answerFile(file) == false)
-            return false;
-    }
+    //     std::string file = getFile200(); 
+    //     if (answerFile(file) == false)
+    //         return false;
+    // }
     
     // if (_request.find("GET /images/trees.jpg HTTP/1.1") != std::string::npos){
         
