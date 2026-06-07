@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:40:00 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/04 18:57:59 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/05 17:47:16 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,20 +33,21 @@
 #include <cstdio>
 #include <limits>
 
-#define BUF_SIZE 500
+#define BUF_SIZE 8000
 
 class ResponseWriter {
 
 private:
 
-    std::string _response;
+    std::string _header;
+    std::string _content;
     int         _fd;
 
 protected:
 
 public:
 
-                        ResponseWriter( std::string response, int fd );
+                        ResponseWriter( std::string header, std::string content, int fd );
                         ResponseWriter( ResponseWriter const & src );
                         ~ResponseWriter();
     ResponseWriter &    operator=( ResponseWriter const & other );

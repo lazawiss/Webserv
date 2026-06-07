@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/05 15:23:17 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/07 11:33:38 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,11 +18,11 @@
 ** ============================================================================
 */
 
-HTTPParser:: HTTPParser( std::string request) : _request(request), _buffer(""), _n_read_index(0){
+HTTPParser:: HTTPParser( std::string request) : _request(request), _root("data/html"), _index("index.html"), _error("404.html"), _buffer(""), _n_read_index(0){
     
 }
 
-HTTPParser::HTTPParser( HTTPParser const & src ) : _request(src._request), _n_read_index(src._n_read_index){
+HTTPParser::HTTPParser( HTTPParser const & src ) : _request(src._request), _root(src._root), _index(src._index), _error(src._error), _n_read_index(src._n_read_index){
     
      _buffer[BUF_SIZE] = src._buffer[BUF_SIZE];
 }
@@ -36,6 +36,9 @@ HTTPParser &    HTTPParser::operator=( HTTPParser const & other ){
     if (this != &other ){
 
         this->_request = other._request;
+        this->_root = other._root;
+        this->_index = other._index;
+        this->_error = other._error;
         this->_buffer[BUF_SIZE] = other._buffer[BUF_SIZE];
         this->_n_read_index = other._n_read_index;
 
@@ -62,16 +65,36 @@ int HTTPParser::getNReadIndex() const{
 
 bool    HTTPParser::findMethods(){
     
+    if (_request.size() > BUF_SIZE){
+        
+        std::string file = getFile414(); 
+        if (answerFile(file) == false)
+            return false;
+        
+    }
+    std::string line;
+    
     if (_request.find("GET / HTTP/1.1") != std::string::npos){ // same as EOF
         
-       
-        int indexfd = open("data/html/index.html", O_RDONLY);
-        this->_n_read_index = read(indexfd, _buffer, BUF_SIZE);
-        close(indexfd);
-        std::cout << "n_read_index:" << _n_read_index << std::endl;
-        if (_n_read_index == -1)
+        std::string file = getFile200(); 
+        if (answerFile(file) == false)
             return false;
     }
+    
+    if (_request.find("GET / HTTP/1.1") != std::string::npos){ // same as EOF
+        
+        std::string file = getFile200(); 
+        if (answerFile(file) == false)
+            return false;
+    }
+    
+    // if (_request.find("GET /images/trees.jpg HTTP/1.1") != std::string::npos){
+        
+       
+
+
+      
+    // }
     
     return true;
         
@@ -89,6 +112,53 @@ bool    HTTPParser::findHeaders(){
 }
 
 bool    HTTPParser::findCGI(){
+    
+    return true;
+    
+}
+
+std::string    HTTPParser::getFile200(){
+     
+    std::string file = _root;
+    file += "/";
+    file += _index;
+ 
+    return file;
+
+}
+
+std::string   HTTPParser::getFile404(){
+
+    std::string file = _root;
+    file += "/";
+    file += _error;
+  
+    return file;
+    
+}
+
+std::string   HTTPParser::getFile414(){
+
+    std::string file = _root;
+    file += "/";
+    file += "414.html";
+  
+    return file;
+    
+}
+
+bool    HTTPParser::answerFile( std::string file ){
+
+    int indexfd = open(file.c_str(), O_RDONLY);
+    if (indexfd == -1){
+        std::cerr << "Error file failed to open on indexfd:" << indexfd << std::endl;
+        return false;
+    }
+    this->_n_read_index = read(indexfd, _buffer, BUF_SIZE);
+    close(indexfd);
+    std::cout << "n_read_index:" << _n_read_index << std::endl;
+    if (_n_read_index == -1)
+            return false;
     
     return true;
     

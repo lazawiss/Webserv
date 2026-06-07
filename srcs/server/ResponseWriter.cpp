@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:46:22 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/05 15:41:04 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/05 17:35:42 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,27 +18,25 @@
 ** ============================================================================
 */
 
-ResponseWriter:: ResponseWriter( std::string response, int fd ) : _response(response), _fd(fd){
+ResponseWriter:: ResponseWriter( std::string header, std::string content, int fd ) : _header(header),_content(content), _fd(fd){
     
 }
 
-ResponseWriter::ResponseWriter( ResponseWriter const & src ) : _response(src._response), _fd(src._fd){
+ResponseWriter::ResponseWriter( ResponseWriter const & src ) : _header(src._header), _content(src._content), _fd(src._fd){
     
 }
 
 ResponseWriter::~ResponseWriter(){
     
-    // if (_fd)
-    //     close(_fd);
 }
 
 ResponseWriter &    ResponseWriter::operator=( ResponseWriter const & other ){
     
     if (this != &other){
         
-        this->_response = other._response;
+        this->_header = other._header;
+        this->_content = other._content;
         this->_fd = other._fd;
-        
     }
 
     return *this;
@@ -52,7 +50,9 @@ ResponseWriter &    ResponseWriter::operator=( ResponseWriter const & other ){
 
 bool ResponseWriter::sendResponse(){
     
-    if (send(_fd, _response.c_str(), _response.size(), 0) < 0)
+    if (send(_fd, _header.c_str(), _header.size(), 0) < 0)
+        return false;
+    if (send(_fd, _content.c_str(), _content.size(), 0) < 0)
         return false;
             
     return true;
