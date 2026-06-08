@@ -13,6 +13,7 @@
 ** ServerConfig - Class
 ** ============================================================================
 */
+
 class ServerConfig : public AConfig
 {
 private:
@@ -25,11 +26,14 @@ public:
     ~ServerConfig();
 
     // ── Getters ───────────────────────────────────────────
-    const std::vector<std::string>&     geListen()          const;
+    const std::vector<std::string>&     getListen()          const;
     const std::vector<std::string>&     getServerNames()    const;
     const std::vector<LocationConfig>&  getLocations()      const;
 
     // ── Setters ───────────────────────────────────────────
+    void addListen(const std::string& listen);
+    void addServerName(const std::string& name);
+    void addLocation(const LocationConfig& location);
 };
 
 #endif

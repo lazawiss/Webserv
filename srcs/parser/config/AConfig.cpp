@@ -6,8 +6,8 @@
 ** ============================================================================
 */
 
-// Note Delphine : un vector et une map se contruisent vides automatiquement en 
-// CPP98, pas besoin de les initialiser explicitement !!
+// Note Delphine : une string, un vector et une map se contruisent vides
+// automatiquement en CPP98, pas besoin de les initialiser explicitement !!
 AConfig::AConfig() : _root(""), _autoindex(false), _client_max_body_size(0) {}
 
 AConfig::~AConfig() {}
@@ -61,6 +61,7 @@ void AConfig::setClientMaxBodySize(size_t size)
 {
     _client_max_body_size = size;
 }
+
 void AConfig::addErrorPage(int code, const std::string& uri)
 {
     _error_pages[code] = uri;
