@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/07 14:16:23 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/08 16:42:25 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -101,7 +101,7 @@ bool    EpollLoop::do_use_fd(  int fd ){
     }
     
     std::string request = std::string(buf, n_read);
-    std::cout << "Request on fd " << fd << ": " << request << std::endl;
+    // std::cout << "Request on fd " << fd << ": " << request << std::endl;
     
     // int s = getsockname(fd, (struct sockaddr *) &peer_addr, &peer_addr_len);
     // if (fd == 0)
@@ -123,7 +123,8 @@ bool    EpollLoop::do_use_fd(  int fd ){
     // should fork() here : ONLY FORK() FOR CGI
         
     // send response  
-    std::string header = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<html><body>Hello from C++!</body></html>";
+    std::cout << "header:" << HTTPparser.getHeader() << std::endl;
+    std::string header = std::string(HTTPparser.getHeader().c_str(), HTTPparser.getHeader().size());
     std::string content = std::string(HTTPparser.getBuffer().c_str(), HTTPparser.getNReadIndex());
 
     ResponseWriter  responseWriter( header, content, fd);

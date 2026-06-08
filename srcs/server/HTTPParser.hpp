@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/07 16:52:49 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/08 16:22:43 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,12 +45,13 @@ class HTTPParser {
 
 private:
 
-    std::vector<Token> _allTokens;
-    std::string _root;
-    std::string _index;
-    std::string _error;
-    char        _buffer[BUF_SIZE];
-    ssize_t     _n_read_index;
+    std::vector<Token>  _allTokens;
+    std::string         _root;
+    std::string         _index;
+    std::string         _error;
+    std::string         _header;
+    char                _buffer[BUF_SIZE];
+    ssize_t             _n_read_index;
     
 
 protected:
@@ -63,18 +64,20 @@ public:
     HTTPParser &    operator=( HTTPParser const & other );
 
     std::string     getBuffer() const;
+    std::string     getHeader() const;
     int             getNReadIndex() const;
     
-    // bool            isTokenWord( Token const & t );
-
     bool            findMethods();
     bool            findPath();
     bool            findHeaders();
     bool            findCGI();
 
+    std::string     getFile( std::string fileName );
     std::string     getFile200();
     std::string     getFile404();
     std::string     getFile414();
+    
+    std::string     buildAnswerHeader();
     
     bool            answerFile( std::string file );
 };
