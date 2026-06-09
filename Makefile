@@ -9,7 +9,8 @@ SRC = \
 	srcs/server/ListenerManager.cpp \
 	srcs/server/EpollLoop.cpp \
 	srcs/server/HTTPParser.cpp \
-	srcs/server/ResponseWriter.cpp 
+	srcs/server/RequestHandler.cpp \
+	srcs/server/ResponseSender.cpp 
 
 
 OBJ = $(SRC:.cpp=.o)

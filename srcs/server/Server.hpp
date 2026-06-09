@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/21 14:12:24 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/07 14:04:14 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/08 18:36:54 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,9 +51,6 @@ class EpollLoop;
 class Server {
 
 private:
-
-    // Lexer   lexer;
-    // Parser parser;
     
     SignalManager   _signalManager;
     ListenerManager _listenermanager;

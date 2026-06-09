@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/08 16:43:20 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/09 21:30:14 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,15 +19,12 @@
 ** ============================================================================
 */
 
-HTTPParser:: HTTPParser( std::vector<Token> allTokens ) : _allTokens(allTokens), 
-_root("data/html"), _index("index.html"), _error("404.html"), _header(), _buffer(""), _n_read_index(0){
+HTTPParser:: HTTPParser( std::vector<Token> allTokens ) : _allTokens(allTokens), _code(){
     
 }
 
-HTTPParser::HTTPParser( HTTPParser const & src ) : _allTokens(src._allTokens), 
-_root(src._root), _index(src._index), _error(src._error), _header(src._header), _n_read_index(src._n_read_index){
+HTTPParser::HTTPParser( HTTPParser const & src ) : _allTokens(src._allTokens), _code(src._code){
     
-     _buffer[BUF_SIZE] = src._buffer[BUF_SIZE];
 }
 
 HTTPParser::~HTTPParser(){
@@ -39,31 +36,20 @@ HTTPParser &    HTTPParser::operator=( HTTPParser const & other ){
     if (this != &other ){
 
         this->_allTokens = other._allTokens;
-        this->_root = other._root;
-        this->_index = other._index;
-        this->_error = other._error;
-        this->_header = other._header;
-        this->_buffer[BUF_SIZE] = other._buffer[BUF_SIZE];
-        this->_n_read_index = other._n_read_index;
+        this->_code = other._code;
     }
     
     return *this;
 }
 
-
-std::string HTTPParser::getBuffer() const{
-
-    return _buffer;
+std::string HTTPParser::getCode() const{
+        
+    return _code;
 }
 
-std::string HTTPParser::getHeader() const{
-
-    return _header;
-}
-
-int HTTPParser::getNReadIndex() const{
-    
-    return _n_read_index;
+std::string HTTPParser::getType() const{
+        
+    return _type;
 }
 
 /*
@@ -72,46 +58,127 @@ int HTTPParser::getNReadIndex() const{
 ** ============================================================================
 */
 
+// Check if the entry Host: correspond to the config file info
+// or if it exist at all
+bool    HTTPParser::checkHost( ListenerManager const & listener ){
+
+
+    std::string hostname = listener.getNode();
+    hostname += ":";
+    hostname += listener.getService();
+    
+    std::vector<Token>::iterator it;
+
+    for (it = _allTokens.begin(); it != _allTokens.end(); ++it){
+    
+        if (it->type == Word){
+            
+            if (it->value == "Host:"){
+                it++;
+                if (it->type == Word){
+                    
+                    if (it->value != hostname){
+                        
+                        _code = "421";
+                        _type = "text/html";
+                        return false;
+                    }
+                }
+            }
+        }
+        else if (it->type != Semicolon && it->type != End) {
+            
+            _code = "400";
+            _type = "text/html";
+
+            return false;
+        }
+    }
+    return true;
+}
+
 static bool isTokenWord( Token const & t ){
     
     return t.type == Word;
+}
+
+static bool isMethodGet( Token const & t ){
+    
+    return t.value == "GET";
+}
+
+static bool isMethodPost( Token const & t ){
+    
+    return t.value == "POST";
+}
+
+static bool isMethodDelete( Token const & t ){
+    
+    return t.value == "DELETE";
 }
 
 bool    HTTPParser::findMethods(){
     
     std::vector<Token>::iterator found;
     
-    // found = find(_allTokens.begin(), _allTokens.end(),"WORD");
     if (_allTokens.size() > BUF_SIZE){
         
-        std::string file = getFile414(); 
-        if (answerFile(file) == false)
-            return false;
+        _code = "414";
+        _type = "text/html";
+
+
+        return false;
     }
-    
+
+  
     found = find_if(_allTokens.begin(), _allTokens.end(), isTokenWord);
     if (found != _allTokens.end()){ // same as EOF
         
-        buildAnswerHeader();
-        std::string file = getFile200(); 
-        if (answerFile(file) == false)
-            return false;
+        found = find_if(_allTokens.begin(), _allTokens.end(), isMethodGet);
+        if (found != _allTokens.end()){
+            
+            found++;
+            if (found->value == "/"){
+                
+                
+                _code = "index";
+                _type = "text/html";
+
+                return true;
+            }
+            // if (found->value == "/images/tree.jpg"){
+                
+                
+            //     _code = "index";
+            //     _type = "image/jpeg";
+                
+            //     return true;
+            // }
+            _code = "400";
+            _type = "text/html";
+            
+            return true;
+        }
+        found = find_if(_allTokens.begin(), _allTokens.end(), isMethodPost);
+        if (found != _allTokens.end()){
+            
+            _code = "200"; //? fichier specifique 
+            return true;
+        }
+        found = find_if(_allTokens.begin(), _allTokens.end(), isMethodDelete);
+        if (found != _allTokens.end()){
+            
+            _code = "200"; //? fichier specifique
+            return true;
+        }
     }
-    
-    // if (_request.find("GET / HTTP/1.1") != std::string::npos){ // same as EOF
-        
-    //     std::string file = getFile200(); 
-    //     if (answerFile(file) == false)
-    //         return false;
-    // }
-    
-    // if (_request.find("GET /images/trees.jpg HTTP/1.1") != std::string::npos){
-        
-      
-    // }
-    
+    else {
+        _code = "405";
+        _type = "text/html";
+
+        return false;
+    }
     return true;
-        
 }
 
 bool    HTTPParser::findPath(){
@@ -131,65 +198,4 @@ bool    HTTPParser::findCGI(){
     
 }
 
-std::string HTTPParser::getFile( std::string fileName ){
-    
-    std::string file = _root;
-    file += "/";
-    file += fileName;
- 
-    return file;
-}
 
-std::string HTTPParser::getFile200(){
-     
-    std::string file = _root;
-    file += "/";
-    file += _index;
- 
-    return file;
-}
-
-std::string HTTPParser::getFile404(){
-
-    std::string file = _root;
-    file += "/";
-    file += _error;
-  
-    return file;
-}
-
-std::string HTTPParser::getFile414(){
-
-    std::string file = _root;
-    file += "/";
-    file += "414.html";
-  
-    return file;
-}
-
-std::string HTTPParser::buildAnswerHeader(){
-    
-    _header = "HTTP/1.1 200 OK\r\n";
-    _header += "Content-Type: text/html\r\n\r\n"; 
-
-    return _header;
-}
-
-
-bool    HTTPParser::answerFile( std::string file ){
-
-    int indexfd = open(file.c_str(), O_RDONLY);
-    if (indexfd == -1){
-        std::cerr << "Error file failed to open on indexfd:" << indexfd << std::endl;
-        close(indexfd);
-        return false;
-    }
-    this->_n_read_index = read(indexfd, _buffer, BUF_SIZE);
-    close(indexfd);
-    std::cout << "n_read_index:" << _n_read_index << std::endl;
-    if (_n_read_index == -1)
-        return false;
-    
-    return true;
-    
-}

@@ -30,9 +30,9 @@ void print_token_chain(std::vector <Token> tokens)
 }
 
 /*
-** Opens and validates the config file, then tokenizes its content
+** read request, then tokenizes its content
 ** line by line into a single token chain.
-** Returns SUCCESS if the file was parsed correctly, ERROR otherwise.
+** Returns vector<Token>.
 */
 std::vector<Token>   HTTPparse_file(const std::string &str)
 {
@@ -68,6 +68,11 @@ std::vector<Token>   HTTPparse_file(const std::string &str)
     return allTokens;
 }
 
+/*
+** Opens and validates the config file, then tokenizes its content
+** line by line into a single token chain.
+** Returns SUCCESS if the file was parsed correctly, ERROR otherwise.
+*/
 int parse_file(const std::string &str)
 {
     std::ifstream file(str.c_str());

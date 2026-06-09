@@ -6,18 +6,18 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/08 16:42:25 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/09 21:50:47 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 
 #include "EpollLoop.hpp"
 #include "Server.hpp"
-#include "ListenerManager.hpp"
-#include "ResponseWriter.hpp"
-#include "../parser/Parser.hpp"
 #include "../lexer/Lexer.hpp"
-
+#include "ListenerManager.hpp"
+#include "ResponseSender.hpp"
+#include "../parser/Parser.hpp"
+#include "RequestHandler.hpp"
 
 
 /*
@@ -75,7 +75,7 @@ int EpollLoop::setnonblocking( int fd ){
 // parse request
 // answer : send response
 // CGI >> fork 
-bool    EpollLoop::do_use_fd(  int fd ){
+bool    EpollLoop::do_use_fd(  int fd, ListenerManager const & listen ){
     
     char    buf[BUF_SIZE];
 
@@ -111,25 +111,26 @@ bool    EpollLoop::do_use_fd(  int fd ){
     
     // Parse request
     
-    std::vector<Token> allTokens = HTTPparse_file(request);
+    std::vector<Token> list = HTTPparse_file(request);
     
-    HTTPParser HTTPparser(allTokens);
-    if (HTTPparser.findMethods() == false){
+    RequestHandler requestHandler(list);
+    // HTTPParser HTTPparser(allTokens);
+    if (requestHandler.handleRequest(listen) == false){
          std::cerr << "Reading of html file failed: " << strerror(errno) << std::endl;
         close(fd);
         return false;
     }
  
-    // should fork() here : ONLY FORK() FOR CGI
+    // // should fork() here : ONLY FORK() FOR CGI
         
-    // send response  
-    std::cout << "header:" << HTTPparser.getHeader() << std::endl;
-    std::string header = std::string(HTTPparser.getHeader().c_str(), HTTPparser.getHeader().size());
-    std::string content = std::string(HTTPparser.getBuffer().c_str(), HTTPparser.getNReadIndex());
+    // // send response  
+    std::cout << "header:" << requestHandler.getHeader() << std::endl;
+    std::string header = std::string (requestHandler.getHeader());
+    std::string content = std::string(requestHandler.getBuffer().c_str(), requestHandler.getNReadIndex());
 
-    ResponseWriter  responseWriter( header, content, fd);
+    ResponseSender  responseSender( header, content, fd);
 
-    if (responseWriter.sendResponse() == false){
+    if (responseSender.sendResponse() == false){
         std::cerr << "Error sending response: " << strerror(errno) << std::endl;
         close(fd);
         return false;
@@ -205,7 +206,7 @@ bool    EpollLoop::readingSocket( ListenerManager const & listen ){
             }
             else{
                 
-                if(do_use_fd(events[n].data.fd) == false)
+                if(do_use_fd(events[n].data.fd, listen) == false)
                     break;
             }
         }
