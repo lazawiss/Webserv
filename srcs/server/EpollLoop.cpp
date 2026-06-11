@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/09 21:50:47 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/11 20:13:01 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -113,27 +113,52 @@ bool    EpollLoop::do_use_fd(  int fd, ListenerManager const & listen ){
     
     std::vector<Token> list = HTTPparse_file(request);
     
+    
     RequestHandler requestHandler(list);
-    // HTTPParser HTTPparser(allTokens);
+    
     if (requestHandler.handleRequest(listen) == false){
-         std::cerr << "Reading of html file failed: " << strerror(errno) << std::endl;
+        std::cerr << "Reading of html file failed: " << strerror(errno) << std::endl;
         close(fd);
         return false;
     }
- 
-    // // should fork() here : ONLY FORK() FOR CGI
         
+    // // should fork() here : ONLY FORK() FOR CGI
+    
     // // send response  
     std::cout << "header:" << requestHandler.getHeader() << std::endl;
     std::string header = std::string (requestHandler.getHeader());
     std::string content = std::string(requestHandler.getBuffer().c_str(), requestHandler.getNReadIndex());
-
-    ResponseSender  responseSender( header, content, fd);
-
-    if (responseSender.sendResponse() == false){
+    
+    // ResponseSender  responseSender( header, content, fd);
+    
+    
+    // if (responseSender.sendResponse() == false){
+        //     std::cerr << "Error sending response: " << strerror(errno) << std::endl;
+        //     close(fd);
+        //     return false;
+        // } 
+        
+    if (send(fd, header.c_str(), header.size(), 0) < 0){
         std::cerr << "Error sending response: " << strerror(errno) << std::endl;
         close(fd);
         return false;
+    }
+    
+    ssize_t totalSent = 0;
+        
+    while (totalSent < requestHandler.getNReadIndex()){
+        
+        // ssize_t sent = send(fd, content.c_str(), content.size(), 0) < 0;
+        ssize_t sent = send(fd, content.c_str() + totalSent, content.size() - totalSent, 0) < 0;
+        
+        
+        if (sent == -1){
+            std::cerr << "Error sending response: " << strerror(errno) << std::endl;
+            close(fd);
+            return false;
+        }
+            
+        totalSent += sent;
     }
     
     close(fd);

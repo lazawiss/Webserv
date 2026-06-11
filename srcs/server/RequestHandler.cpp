@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/11 16:59:19 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/11 20:02:03 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -152,7 +152,11 @@ std::string RequestHandler::buildAnswerHeader( std::string code, std::string typ
     if ( type == "image/jpeg" ||  type == "image/png" ){
         
         _header += "\r\n";
-        _header += "Context-Length: " + this->getSize();
+        _header += "Context-Length: ";
+        std::stringstream ss;
+        ss << _n_read_index;
+        std::string size = ss.str();
+        _header += size;
         _header += "\r\n";
         _header += "Connection: keep-alive";
 
@@ -184,30 +188,47 @@ bool    RequestHandler::answerFileImage(){
 
     std::ifstream source("data/images/cat.png",std::ios::binary);
 
-    if (source.is_open() == false)
-    {
-        std::cerr << "Error: file doesn't exist" << std::endl;
-        return false;
-    }
+    // if (source.is_open() == false)
+    // {
+    //     std::cerr << "Error: file doesn't exist" << std::endl;
+    //     return false;
+    // }
 
-    if (source.peek() == std::ifstream::traits_type::eof())
-    {
-        std::cerr << "Error: file is empty" << std::endl;
-        return false;
-    }
+    // if (source.peek() == std::ifstream::traits_type::eof())
+    // {
+    //     std::cerr << "Error: file is empty" << std::endl;
+    //     return false;
+    // }
 
-    source.seekg(0, std::ios::end);
+    // source.seekg(0, std::ios::end);
     size_t size = source.tellg();
-    source.seekg(0, std::ios::beg);
-    char file_buffer[size];
-    source.read(file_buffer, size);
+    // source.seekg(0, std::ios::beg);
+    // char file_buffer[size];
+    // source.read(file_buffer, size);
     
-    std::stringstream ss;
-    ss << size;
-    _size = ss.str();
+    // std::stringstream ss;
+    // ss << size;
+    // _size = ss.str();
     
-    std::cout << "Size: " << _size << std::endl;
-    if (size > BUF_SIZE){
+    // std::cout << "Size: " << _size << std::endl;
+    // if (size > BUF_SIZE){
+    //     std::cerr << "Image size is too big." << std::endl;
+    //     return false;
+    // }
+
+    int indexfd = open("data/images/cat.png", O_RDONLY);
+    if (indexfd == -1){
+        std::cerr << "Error file failed to open on indexfd:" << indexfd << std::endl;
+        close(indexfd);
+        return false;
+    }
+    this->_n_read_index = read(indexfd, _buffer, size);
+    close(indexfd);
+    std::cout << "n_read_index:" << _n_read_index << std::endl;
+    if (_n_read_index == -1)
+        return false;
+
+    if (_n_read_index > BUF_SIZE){
         std::cerr << "Image size is too big." << std::endl;
         return false;
     }
@@ -228,23 +249,23 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         std::cerr << "Error Method not implemented: " << strerror(errno) << std::endl;
     }
 
-    buildAnswerHeader(HTTPParser.getCode(), HTTPParser.getType());
     if (HTTPParser.getType() == "text/html"){
         
         std::string file = getFile(HTTPParser.getCode()); 
         if (answerFile(file) == false)
-            return false;
+        return false;
     }
     if (HTTPParser.getType() == "image/jpeg"){
         
         if (answerFileImage() == false)
-            return false;
+        return false;
     }
     if (HTTPParser.getType() == "image/png"){
         
         if (answerFileImage() == false)
-            return false;
+        return false;
     }
+    buildAnswerHeader(HTTPParser.getCode(), HTTPParser.getType());
 
     
 
