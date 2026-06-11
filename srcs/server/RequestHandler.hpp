@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:00:06 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/09 21:37:27 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/11 17:13:19 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,6 +54,7 @@ private:
     std::string         _size;
     char                _buffer[BUF_SIZE];
     ssize_t             _n_read_index;
+   
 
     
 protected:

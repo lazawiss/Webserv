@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/09 21:30:14 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/11 16:50:17 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -138,22 +138,40 @@ bool    HTTPParser::findMethods(){
         if (found != _allTokens.end()){
             
             found++;
+           
             if (found->value == "/"){
                 
                 
                 _code = "index";
                 _type = "text/html";
-
+                
                 return true;
             }
-            // if (found->value == "/images/tree.jpg"){
+            if (found->value.find("/images") != std::string::npos){
                 
+                std::cout <<  "found /images " << std::endl;
+
+                char const *lastSlash = strrchr(found->value.c_str(), '.');
+                if (lastSlash)
+                    std::cout <<  "lastSlash:" << lastSlash << std::endl;
+                std::string suffix = std::string(lastSlash);
+                if (suffix  == ".jpg"){
+                    
+                    
+                    _code = "index";
+                    _type = "image/jpeg";
+                    
+                    return true;
+                }
+                if (suffix == ".png"){
                 
-            //     _code = "index";
-            //     _type = "image/jpeg";
-                
-            //     return true;
-            // }
+                    
+                    _code = "index";
+                    _type = "image/png";
+                    
+                    return true;
+                }
+            }
             _code = "400";
             _type = "text/html";
             

@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/09 21:48:57 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/11 16:59:19 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -149,11 +149,10 @@ std::string RequestHandler::buildAnswerHeader( std::string code, std::string typ
     _header += "\r\n";
     _header += "Content-Type: ";
     _header += type;
-    if (type == "image/jpeg"){
+    if ( type == "image/jpeg" ||  type == "image/png" ){
         
         _header += "\r\n";
-        _header += "Context-Length: ";
-        _header += this->getSize();
+        _header += "Context-Length: " + this->getSize();
         _header += "\r\n";
         _header += "Connection: keep-alive";
 
@@ -183,7 +182,7 @@ bool    RequestHandler::answerFile( std::string file ){
 
 bool    RequestHandler::answerFileImage(){
 
-    std::ifstream source("data/images/tree.jpg",std::ios::binary);
+    std::ifstream source("data/images/cat.png",std::ios::binary);
 
     if (source.is_open() == false)
     {
@@ -200,14 +199,18 @@ bool    RequestHandler::answerFileImage(){
     source.seekg(0, std::ios::end);
     size_t size = source.tellg();
     source.seekg(0, std::ios::beg);
-    // char file_buffer[size];
-    source.read(_buffer, size);
+    char file_buffer[size];
+    source.read(file_buffer, size);
     
     std::stringstream ss;
     ss << size;
     _size = ss.str();
     
     std::cout << "Size: " << _size << std::endl;
+    if (size > BUF_SIZE){
+        std::cerr << "Image size is too big." << std::endl;
+        return false;
+    }
 
     return true;
 }
@@ -233,6 +236,11 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
             return false;
     }
     if (HTTPParser.getType() == "image/jpeg"){
+        
+        if (answerFileImage() == false)
+            return false;
+    }
+    if (HTTPParser.getType() == "image/png"){
         
         if (answerFileImage() == false)
             return false;
