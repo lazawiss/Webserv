@@ -1,6 +1,8 @@
 #ifndef PARSER_HPP
 # define PARSER_HPP
 
+# include "./config/GlobalConfig.hpp"
+# include "./config/AConfig.hpp"
 # include "../errors/Errors.hpp"
 # include "../lexer/Lexer.hpp"
 
@@ -30,6 +32,13 @@ public:
     const Token& consume();
 
     GlobalConfig parse();
+
+    void parseConfig(GlobalConfig &config);
+    void parseConfigRoot(AConfig &ref);
+    void parseConfigIndex(AConfig &ref);
+    void parseConfigAutoIndex(AConfig &ref);
+    void parseConfigClientMaxBodySize(AConfig &ref);
+    void parseConfigErrorPage(AConfig &ref);
 };
 
 #endif

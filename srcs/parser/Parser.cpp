@@ -1,5 +1,4 @@
 #include "Parser.hpp"
-#include "./config/GlobalConfig.hpp"
 
 #include "../lexer/Lexer.hpp"
 
@@ -15,7 +14,7 @@ Parser::~Parser() {}
 
 /*
 ** ============================================================================
-** 
+** Print Tokens - To delete after!
 ** ============================================================================
 */
 
@@ -128,7 +127,7 @@ int parse_file(const std::string &str)
     print_token_chain(allTokens);
 
     Parser parser(allTokens);
-    GlobalConfig parse();
+    GlobalConfig config = parser.parse();
 
     return SUCCESS;
 }
@@ -155,14 +154,9 @@ GlobalConfig Parser::parse()
             //parseServer(config)
         }
         else if (current().type == Word)
-        {
-            //parseConfig(config)
-        }
+            parseConfig(config);
         else
-        {
-            // Throw error
-            std::cerr << "Unexpected token" << std::endl;
-        }
+        { /* TO DO: Throw an error */}
     }
 
     if (config.getServers().empty())
@@ -172,4 +166,85 @@ GlobalConfig Parser::parse()
     }
 
     return config;
+}
+
+void Parser::parseConfig(GlobalConfig &config)
+{
+
+    if (current().value == "root")                      parseConfigRoot(config);
+    else if (current().value == "index")                parseConfigIndex(config);
+    else if (current().value == "error_page")           parseConfigErrorPage(config);
+    else if (current().value == "autoindex")            parseConfigAutoIndex(config);
+    else if (current().value == "client_max_body_size") parseConfigClientMaxBodySize(config);
+    else                                                { /* TO DO: Throw an error */}
+}
+
+void Parser::parseConfigRoot(AConfig &ref)
+{
+    consume();
+    if (current().type != Word)
+    { /* TO DO: Throw an error */}
+    ref.setRoot(consume().value);
+    if (current().type != Semicolon)
+    { /* TO DO: Throw an error */}
+    consume();
+}
+
+void Parser::parseConfigIndex(AConfig &ref)
+{
+    consume();
+    if (current().type != Word)
+    { /* TO DO: Throw an error */}
+    while (current().type == Word)
+    {
+        ref.addIndex(consume().value);
+    }
+    if (current().type != Semicolon)
+    { /* TO DO: Throw an error */}
+    consume();
+}
+
+void Parser::parseConfigAutoIndex(AConfig &ref)
+{
+    consume();
+    if (current().type != Word)
+    { /* TO DO: Throw an error */}
+    if (current().value != "on" && current().value != "off")
+    { /* TO DO: Throw an error */}
+    ref.setAutoindex(consume().value == "on" ? true : false);
+    if (current().type != Semicolon)
+    { /* TO DO: Throw an error */}
+    consume();
+}
+
+void Parser::parseConfigClientMaxBodySize(AConfig &ref)
+{
+    (void)ref;
+
+    consume();
+    if (current().type != Word)
+    { /* TO DO: Throw an error */}
+    // TO DO (later): create a parseSize function/method
+    if (current().type != Semicolon)
+    { /* TO DO: Throw an error */}
+    consume();
+}
+
+void Parser::parseConfigErrorPage(AConfig &ref)
+{
+    consume();
+    if (current().type != Word)
+    { /* TO DO: Throw an error */}
+    
+    int code = std::atoi(consume().value.c_str());
+
+    if (current().type != Word)
+    { /* TO DO: Throw an error */}
+
+    std::string uri = consume().value;
+    ref.addErrorPage(code, uri);
+
+    if (current().type != Semicolon)
+    { /* TO DO: Throw an error */}
+    consume();
 }
