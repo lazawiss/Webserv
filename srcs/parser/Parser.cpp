@@ -1,5 +1,23 @@
 #include "Parser.hpp"
+
 #include "../lexer/Lexer.hpp"
+
+/*
+** ============================================================================
+** Parser - Constructors & Destructor
+** ============================================================================
+*/
+
+Parser::Parser(const std::vector<Token> &tokens) : _tokens(tokens), _index(0) {}
+
+Parser::~Parser() {}
+
+
+/*
+** ============================================================================
+** 
+** ============================================================================
+*/
 
 static std::string tokenTypeToString(TokenType type)
 {
@@ -29,35 +47,74 @@ void print_token_chain(const std::vector <Token> &tokens)
     return ;
 }
 
-bool precheck_token_chain(const std::vector<Token> &tokens)
+// bool precheck_token_chain(const std::vector<Token> &tokens)
+// {
+//     int server = 0;
+//     int b = 0;
+//     if (tokens.size() == 0)
+//         return (false);
+//     std::vector<Token>::const_iterator it = tokens.begin();
+//     if (!tokens[tokens.size() - 1].type == End)
+//         return (false);
+//     while (it != tokens.end())
+//     {
+//         if (it->type == LBracket)
+//             b++;
+//         if (it->type == RBracket)
+//             b--;
+//         if (it->type == Word && (it->value == "server"))
+//         {
+//             if (it + 1 != tokens.end())
+//             {
+//                 if ((it + 1)->type == LBracket)
+//                     server++;
+//             }
+//         }
+//         it++;
+//     }
+//     if (server == 1 || (b != 0))
+//         return false;
+//     return true;
+// }
+
+/*
+** ============================================================================
+** 
+** ============================================================================
+*/
+
+/*
+** Returns the current token without moving forward in the token chain.
+** Used to inspect what we are about to parse.
+*/
+const Token& Parser::current() const
 {
-    int server = 0;
-    int b = 0;
-    if (tokens.size() == 0)
-        return (false);
-    std::vector<Token>::const_iterator it = tokens.begin();
-    if (!tokens[tokens.size() - 1].type == End)
-        return (false);
-    while (it != tokens.end())
-    {
-        if (it->type == LBracket)
-            b++;
-        if (it->type == RBracket)
-            b--;
-        if (it->type == Word && (it->value == "server"))
-        {
-            if (it + 1 != tokens.end())
-            {
-                if ((it + 1)->type == LBracket)
-                    server++;
-            }
-        }
-        it++;
-    }
-    if (server == 1 || (b != 0))
-        return false;
-    return true;
+    return _tokens[_index];
 }
+
+/*
+** Returns the next token without moving forward in the token chain.
+** Used to look ahead and validate what comes after the current token.
+*/
+const Token& Parser::peek() const
+{
+    return _tokens[_index + 1];
+}
+
+/*
+** Returns the current token and moves forward by one in the token chain.
+** Used to consume a token once we know it is valid.
+*/
+const Token& Parser::consume()
+{
+    return _tokens[_index++];
+}
+
+/*
+** ============================================================================
+** 
+** ============================================================================
+*/
 
 /*
 ** Opens and validates the config file, then tokenizes its content
@@ -85,7 +142,8 @@ int parse_file(const std::string &str)
 
     while (std::getline(file, line))
     {
-        std::cout << line << "\n";
+        // std::cout << line << "\n";
+        
         Lexer lexer(line);
         std::vector<Token> lineTokens = lexer.tokenize();
 
@@ -98,10 +156,13 @@ int parse_file(const std::string &str)
 
     allTokens.push_back(Token(End, ""));
     print_token_chain(allTokens);
-    if (precheck_token_chain(allTokens) == false)
-    {
-        std::cerr << "Error: file '" << str << "' does not have server, end, or correct brackets" << std::endl;
-        return ERR_PREVALIDATION_CONFIG;
-    }
+
+    Parser parser(allTokens);
+
+    // if (precheck_token_chain(allTokens) == false)
+    // {
+    //     std::cerr << "Error: file '" << str << "' does not have server, end, or correct brackets" << std::endl;
+    //     return ERR_PREVALIDATION_CONFIG;
+    // }
     return SUCCESS;
 }

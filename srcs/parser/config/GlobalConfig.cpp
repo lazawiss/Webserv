@@ -6,7 +6,7 @@
 ** ============================================================================
 */
 
-GlobalConfig::GlobalConfig() {}
+GlobalConfig::GlobalConfig() : AConfig() {}
 
 GlobalConfig::~GlobalConfig() {}
 

@@ -1,11 +1,17 @@
 #ifndef GLOBALCONFIG_HPP
 # define GLOBALCONFIG_HPP
 
+# include "AConfig.hpp"
 # include "ServerConfig.hpp"
 
 # include <vector>
 
-class GlobalConfig
+/*
+** ============================================================================
+** AConfig - Class
+** ============================================================================
+*/
+class GlobalConfig : public AConfig
 {
 private:
     std::vector<ServerConfig> _servers;
