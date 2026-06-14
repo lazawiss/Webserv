@@ -10,6 +10,11 @@
 
 int parse_file(const std::string& path);
 
+/*
+** ============================================================================
+** Parser - Class
+** ============================================================================
+*/
 class Parser
 {
 private:
@@ -23,6 +28,8 @@ public:
     const Token& current()  const;
     const Token& peek()     const;
     const Token& consume();
+
+    GlobalConfig parse();
 };
 
 #endif

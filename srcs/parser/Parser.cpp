@@ -1,4 +1,5 @@
 #include "Parser.hpp"
+#include "./config/GlobalConfig.hpp"
 
 #include "../lexer/Lexer.hpp"
 
@@ -11,7 +12,6 @@
 Parser::Parser(const std::vector<Token> &tokens) : _tokens(tokens), _index(0) {}
 
 Parser::~Parser() {}
-
 
 /*
 ** ============================================================================
@@ -46,36 +46,6 @@ void print_token_chain(const std::vector <Token> &tokens)
     }
     return ;
 }
-
-// bool precheck_token_chain(const std::vector<Token> &tokens)
-// {
-//     int server = 0;
-//     int b = 0;
-//     if (tokens.size() == 0)
-//         return (false);
-//     std::vector<Token>::const_iterator it = tokens.begin();
-//     if (!tokens[tokens.size() - 1].type == End)
-//         return (false);
-//     while (it != tokens.end())
-//     {
-//         if (it->type == LBracket)
-//             b++;
-//         if (it->type == RBracket)
-//             b--;
-//         if (it->type == Word && (it->value == "server"))
-//         {
-//             if (it + 1 != tokens.end())
-//             {
-//                 if ((it + 1)->type == LBracket)
-//                     server++;
-//             }
-//         }
-//         it++;
-//     }
-//     if (server == 1 || (b != 0))
-//         return false;
-//     return true;
-// }
 
 /*
 ** ============================================================================
@@ -158,11 +128,48 @@ int parse_file(const std::string &str)
     print_token_chain(allTokens);
 
     Parser parser(allTokens);
+    GlobalConfig parse();
 
-    // if (precheck_token_chain(allTokens) == false)
-    // {
-    //     std::cerr << "Error: file '" << str << "' does not have server, end, or correct brackets" << std::endl;
-    //     return ERR_PREVALIDATION_CONFIG;
-    // }
     return SUCCESS;
+}
+
+/*
+** ============================================================================
+** 
+** ============================================================================
+*/
+
+/*
+** Entry point of the parser. Reads the token chain and builds
+** a GlobalConfig object containing all server blocks.
+** Throws ParseError if the syntax is invalid.
+*/
+GlobalConfig Parser::parse()
+{
+    GlobalConfig config;
+
+    while (current().type != End)
+    {
+        if (current().type == Word && current().value == "server")
+        {
+            //parseServer(config)
+        }
+        else if (current().type == Word)
+        {
+            //parseConfig(config)
+        }
+        else
+        {
+            // Throw error
+            std::cerr << "Unexpected token" << std::endl;
+        }
+    }
+
+    if (config.getServers().empty())
+    {
+        // Throw error
+        std::cerr << "Error: At least one server block is required" << std::endl;
+    }
+
+    return config;
 }
