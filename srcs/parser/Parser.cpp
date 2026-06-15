@@ -14,41 +14,7 @@ Parser::~Parser() {}
 
 /*
 ** ============================================================================
-** Print Tokens - To delete after!
-** ============================================================================
-*/
-
-static std::string tokenTypeToString(TokenType type)
-{
-    switch(type)
-    {
-        case Word:      return "Word";
-        case LBracket:  return "LBracket";
-        case RBracket:  return "RBracket";
-        case Semicolon: return "Semicolon";
-        case Hashtag:   return "Hashtag";
-        case End:       return "End";
-
-        default:        return "Unknown";
-    }
-}
-
-void print_token_chain(const std::vector <Token> &tokens)
-{
-    for (size_t i = 0; i < tokens.size(); i++)
-    {
-        std::cout
-            << tokenTypeToString(tokens[i].type)
-            << " => "
-            << tokens[i].value
-            << std::endl;
-    }
-    return ;
-}
-
-/*
-** ============================================================================
-** 
+** Parser - Token navigation methods
 ** ============================================================================
 */
 
@@ -110,9 +76,7 @@ int parse_file(const std::string &str)
     std::vector<Token> allTokens;
 
     while (std::getline(file, line))
-    {
-        // std::cout << line << "\n";
-        
+    {   
         Lexer lexer(line);
         std::vector<Token> lineTokens = lexer.tokenize();
 
@@ -124,10 +88,64 @@ int parse_file(const std::string &str)
     }
 
     allTokens.push_back(Token(End, ""));
-    print_token_chain(allTokens);
+    // print_token_chain(allTokens);
 
     Parser parser(allTokens);
     GlobalConfig config = parser.parse();
+
+    /* ============================================================================ */
+
+    std::cout << "==========================" << std::endl;
+    std::cout << "[GLOBAL]" << std::endl;
+    std::cout << "root:                 " << config.getRoot()            << std::endl;
+    std::cout << "autoindex:            " << config.getAutoindex()       << std::endl;
+    // std::cout << "client_max_body_size: " << config.getClientMaxBodySize() << std::endl;
+
+    std::cout << "index: ";
+    for (size_t i = 0; i < config.getIndex().size(); i++)
+        std::cout << config.getIndex()[i] << " ";
+    std::cout << std::endl;
+
+    std::cout << "error_pages: ";
+    const std::map<int, std::string>& ep = config.getErrorPages();
+    for (std::map<int, std::string>::const_iterator it = ep.begin(); it != ep.end(); it++)
+        std::cout << it->first << " -> " << it->second << " ";
+    std::cout << std::endl;
+
+    std::cout << "==========================" << std::endl;
+    std::cout << "nb servers: " << config.getServers().size() << std::endl;
+
+    for (size_t i = 0; i < config.getServers().size(); i++)
+    {
+        std::cout << "--- server[" << i << "] ---" << std::endl;
+
+        std::cout << "listen: ";
+        for (size_t j = 0; j < config.getServers()[i].getListen().size(); j++)
+            std::cout << config.getServers()[i].getListen()[j] << " ";
+        std::cout << std::endl;
+
+        std::cout << "server_name: ";
+        for (size_t j = 0; j < config.getServers()[i].getServerNames().size(); j++)
+            std::cout << config.getServers()[i].getServerNames()[j] << " ";
+        std::cout << std::endl;
+
+        std::cout << "root:                 " << config.getServers()[i].getRoot()            << std::endl;
+        std::cout << "autoindex:            " << config.getServers()[i].getAutoindex()       << std::endl;
+        // std::cout << "client_max_body_size: " << config.getServers()[i].getClientMaxBodySize() << std::endl;
+
+        std::cout << "index: ";
+        for (size_t j = 0; j < config.getServers()[i].getIndex().size(); j++)
+            std::cout << config.getServers()[i].getIndex()[j] << " ";
+        std::cout << std::endl;
+
+        std::cout << "error_pages: ";
+        const std::map<int, std::string>& sep = config.getServers()[i].getErrorPages();
+        for (std::map<int, std::string>::const_iterator it = sep.begin(); it != sep.end(); it++)
+            std::cout << it->first << " -> " << it->second << " ";
+        std::cout << std::endl;
+    }
+    std::cout << "==========================" << std::endl;
+    /* ============================================================================ */
 
     return SUCCESS;
 }
@@ -150,9 +168,7 @@ GlobalConfig Parser::parse()
     while (current().type != End)
     {
         if (current().type == Word && current().value == "server")
-        {
-            //parseServer(config)
-        }
+            config.addServer(parseServer());
         else if (current().type == Word)
             parseConfig(config);
         else
@@ -160,22 +176,55 @@ GlobalConfig Parser::parse()
     }
 
     if (config.getServers().empty())
-    {
-        // Throw error
-        std::cerr << "Error: At least one server block is required" << std::endl;
-    }
+    { /* TO DO: Throw an error : At least one server block is required" */ }
 
     return config;
 }
 
 void Parser::parseConfig(GlobalConfig &config)
 {
-
     if (current().value == "root")                      parseConfigRoot(config);
     else if (current().value == "index")                parseConfigIndex(config);
     else if (current().value == "error_page")           parseConfigErrorPage(config);
     else if (current().value == "autoindex")            parseConfigAutoIndex(config);
     else if (current().value == "client_max_body_size") parseConfigClientMaxBodySize(config);
+    else                                                { /* TO DO: Throw an error */}
+}
+
+ServerConfig Parser::parseServer()
+{
+    ServerConfig server;
+
+    consume();
+
+    if (current().type != LBracket)
+    { /* TO DO: Throw an error */}
+    consume();
+
+    while (current().type != RBracket && current().type != End)
+    {
+        if (current().type == Word && current().value == "listen")              parseConfigListen(server);
+        else if (current().type == Word && current().value == "server_name")    parseConfigServerName(server);
+        // else if (current().type == Word && current().value == "location")       // TO DO
+        else if (current().type == Word)                                        parseServerDirective(server);
+        else { /* TO DO: Throw an error */}
+    }
+    
+    if (current().type != RBracket)
+    { /* TO DO: Throw an error */}
+
+    consume();
+
+    return server;
+}
+
+void Parser::parseServerDirective(ServerConfig& server)
+{
+    if (current().value == "root")                      parseConfigRoot(server);
+    else if (current().value == "index")                parseConfigIndex(server);
+    else if (current().value == "error_page")           parseConfigErrorPage(server);
+    else if (current().value == "autoindex")            parseConfigAutoIndex(server);
+    else if (current().value == "client_max_body_size") parseConfigClientMaxBodySize(server);
     else                                                { /* TO DO: Throw an error */}
 }
 
@@ -248,3 +297,68 @@ void Parser::parseConfigErrorPage(AConfig &ref)
     { /* TO DO: Throw an error */}
     consume();
 }
+
+void Parser::parseConfigListen(ServerConfig &ref)
+{
+    consume();
+    if (current().type != Word)
+    { /* TO DO: Throw an error */}
+    ref.addListen(consume().value);
+    if (current().type != Semicolon)
+    { /* TO DO: Throw an error */}
+    consume();
+}
+
+void Parser::parseConfigServerName(ServerConfig &ref)
+{
+    consume();
+    if (current().type != Word)
+    { /* TO DO: Throw an error */}
+    while (current().type == Word)
+    {
+        ref.addServerName(consume().value);
+    }
+    if (current().type != Semicolon)
+    { /* TO DO: Throw an error */}
+    consume();
+}
+
+
+
+
+
+
+
+/*
+** ============================================================================
+** Print Tokens - To delete after!
+** ============================================================================
+*/
+
+// static std::string tokenTypeToString(TokenType type)
+// {
+//     switch(type)
+//     {
+//         case Word:      return "Word";
+//         case LBracket:  return "LBracket";
+//         case RBracket:  return "RBracket";
+//         case Semicolon: return "Semicolon";
+//         case Hashtag:   return "Hashtag";
+//         case End:       return "End";
+
+//         default:        return "Unknown";
+//     }
+// }
+
+// void print_token_chain(const std::vector <Token> &tokens)
+// {
+//     for (size_t i = 0; i < tokens.size(); i++)
+//     {
+//         std::cout
+//             << tokenTypeToString(tokens[i].type)
+//             << " => "
+//             << tokens[i].value
+//             << std::endl;
+//     }
+//     return ;
+// }

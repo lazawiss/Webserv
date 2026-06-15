@@ -39,6 +39,11 @@ public:
     void parseConfigAutoIndex(AConfig &ref);
     void parseConfigClientMaxBodySize(AConfig &ref);
     void parseConfigErrorPage(AConfig &ref);
+
+    ServerConfig parseServer();
+    void parseConfigListen(ServerConfig &ref);
+    void parseConfigServerName(ServerConfig &ref);
+    void parseServerDirective(ServerConfig& server);
 };
 
 #endif

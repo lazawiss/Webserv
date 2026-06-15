@@ -26,7 +26,7 @@ public:
     ~ServerConfig();
 
     // ── Getters ───────────────────────────────────────────
-    const std::vector<std::string>&     getListen()          const;
+    const std::vector<std::string>&     getListen()         const;
     const std::vector<std::string>&     getServerNames()    const;
     const std::vector<LocationConfig>&  getLocations()      const;
 
