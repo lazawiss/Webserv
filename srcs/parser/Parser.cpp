@@ -2,6 +2,8 @@
 
 #include "../lexer/Lexer.hpp"
 
+// void print_token_chain(const std::vector <Token> &tokens);
+
 /*
 ** ============================================================================
 ** Parser - Constructors & Destructor
@@ -81,10 +83,10 @@ int parse_file(const std::string &str)
     allTokens.push_back(Token(End, ""));
     // print_token_chain(allTokens);
 
-    Parser parser(allTokens);
-    GlobalConfig config = parser.parse();
-
-
+    try
+    {
+        Parser parser(allTokens);
+        GlobalConfig config = parser.parse();
 
     /* ============================================================================ */
 
@@ -94,30 +96,32 @@ int parse_file(const std::string &str)
     std::cout << "autoindex:            " << config.getAutoindex()       << std::endl;
     // std::cout << "client_max_body_size: " << config.getClientMaxBodySize() << std::endl;
 
-    std::cout << "index: ";
+    std::cout << "index:                ";
     for (size_t i = 0; i < config.getIndex().size(); i++)
         std::cout << config.getIndex()[i] << " ";
     std::cout << std::endl;
 
-    std::cout << "error_pages: ";
+    std::cout << "error_pages:          ";
     const std::map<int, std::string>& ep = config.getErrorPages();
     for (std::map<int, std::string>::const_iterator it = ep.begin(); it != ep.end(); it++)
         std::cout << it->first << " -> " << it->second << " ";
     std::cout << std::endl;
 
     std::cout << "==========================" << std::endl;
-    std::cout << "nb servers: " << config.getServers().size() << std::endl;
+    std::cout << "[SERVER]" << std::endl;
+    std::cout << "nb servers:           " << config.getServers().size() << std::endl;
+    std::cout << std::endl;
 
     for (size_t i = 0; i < config.getServers().size(); i++)
     {
         std::cout << "--- server[" << i << "] ---" << std::endl;
 
-        std::cout << "listen: ";
+        std::cout << "listen:               ";
         for (size_t j = 0; j < config.getServers()[i].getListen().size(); j++)
             std::cout << config.getServers()[i].getListen()[j] << " ";
         std::cout << std::endl;
 
-        std::cout << "server_name: ";
+        std::cout << "server_name:          ";
         for (size_t j = 0; j < config.getServers()[i].getServerNames().size(); j++)
             std::cout << config.getServers()[i].getServerNames()[j] << " ";
         std::cout << std::endl;
@@ -126,12 +130,12 @@ int parse_file(const std::string &str)
         std::cout << "autoindex:            " << config.getServers()[i].getAutoindex()       << std::endl;
         // std::cout << "client_max_body_size: " << config.getServers()[i].getClientMaxBodySize() << std::endl;
 
-        std::cout << "index: ";
+        std::cout << "index:                ";
         for (size_t j = 0; j < config.getServers()[i].getIndex().size(); j++)
             std::cout << config.getServers()[i].getIndex()[j] << " ";
         std::cout << std::endl;
 
-        std::cout << "error_pages: ";
+        std::cout << "error_pages:          ";
         const std::map<int, std::string>& sep = config.getServers()[i].getErrorPages();
         for (std::map<int, std::string>::const_iterator it = sep.begin(); it != sep.end(); it++)
             std::cout << it->first << " -> " << it->second << " ";
@@ -139,6 +143,13 @@ int parse_file(const std::string &str)
     }
     std::cout << "==========================" << std::endl;
     /* ============================================================================ */
+
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
+
 
     return SUCCESS;
 }
@@ -222,7 +233,7 @@ LocationConfig Parser::parseLocation()
 
     while (current().type != RBracket && current().type != End)
     {
-        if (current().type == Word && current().value == "method")
+        if (current().type == Word && current().value == "methods")
             parseConfigMethod(location);
         else if (current().type == Word)
             parseLocationDirective(location);
@@ -388,8 +399,8 @@ void Parser::parseConfigMethod(LocationConfig &ref)
         throw ExpectedWord();
     while (current().type == Word)
     {
-        if (current().value != "GET" || current().value != "POST"
-            || current().value != "PUT" || current().value != "DELETE")
+        if (current().value != "GET" && current().value != "POST"
+            && current().value != "PUT" && current().value != "DELETE")
                 throw ExpectedCorrectMethod();
 
         ref.addMethod(next().value);
@@ -407,48 +418,48 @@ void Parser::parseConfigMethod(LocationConfig &ref)
 
 const char* Parser::NoServerDefined::what() const throw()
 {
-    return "At least one server block is required\n";
+    return "At least one server block is required";
 }
 
 const char* Parser::ExpectedWord::what() const throw()
 {
-    return "Unexpected token, should be a 'word' type\n";
+    return "Unexpected token, should be a 'word' type";
 }
 
 const char* Parser::ExpectedSemicolon::what() const throw()
 {
-    return "Unexpected token, should be a 'semi colon' type\n";
+    return "Unexpected token, should be a 'semi colon' type";
 }
 
 const char* Parser::ExpectedLBracket::what() const throw()
 {
-    return "Unexpected token, should be a 'left braket' type\n";
+    return "Unexpected token, should be a 'left braket' type";
 }
 
 const char* Parser::ExpectedRBracket::what() const throw()
 {
-    return "Unexpected token, should be a 'right braket' type\n";
+    return "Unexpected token, should be a 'right braket' type";
 }
 
 const char* Parser::UnknownDirective::what() const throw()
 {
     return "Error: unexpected token, unknown directive in global, "
-        "server or location context\n";
+        "server or location context";
 }
 
 const char* Parser::ExpectedCorrectMethod::what() const throw()
 {
-    return "Invalid HTTP method, should be 'GET', 'POST', 'PUT' or DELETE\n";
+    return "Invalid HTTP method, should be 'GET', 'POST', 'PUT' or 'DELETE'";
 }
 
 const char* Parser::ExpectedCorrectAutoIndex::what() const throw()
 {
-    return "Error: unexpected token, auto index can be 'on' or 'off'\n";
+    return "Error: unexpected token, auto index can be 'on' or 'off'";
 }
 
 /*
 ** ============================================================================
-** Print Tokens - To delete after!
+** Print Tokens - DEBUG!!
 ** ============================================================================
 */
 
