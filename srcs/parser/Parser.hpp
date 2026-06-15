@@ -44,6 +44,10 @@ public:
     void parseConfigListen(ServerConfig &ref);
     void parseConfigServerName(ServerConfig &ref);
     void parseServerDirective(ServerConfig& server);
+
+    LocationConfig parseLocation();
+    void parseConfigMethod(LocationConfig &ref);
+    void parseLocationDirective(LocationConfig &location);
 };
 
 #endif

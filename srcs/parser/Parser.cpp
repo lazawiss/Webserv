@@ -93,6 +93,8 @@ int parse_file(const std::string &str)
     Parser parser(allTokens);
     GlobalConfig config = parser.parse();
 
+
+
     /* ============================================================================ */
 
     std::cout << "==========================" << std::endl;
@@ -205,7 +207,7 @@ ServerConfig Parser::parseServer()
     {
         if (current().type == Word && current().value == "listen")              parseConfigListen(server);
         else if (current().type == Word && current().value == "server_name")    parseConfigServerName(server);
-        // else if (current().type == Word && current().value == "location")       // TO DO
+        else if (current().type == Word && current().value == "location")       server.addLocation(parseLocation());
         else if (current().type == Word)                                        parseServerDirective(server);
         else { /* TO DO: Throw an error */}
     }
@@ -218,6 +220,36 @@ ServerConfig Parser::parseServer()
     return server;
 }
 
+LocationConfig Parser::parseLocation()
+{
+    LocationConfig location;
+
+    consume();
+    
+    if (current().type != Word || current().value[0] != '/')
+    { /* TO DO: Throw an error */}
+
+    location.setPath(consume().value);
+
+    if (current().type != LBracket)
+    { /* TO DO: Throw an error */}
+    consume();
+
+    while (current().type != RBracket && current().type != End)
+    {
+        if (current().type == Word && current().value == "method")              parseConfigMethod(location);
+        else if (current().type == Word)                                        parseLocationDirective(location);
+        else { /* TO DO: Throw an error */}
+    }
+    
+    if (current().type != RBracket)
+    { /* TO DO: Throw an error */}
+
+    consume();
+
+    return location;
+}
+
 void Parser::parseServerDirective(ServerConfig& server)
 {
     if (current().value == "root")                      parseConfigRoot(server);
@@ -225,6 +257,16 @@ void Parser::parseServerDirective(ServerConfig& server)
     else if (current().value == "error_page")           parseConfigErrorPage(server);
     else if (current().value == "autoindex")            parseConfigAutoIndex(server);
     else if (current().value == "client_max_body_size") parseConfigClientMaxBodySize(server);
+    else                                                { /* TO DO: Throw an error */}
+}
+
+void Parser::parseLocationDirective(LocationConfig &location)
+{
+    if (current().value == "root")                      parseConfigRoot(location);
+    else if (current().value == "index")                parseConfigIndex(location);
+    else if (current().value == "error_page")           parseConfigErrorPage(location);
+    else if (current().value == "autoindex")            parseConfigAutoIndex(location);
+    else if (current().value == "client_max_body_size") parseConfigClientMaxBodySize(location);
     else                                                { /* TO DO: Throw an error */}
 }
 
@@ -323,6 +365,25 @@ void Parser::parseConfigServerName(ServerConfig &ref)
     consume();
 }
 
+// N.B: check "location ~ \.(gif|jpg|png)$"
+void Parser::parseConfigMethod(LocationConfig &ref)
+{
+    consume();
+
+    if (current().type != Word)
+    { /* TO DO: Throw an error */}
+
+    while (current().type == Word && (current().value == "GET"
+            || current().value == "POST" || current().value == "PUT"
+            || current().value == "DELETE"))
+    {
+        ref.addMethod(consume().value);
+    }
+
+    if (current().type != Semicolon)
+    { /* TO DO: Throw an error */}
+    consume();
+}
 
 
 
