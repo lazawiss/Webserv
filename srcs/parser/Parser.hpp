@@ -9,13 +9,11 @@
 # include <string>
 
 class Parser {
-    // lire vector
-    // est-ce qu'on est un directive ou bien un bloc?
-    // est-ce que j'ai fini ce contexte? 
+// lire vector
+// est-ce qu'on est un directive ou bien un bloc?
+// est-ce que j'ai fini ce contexte?
 public:
-    Parser(const std::vector<Token> &list,
-    bool err);
-
+    Parser(const std::vector<Token> &list, bool err);
     Parser& operator=(Parser const &existing);
     Parser (Parser const &existing);
     ~Parser();
@@ -26,20 +24,19 @@ private:
 };
 
 class Config_Abstract { 
-    // all three, general server and location are all the same
-    // root 
-    // index
+// all three, general server and location are all the same
+// root 
+// index
  };
 class Config_General : public Config_Abstract {};
 class Config_Server : public Config_Abstract {
- //nombre de servers mais si on fait abstract on pourrait pas compter depuis base
- //config_location 
-
- // parser donne "server block" et ici on parse les infos relative aux serveurs
- // until the crochet right to close server block 
+//nombre de servers mais si on fait abstract on pourrait pas compter depuis base
+//config_location 
+// parser donne "server block" et ici on parse les infos relative aux serveurs
+// until the crochet right to close server block 
 };
 class Config_Location : public Config_Abstract {
- //nombre de locations
+//nombre de locations
 
 };
 
