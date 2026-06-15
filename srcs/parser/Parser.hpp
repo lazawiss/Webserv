@@ -6,6 +6,7 @@
 # include "../errors/Errors.hpp"
 # include "../lexer/Lexer.hpp"
 
+# include <exception>
 # include <fstream>
 # include <iostream>
 # include <string>
@@ -27,9 +28,8 @@ public:
     Parser(const std::vector<Token> &tokens);
     ~Parser();
 
-    const Token& current()  const;
-    const Token& peek()     const;
-    const Token& consume();
+    const Token& current()      const;
+    const Token& next();
 
     GlobalConfig parse();
 
@@ -48,6 +48,55 @@ public:
     LocationConfig parseLocation();
     void parseConfigMethod(LocationConfig &ref);
     void parseLocationDirective(LocationConfig &location);
+
+
+    class NoServerDefined : public std::exception
+	{
+		public:
+			const char* what() const throw();
+	};
+
+	class ExpectedWord : public std::exception
+	{
+		public:
+			const char* what() const throw();
+	};
+
+    class ExpectedSemicolon : public std::exception
+	{
+		public:
+			const char* what() const throw();
+	};
+
+    class ExpectedLBracket : public std::exception
+	{
+		public:
+			const char* what() const throw();
+	};
+
+    class ExpectedRBracket : public std::exception
+	{
+		public:
+			const char* what() const throw();
+	};
+
+    class UnknownDirective : public std::exception
+	{
+		public:
+			const char* what() const throw();
+	};
+
+    class ExpectedCorrectMethod : public std::exception
+	{
+		public:
+			const char* what() const throw();
+	};
+
+    class ExpectedCorrectAutoIndex : public std::exception
+	{
+		public:
+			const char* what() const throw();
+	};
 };
 
 #endif

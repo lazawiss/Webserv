@@ -28,26 +28,17 @@ const Token& Parser::current() const
 }
 
 /*
-** Returns the next token without moving forward in the token chain.
-** Used to look ahead and validate what comes after the current token.
-*/
-const Token& Parser::peek() const
-{
-    return _tokens[_index + 1];
-}
-
-/*
 ** Returns the current token and moves forward by one in the token chain.
-** Used to consume a token once we know it is valid.
+** Used to next a token once we know it is valid.
 */
-const Token& Parser::consume()
+const Token& Parser::next()
 {
     return _tokens[_index++];
 }
 
 /*
 ** ============================================================================
-** 
+** Parser - Parse file
 ** ============================================================================
 */
 
@@ -154,7 +145,7 @@ int parse_file(const std::string &str)
 
 /*
 ** ============================================================================
-** 
+** Parser – Member functions
 ** ============================================================================
 */
 
@@ -174,48 +165,42 @@ GlobalConfig Parser::parse()
         else if (current().type == Word)
             parseConfig(config);
         else
-        { /* TO DO: Throw an error */}
+            throw ExpectedWord();
     }
 
     if (config.getServers().empty())
-    { /* TO DO: Throw an error : At least one server block is required" */ }
+        throw NoServerDefined();
 
     return config;
-}
-
-void Parser::parseConfig(GlobalConfig &config)
-{
-    if (current().value == "root")                      parseConfigRoot(config);
-    else if (current().value == "index")                parseConfigIndex(config);
-    else if (current().value == "error_page")           parseConfigErrorPage(config);
-    else if (current().value == "autoindex")            parseConfigAutoIndex(config);
-    else if (current().value == "client_max_body_size") parseConfigClientMaxBodySize(config);
-    else                                                { /* TO DO: Throw an error */}
 }
 
 ServerConfig Parser::parseServer()
 {
     ServerConfig server;
 
-    consume();
-
+    next();
     if (current().type != LBracket)
-    { /* TO DO: Throw an error */}
-    consume();
+        throw ExpectedLBracket();
+    next();
 
     while (current().type != RBracket && current().type != End)
     {
-        if (current().type == Word && current().value == "listen")              parseConfigListen(server);
-        else if (current().type == Word && current().value == "server_name")    parseConfigServerName(server);
-        else if (current().type == Word && current().value == "location")       server.addLocation(parseLocation());
-        else if (current().type == Word)                                        parseServerDirective(server);
-        else { /* TO DO: Throw an error */}
+        if (current().type == Word && current().value == "listen")
+            parseConfigListen(server);
+        else if (current().type == Word && current().value == "server_name")
+            parseConfigServerName(server);
+        else if (current().type == Word && current().value == "location")
+            server.addLocation(parseLocation());
+        else if (current().type == Word)
+            parseServerDirective(server);
+        else
+            throw ExpectedWord();
     }
     
     if (current().type != RBracket)
-    { /* TO DO: Throw an error */}
+        throw ExpectedRBracket();
 
-    consume();
+    next();
 
     return server;
 }
@@ -224,171 +209,242 @@ LocationConfig Parser::parseLocation()
 {
     LocationConfig location;
 
-    consume();
+    next();
     
     if (current().type != Word || current().value[0] != '/')
-    { /* TO DO: Throw an error */}
+        throw ExpectedWord();
 
-    location.setPath(consume().value);
+    location.setPath(next().value);
 
     if (current().type != LBracket)
-    { /* TO DO: Throw an error */}
-    consume();
+        throw ExpectedLBracket();
+    next();
 
     while (current().type != RBracket && current().type != End)
     {
-        if (current().type == Word && current().value == "method")              parseConfigMethod(location);
-        else if (current().type == Word)                                        parseLocationDirective(location);
-        else { /* TO DO: Throw an error */}
+        if (current().type == Word && current().value == "method")
+            parseConfigMethod(location);
+        else if (current().type == Word)
+            parseLocationDirective(location);
+        else
+            throw ExpectedWord();
     }
     
     if (current().type != RBracket)
-    { /* TO DO: Throw an error */}
+        throw ExpectedRBracket();
 
-    consume();
+    next();
 
     return location;
 }
 
+void Parser::parseConfig(GlobalConfig &config)
+{
+    if (current().value == "root")
+        parseConfigRoot(config);
+    else if (current().value == "index")
+        parseConfigIndex(config);
+    else if (current().value == "error_page")
+        parseConfigErrorPage(config);
+    else if (current().value == "autoindex")
+        parseConfigAutoIndex(config);
+    else if (current().value == "client_max_body_size")
+        parseConfigClientMaxBodySize(config);
+    else
+        throw UnknownDirective();
+}
+
 void Parser::parseServerDirective(ServerConfig& server)
 {
-    if (current().value == "root")                      parseConfigRoot(server);
-    else if (current().value == "index")                parseConfigIndex(server);
-    else if (current().value == "error_page")           parseConfigErrorPage(server);
-    else if (current().value == "autoindex")            parseConfigAutoIndex(server);
-    else if (current().value == "client_max_body_size") parseConfigClientMaxBodySize(server);
-    else                                                { /* TO DO: Throw an error */}
+    if (current().value == "root")
+        parseConfigRoot(server);
+    else if (current().value == "index")
+        parseConfigIndex(server);
+    else if (current().value == "error_page")
+        parseConfigErrorPage(server);
+    else if (current().value == "autoindex")
+        parseConfigAutoIndex(server);
+    else if (current().value == "client_max_body_size")
+        parseConfigClientMaxBodySize(server);
+    else
+        throw UnknownDirective();
 }
 
 void Parser::parseLocationDirective(LocationConfig &location)
 {
-    if (current().value == "root")                      parseConfigRoot(location);
-    else if (current().value == "index")                parseConfigIndex(location);
-    else if (current().value == "error_page")           parseConfigErrorPage(location);
-    else if (current().value == "autoindex")            parseConfigAutoIndex(location);
-    else if (current().value == "client_max_body_size") parseConfigClientMaxBodySize(location);
-    else                                                { /* TO DO: Throw an error */}
+    if (current().value == "root")
+        parseConfigRoot(location);
+    else if (current().value == "index")
+        parseConfigIndex(location);
+    else if (current().value == "error_page")
+        parseConfigErrorPage(location);
+    else if (current().value == "autoindex")
+        parseConfigAutoIndex(location);
+    else if (current().value == "client_max_body_size")
+        parseConfigClientMaxBodySize(location);
+    else
+        throw UnknownDirective();
 }
 
 void Parser::parseConfigRoot(AConfig &ref)
 {
-    consume();
+    next();
     if (current().type != Word)
-    { /* TO DO: Throw an error */}
-    ref.setRoot(consume().value);
+        throw ExpectedWord();
+    ref.setRoot(next().value);
     if (current().type != Semicolon)
-    { /* TO DO: Throw an error */}
-    consume();
+        throw ExpectedSemicolon();
+    next();
 }
 
 void Parser::parseConfigIndex(AConfig &ref)
 {
-    consume();
+    next();
     if (current().type != Word)
-    { /* TO DO: Throw an error */}
+        throw ExpectedWord();
     while (current().type == Word)
     {
-        ref.addIndex(consume().value);
+        ref.addIndex(next().value);
     }
     if (current().type != Semicolon)
-    { /* TO DO: Throw an error */}
-    consume();
+        throw ExpectedSemicolon();
+    next();
 }
 
 void Parser::parseConfigAutoIndex(AConfig &ref)
 {
-    consume();
+    next();
     if (current().type != Word)
-    { /* TO DO: Throw an error */}
+        throw ExpectedWord();
     if (current().value != "on" && current().value != "off")
-    { /* TO DO: Throw an error */}
-    ref.setAutoindex(consume().value == "on" ? true : false);
+        throw ExpectedCorrectAutoIndex();
+    ref.setAutoindex(next().value == "on" ? true : false);
     if (current().type != Semicolon)
-    { /* TO DO: Throw an error */}
-    consume();
+        throw ExpectedSemicolon();
+    next();
 }
 
 void Parser::parseConfigClientMaxBodySize(AConfig &ref)
 {
     (void)ref;
 
-    consume();
+    next();
     if (current().type != Word)
-    { /* TO DO: Throw an error */}
+        throw ExpectedWord();
     // TO DO (later): create a parseSize function/method
     if (current().type != Semicolon)
-    { /* TO DO: Throw an error */}
-    consume();
+        throw ExpectedSemicolon();
+    next();
 }
 
 void Parser::parseConfigErrorPage(AConfig &ref)
 {
-    consume();
+    next();
     if (current().type != Word)
-    { /* TO DO: Throw an error */}
+        throw ExpectedWord();
     
-    int code = std::atoi(consume().value.c_str());
+    int code = std::atoi(next().value.c_str());
 
     if (current().type != Word)
-    { /* TO DO: Throw an error */}
+        throw ExpectedWord();
 
-    std::string uri = consume().value;
+    std::string uri = next().value;
     ref.addErrorPage(code, uri);
 
     if (current().type != Semicolon)
-    { /* TO DO: Throw an error */}
-    consume();
+        throw ExpectedSemicolon();
+    next();
 }
 
 void Parser::parseConfigListen(ServerConfig &ref)
 {
-    consume();
+    next();
     if (current().type != Word)
-    { /* TO DO: Throw an error */}
-    ref.addListen(consume().value);
+        throw ExpectedWord();
+    ref.addListen(next().value);
     if (current().type != Semicolon)
-    { /* TO DO: Throw an error */}
-    consume();
+        throw ExpectedSemicolon();
+    next();
 }
 
 void Parser::parseConfigServerName(ServerConfig &ref)
 {
-    consume();
+    next();
     if (current().type != Word)
-    { /* TO DO: Throw an error */}
+        throw ExpectedWord();
     while (current().type == Word)
     {
-        ref.addServerName(consume().value);
+        ref.addServerName(next().value);
     }
     if (current().type != Semicolon)
-    { /* TO DO: Throw an error */}
-    consume();
+        throw ExpectedSemicolon();
+    next();
 }
 
-// N.B: check "location ~ \.(gif|jpg|png)$"
 void Parser::parseConfigMethod(LocationConfig &ref)
 {
-    consume();
-
+    next();
     if (current().type != Word)
-    { /* TO DO: Throw an error */}
-
-    while (current().type == Word && (current().value == "GET"
-            || current().value == "POST" || current().value == "PUT"
-            || current().value == "DELETE"))
+        throw ExpectedWord();
+    while (current().type == Word)
     {
-        ref.addMethod(consume().value);
-    }
+        if (current().value != "GET" || current().value != "POST"
+            || current().value != "PUT" || current().value != "DELETE")
+                throw ExpectedCorrectMethod();
 
+        ref.addMethod(next().value);
+    }
     if (current().type != Semicolon)
-    { /* TO DO: Throw an error */}
-    consume();
+        throw ExpectedSemicolon();
+    next();
 }
 
+/*
+** ============================================================================
+** Parser – handle error with try/catch
+** ============================================================================
+*/
 
+const char* Parser::NoServerDefined::what() const throw()
+{
+    return "At least one server block is required\n";
+}
 
+const char* Parser::ExpectedWord::what() const throw()
+{
+    return "Unexpected token, should be a 'word' type\n";
+}
 
+const char* Parser::ExpectedSemicolon::what() const throw()
+{
+    return "Unexpected token, should be a 'semi colon' type\n";
+}
 
+const char* Parser::ExpectedLBracket::what() const throw()
+{
+    return "Unexpected token, should be a 'left braket' type\n";
+}
+
+const char* Parser::ExpectedRBracket::what() const throw()
+{
+    return "Unexpected token, should be a 'right braket' type\n";
+}
+
+const char* Parser::UnknownDirective::what() const throw()
+{
+    return "Error: unexpected token, unknown directive in global, "
+        "server or location context\n";
+}
+
+const char* Parser::ExpectedCorrectMethod::what() const throw()
+{
+    return "Invalid HTTP method, should be 'GET', 'POST', 'PUT' or DELETE\n";
+}
+
+const char* Parser::ExpectedCorrectAutoIndex::what() const throw()
+{
+    return "Error: unexpected token, auto index can be 'on' or 'off'\n";
+}
 
 /*
 ** ============================================================================
