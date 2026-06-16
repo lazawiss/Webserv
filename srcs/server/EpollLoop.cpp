@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/11 20:13:01 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/16 12:07:45 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -129,37 +129,37 @@ bool    EpollLoop::do_use_fd(  int fd, ListenerManager const & listen ){
     std::string header = std::string (requestHandler.getHeader());
     std::string content = std::string(requestHandler.getBuffer().c_str(), requestHandler.getNReadIndex());
     
-    // ResponseSender  responseSender( header, content, fd);
+    ResponseSender  responseSender( header, content, fd);
     
     
-    // if (responseSender.sendResponse() == false){
-        //     std::cerr << "Error sending response: " << strerror(errno) << std::endl;
-        //     close(fd);
-        //     return false;
-        // } 
-        
-    if (send(fd, header.c_str(), header.size(), 0) < 0){
-        std::cerr << "Error sending response: " << strerror(errno) << std::endl;
-        close(fd);
-        return false;
-    }
-    
-    ssize_t totalSent = 0;
-        
-    while (totalSent < requestHandler.getNReadIndex()){
-        
-        // ssize_t sent = send(fd, content.c_str(), content.size(), 0) < 0;
-        ssize_t sent = send(fd, content.c_str() + totalSent, content.size() - totalSent, 0) < 0;
-        
-        
-        if (sent == -1){
+    if (responseSender.sendResponse() == false){
             std::cerr << "Error sending response: " << strerror(errno) << std::endl;
             close(fd);
             return false;
-        }
+        } 
+        
+    // if (send(fd, header.c_str(), header.size(), 0) < 0){
+    //     std::cerr << "Error sending response: " << strerror(errno) << std::endl;
+    //     close(fd);
+    //     return false;
+    // }
+    
+    // ssize_t totalSent = 0;
+        
+    // while (totalSent < requestHandler.getNReadIndex()){
+        
+    //     // ssize_t sent = send(fd, content.c_str(), content.size(), 0) < 0;
+    //     ssize_t sent = send(fd, content.c_str() + totalSent, content.size() - totalSent, 0) < 0;
+        
+        
+    //     if (sent == -1){
+    //         std::cerr << "Error sending response: " << strerror(errno) << std::endl;
+    //         close(fd);
+    //         return false;
+    //     }
             
-        totalSent += sent;
-    }
+    //     totalSent += sent;
+    // }
     
     close(fd);
     return true;

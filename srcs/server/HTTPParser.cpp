@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/11 16:50:17 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/16 12:20:03 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -140,7 +140,6 @@ bool    HTTPParser::findMethods(){
             found++;
            
             if (found->value == "/"){
-                
                 
                 _code = "index";
                 _type = "text/html";
