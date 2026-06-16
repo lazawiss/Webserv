@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/16 12:20:03 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/16 15:51:14 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,6 +57,15 @@ std::string HTTPParser::getType() const{
 ** Parser HTTP
 ** ============================================================================
 */
+
+// CHECK REQUEST:
+// -SIZE
+// -METHOD
+// -HOST
+
+bool    HTTPParser::checkSize(){
+    
+}
 
 // Check if the entry Host: correspond to the config file info
 // or if it exist at all

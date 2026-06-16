@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/16 12:07:45 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/16 14:14:03 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,6 +75,9 @@ int EpollLoop::setnonblocking( int fd ){
 // parse request
 // answer : send response
 // CGI >> fork 
+// handle fds : no closing fds in other classes only in EpollLoop 
+// TO ENSURE NO HANGING FDS : if boolean == false > error caught fd closed in EPollLoop
+// then throw in Server >> quit program
 bool    EpollLoop::do_use_fd(  int fd, ListenerManager const & listen ){
     
     char    buf[BUF_SIZE];
