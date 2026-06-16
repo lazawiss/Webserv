@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/11 20:02:03 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/16 14:24:40 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -78,6 +78,7 @@ int RequestHandler::getNReadIndex() const{
 ** ============================================================================
 */
 
+// build path toward file
 std::string RequestHandler::getFile( std::string code ){
     
     std::string file = _root;
@@ -88,7 +89,9 @@ std::string RequestHandler::getFile( std::string code ){
  
     return file;
 }
-
+ 
+// construct message to send back to client 
+//  header : code + Content-Type
 std::string RequestHandler::buildAnswerHeader( std::string code, std::string type ){
     
     //cherche dans tableau >> code + reason
@@ -165,7 +168,8 @@ std::string RequestHandler::buildAnswerHeader( std::string code, std::string typ
     return _header;
 }
 
-
+// open file + stock it in buffer to send back to client
+// content = text
 bool    RequestHandler::answerFile( std::string file ){
 
     int indexfd = open(file.c_str(), O_RDONLY);
@@ -184,6 +188,8 @@ bool    RequestHandler::answerFile( std::string file ){
     
 }
 
+// open file + stock it in buffer to send back to client
+// content = image
 bool    RequestHandler::answerFileImage(){
 
     std::ifstream source("data/images/cat.png",std::ios::binary);
@@ -235,16 +241,23 @@ bool    RequestHandler::answerFileImage(){
 
     return true;
 }
-
+ 
+// main function : 
+// instanciate HTTPParser 
+// checks if request valid
+// parse request
+// find proper file to send to client
+// build answer depending of content to sent
 bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
     
     HTTPParser HTTPParser(_listTokens);
 
-     
+    //  check request
     if (HTTPParser.checkHost(listen) == false){
         std::cerr << "Error Host not found: " << strerror(errno) << std::endl;
     }
     
+    // find method 
     else if (HTTPParser.findMethods() == false){
         std::cerr << "Error Method not implemented: " << strerror(errno) << std::endl;
     }
@@ -253,18 +266,19 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         
         std::string file = getFile(HTTPParser.getCode()); 
         if (answerFile(file) == false)
-        return false;
+            return false;
     }
     if (HTTPParser.getType() == "image/jpeg"){
         
         if (answerFileImage() == false)
-        return false;
+            return false;
     }
     if (HTTPParser.getType() == "image/png"){
         
         if (answerFileImage() == false)
-        return false;
+            return false;
     }
+    
     buildAnswerHeader(HTTPParser.getCode(), HTTPParser.getType());
 
     
