@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/09 19:26:04 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/16 13:55:03 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,7 @@
 #include <limits>
 
 
-#define BUF_SIZE 8000
+#define BUF_SIZE 80000
 
 
 class HTTPParser {

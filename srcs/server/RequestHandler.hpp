@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:00:06 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/11 17:13:19 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/16 13:54:52 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,7 +41,7 @@
 #include <limits>
 
 
-#define BUF_SIZE 8000
+#define BUF_SIZE 80000
 
 
 class RequestHandler {

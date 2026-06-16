@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/11 20:02:03 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/16 14:06:49 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -188,17 +188,17 @@ bool    RequestHandler::answerFileImage(){
 
     std::ifstream source("data/images/cat.png",std::ios::binary);
 
-    // if (source.is_open() == false)
-    // {
-    //     std::cerr << "Error: file doesn't exist" << std::endl;
-    //     return false;
-    // }
+    if (source.is_open() == false)
+    {
+        std::cerr << "Error: file doesn't exist" << std::endl;
+        return false;
+    }
 
-    // if (source.peek() == std::ifstream::traits_type::eof())
-    // {
-    //     std::cerr << "Error: file is empty" << std::endl;
-    //     return false;
-    // }
+    if (source.peek() == std::ifstream::traits_type::eof())
+    {
+        std::cerr << "Error: file is empty" << std::endl;
+        return false;
+    }
 
     // source.seekg(0, std::ios::end);
     size_t size = source.tellg();
@@ -206,15 +206,17 @@ bool    RequestHandler::answerFileImage(){
     // char file_buffer[size];
     // source.read(file_buffer, size);
     
-    // std::stringstream ss;
-    // ss << size;
-    // _size = ss.str();
+    std::cout << "Size: " << size << std::endl;
+
+    std::stringstream ss;
+    ss << size;
+    _size = ss.str();
     
-    // std::cout << "Size: " << _size << std::endl;
-    // if (size > BUF_SIZE){
-    //     std::cerr << "Image size is too big." << std::endl;
-    //     return false;
-    // }
+    std::cout << "Size: " << _size << std::endl;
+    if (size > BUF_SIZE){
+        std::cerr << "Image size is too big." << std::endl;
+        return false;
+    }
 
     int indexfd = open("data/images/cat.png", O_RDONLY);
     if (indexfd == -1){
@@ -222,7 +224,7 @@ bool    RequestHandler::answerFileImage(){
         close(indexfd);
         return false;
     }
-    this->_n_read_index = read(indexfd, _buffer, size);
+    _n_read_index = read(indexfd, _buffer, size);
     close(indexfd);
     std::cout << "n_read_index:" << _n_read_index << std::endl;
     if (_n_read_index == -1)
