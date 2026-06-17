@@ -40,6 +40,7 @@ public:
     void parseConfigClientMaxBodySize(AConfig &ref);
     void parseConfigErrorPage(AConfig &ref);
 	size_t parseSize(const std::string &word) const;
+	size_t parseCode(const std::string &word) const;
 
     ServerConfig parseServer();
     void parseConfigListen(ServerConfig &ref);
@@ -106,6 +107,12 @@ public:
 	};
 
 	class ExpectedCorrectUnit : public std::exception
+	{
+		public:
+			const char* what() const throw();
+	};
+
+	class ExpectedCorrectCode: public std::exception
 	{
 		public:
 			const char* what() const throw();

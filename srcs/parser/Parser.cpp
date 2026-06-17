@@ -412,13 +412,30 @@ size_t Parser::parseSize(const std::string &word) const
     throw ExpectedCorrectUnit();
 }
 
+size_t Parser::parseCode(const std::string &word) const
+{
+    if (word.size() != 3)
+        throw ExpectedCorrectCode();
+
+    for (size_t i = 0; i < word.size(); i++)
+    {
+        if (!std::isdigit(word[i]))
+            throw ExpectedCorrectCode();
+    }
+
+    return std::atoi(word.c_str());
+}
+
 void Parser::parseConfigErrorPage(AConfig &ref)
 {
     next();
     if (current().type != Word)
         throw ExpectedWord();
-    
-    int code = std::atoi(next().value.c_str());
+
+    int code = parseCode(next().value);
+
+    if (code < 400 || code > 599)
+        throw ExpectedCorrectCode();
 
     if (current().type != Word)
         throw ExpectedWord();
@@ -530,7 +547,13 @@ const char* Parser::ExpectedCorrectSize::what() const throw()
 const char* Parser::ExpectedCorrectUnit::what() const throw()
 {
     return "Invalid size unit: expected 'K', 'M' or 'G' after the number "
-           "(e.g. '10M', '512K', '1G')";
+        "(e.g. '10M', '512K', '1G')";
+}
+
+const char* Parser::ExpectedCorrectCode::what() const throw()
+{
+    return "Invalid HTTP error code: expected a value between 400 and "
+        "599 (e.g. '404', '500')";
 }
 
 /*
