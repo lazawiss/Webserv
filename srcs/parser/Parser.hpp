@@ -33,7 +33,7 @@ public:
 
     GlobalConfig parse();
 
-    void parseConfig(GlobalConfig &config);
+    void parseInheritableDirective(AConfig &ref);
     void parseConfigRoot(AConfig &ref);
     void parseConfigIndex(AConfig &ref);
     void parseConfigAutoIndex(AConfig &ref);
@@ -45,11 +45,9 @@ public:
     ServerConfig parseServer();
     void parseConfigListen(ServerConfig &ref);
     void parseConfigServerName(ServerConfig &ref);
-    void parseServerDirective(ServerConfig& server);
 
     LocationConfig parseLocation();
     void parseConfigMethod(LocationConfig &ref);
-    void parseLocationDirective(LocationConfig &location);
 
 
     class NoServerDefined : public std::exception

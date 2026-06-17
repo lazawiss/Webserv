@@ -210,7 +210,7 @@ GlobalConfig Parser::parse()
         if (current().type == Word && current().value == "server")
             config.addServer(parseServer());
         else if (current().type == Word)
-            parseConfig(config);
+            parseInheritableDirective(config);
         else
             throw ExpectedWord();
     }
@@ -239,7 +239,7 @@ ServerConfig Parser::parseServer()
         else if (current().type == Word && current().value == "location")
             server.addLocation(parseLocation());
         else if (current().type == Word)
-            parseServerDirective(server);
+            parseInheritableDirective(server);
         else
             throw ExpectedWord();
     }
@@ -272,7 +272,7 @@ LocationConfig Parser::parseLocation()
         if (current().type == Word && current().value == "methods")
             parseConfigMethod(location);
         else if (current().type == Word)
-            parseLocationDirective(location);
+            parseInheritableDirective(location);
         else
             throw ExpectedWord();
     }
@@ -285,50 +285,18 @@ LocationConfig Parser::parseLocation()
     return location;
 }
 
-void Parser::parseConfig(GlobalConfig &config)
+void Parser::parseInheritableDirective(AConfig &ref)
 {
     if (current().value == "root")
-        parseConfigRoot(config);
+        parseConfigRoot(ref);
     else if (current().value == "index")
-        parseConfigIndex(config);
+        parseConfigIndex(ref);
     else if (current().value == "error_page")
-        parseConfigErrorPage(config);
+        parseConfigErrorPage(ref);
     else if (current().value == "autoindex")
-        parseConfigAutoIndex(config);
+        parseConfigAutoIndex(ref);
     else if (current().value == "client_max_body_size")
-        parseConfigClientMaxBodySize(config);
-    else
-        throw UnknownDirective();
-}
-
-void Parser::parseServerDirective(ServerConfig& server)
-{
-    if (current().value == "root")
-        parseConfigRoot(server);
-    else if (current().value == "index")
-        parseConfigIndex(server);
-    else if (current().value == "error_page")
-        parseConfigErrorPage(server);
-    else if (current().value == "autoindex")
-        parseConfigAutoIndex(server);
-    else if (current().value == "client_max_body_size")
-        parseConfigClientMaxBodySize(server);
-    else
-        throw UnknownDirective();
-}
-
-void Parser::parseLocationDirective(LocationConfig &location)
-{
-    if (current().value == "root")
-        parseConfigRoot(location);
-    else if (current().value == "index")
-        parseConfigIndex(location);
-    else if (current().value == "error_page")
-        parseConfigErrorPage(location);
-    else if (current().value == "autoindex")
-        parseConfigAutoIndex(location);
-    else if (current().value == "client_max_body_size")
-        parseConfigClientMaxBodySize(location);
+        parseConfigClientMaxBodySize(ref);
     else
         throw UnknownDirective();
 }
