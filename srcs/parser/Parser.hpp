@@ -39,6 +39,7 @@ public:
     void parseConfigAutoIndex(AConfig &ref);
     void parseConfigClientMaxBodySize(AConfig &ref);
     void parseConfigErrorPage(AConfig &ref);
+	size_t parseSize(const std::string &word) const;
 
     ServerConfig parseServer();
     void parseConfigListen(ServerConfig &ref);
@@ -93,6 +94,18 @@ public:
 	};
 
     class ExpectedCorrectAutoIndex : public std::exception
+	{
+		public:
+			const char* what() const throw();
+	};
+
+	class ExpectedCorrectSize : public std::exception
+	{
+		public:
+			const char* what() const throw();
+	};
+
+	class ExpectedCorrectUnit : public std::exception
 	{
 		public:
 			const char* what() const throw();

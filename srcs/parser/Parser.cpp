@@ -97,7 +97,7 @@ int parse_file(const std::string &str)
     std::cout << std::endl;
     std::cout << "root:                 " << config.getRoot()            << std::endl;
     std::cout << "autoindex:            " << config.getAutoindex()       << std::endl;
-    // std::cout << "client_max_body_size: " << config.getClientMaxBodySize() << std::endl;
+    std::cout << "client_max_body_size: " << config.getClientMaxBodySize() << std::endl;
 
     std::cout << "index:                ";
     for (size_t i = 0; i < config.getIndex().size(); i++)
@@ -133,7 +133,7 @@ int parse_file(const std::string &str)
 
         std::cout << "root:                 " << config.getServers()[i].getRoot()            << std::endl;
         std::cout << "autoindex:            " << config.getServers()[i].getAutoindex()       << std::endl;
-        // std::cout << "client_max_body_size: " << config.getServers()[i].getClientMaxBodySize() << std::endl;
+        std::cout << "client_max_body_size: " << config.getServers()[i].getClientMaxBodySize() << std::endl;
 
         std::cout << "index:                ";
         for (size_t j = 0; j < config.getServers()[i].getIndex().size(); j++)
@@ -374,14 +374,42 @@ void Parser::parseConfigAutoIndex(AConfig &ref)
 void Parser::parseConfigClientMaxBodySize(AConfig &ref)
 {
     (void)ref;
-
     next();
     if (current().type != Word)
         throw ExpectedWord();
-    // TO DO (later): create a parseSize function/method
+    ref.setClientMaxBodySize(parseSize(next().value));
     if (current().type != Semicolon)
         throw ExpectedSemicolon();
     next();
+}
+
+size_t Parser::parseSize(const std::string &word) const
+{
+    size_t i = 0;
+
+    while (i < word.size() && std::isdigit(word[i]))
+        i++;
+    
+    if (i == 0)
+        throw ExpectedCorrectSize();
+
+    size_t value = std::atoi(word.c_str());
+    
+    if (i == word.size())
+        return value;
+    
+    if (i != word.size() - 1)
+        throw ExpectedCorrectSize();
+
+    char unit = word[i];
+    if (unit == 'K' || unit == 'k')
+        return value * 1024;
+    if (unit == 'M' || unit == 'm')
+        return value * 1024 * 1024;
+    if (unit == 'G' || unit == 'g')
+        return value * 1024 * 1024 * 1024;
+
+    throw ExpectedCorrectUnit();
 }
 
 void Parser::parseConfigErrorPage(AConfig &ref)
@@ -479,7 +507,7 @@ const char* Parser::ExpectedRBracket::what() const throw()
 
 const char* Parser::UnknownDirective::what() const throw()
 {
-    return "Error: unexpected token, unknown directive in global, "
+    return "Unexpected token, unknown directive in global, "
         "server or location context";
 }
 
@@ -490,7 +518,19 @@ const char* Parser::ExpectedCorrectMethod::what() const throw()
 
 const char* Parser::ExpectedCorrectAutoIndex::what() const throw()
 {
-    return "Error: unexpected token, auto index can be 'on' or 'off'";
+    return "Unexpected token, auto index can be 'on' or 'off'";
+}
+
+const char* Parser::ExpectedCorrectSize::what() const throw()
+{
+    return "Invalid size value: expected at least one digit (e.g. '10M', "
+        "'512K', '1G', or '1024')";
+}
+
+const char* Parser::ExpectedCorrectUnit::what() const throw()
+{
+    return "Invalid size unit: expected 'K', 'M' or 'G' after the number "
+           "(e.g. '10M', '512K', '1G')";
 }
 
 /*
