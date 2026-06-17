@@ -25,7 +25,7 @@ public:
     AConfig();
     AConfig(const AConfig &ref);
     AConfig& operator=(const AConfig &ref);
-    virtual ~AConfig();
+    virtual ~AConfig() = 0;
 
     // ── Getters ─────────────────────────────────────────────────────────────
     const std::string&                    getRoot()              const;

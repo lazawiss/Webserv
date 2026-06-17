@@ -24,32 +24,40 @@ private:
     const std::vector<Token>&   _tokens;
     size_t                      _index;
 
+	// ── Orthodox canonical form (no copy) ───────────────────────────────────
+	// Copy constructor and assignment are declared private and never
+	// defined, since Parser holds a reference that cannot be reassigned.
+	Parser(const Parser &ref);
+    Parser& operator=(const Parser &ref);
+
 public:
+    // ── Orthodox canonical form ─────────────────────────────────────────────
     Parser(const std::vector<Token> &tokens);
     ~Parser();
 
+	// ── Recursive descent parser ────────────────────────────────────────────
+    GlobalConfig	parse();
+    ServerConfig	parseServer();
+    LocationConfig	parseLocation();
+
+	// ── Token navigation methods ─────────────────────────────────────────────
     const Token& current()      const;
     const Token& next();
 
-    GlobalConfig parse();
+	// ── Member methods ──────────────────────────────────────────────────────
+    void	parseInheritableDirective(AConfig &ref);
+    void	parseDirectiveRoot(AConfig &ref);
+    void	parseDirectiveIndex(AConfig &ref);
+    void	parseDirectiveAutoIndex(AConfig &ref);
+    void	parseDirectiveClientMaxBodySize(AConfig &ref);
+    void	parseDirectiveErrorPage(AConfig &ref);
+    void	parseDirectiveListen(ServerConfig &ref);
+    void	parseDirectiveServerName(ServerConfig &ref);
+    void	parseDirectiveMethods(LocationConfig &ref);
+	size_t	parseSize(const std::string &word)				const;
+	size_t	parseCode(const std::string &word)				const;
 
-    void parseInheritableDirective(AConfig &ref);
-    void parseDirectiveRoot(AConfig &ref);
-    void parseDirectiveIndex(AConfig &ref);
-    void parseDirectiveAutoIndex(AConfig &ref);
-    void parseDirectiveClientMaxBodySize(AConfig &ref);
-    void parseDirectiveErrorPage(AConfig &ref);
-	size_t parseSize(const std::string &word) const;
-	size_t parseCode(const std::string &word) const;
-
-    ServerConfig parseServer();
-    void parseDirectiveListen(ServerConfig &ref);
-    void parseDirectiveServerName(ServerConfig &ref);
-
-    LocationConfig parseLocation();
-    void parseDirectiveMethods(LocationConfig &ref);
-
-
+    // ── Throw errors ────────────────────────────────────────────────────────
     class NoServerDefined : public std::exception
 	{
 		public:
