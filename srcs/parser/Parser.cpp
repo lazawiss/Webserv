@@ -42,11 +42,18 @@ const Token& Parser::next()
 ** ============================================================================
 */
 
-/*
-** Opens and validates the config file, then tokenizes its content
-** line by line into a single token chain.
-** Returns SUCCESS if the file was parsed correctly, ERROR otherwise.
-*/
+/**
+** @brief Opens, validates, parses and closes a webserv configuration file.
+**
+** Reads the file line by line, tokenizes each line using the Lexer,
+** and merges all tokens into a single chain terminated by an End token.
+** The chain is then handed to the Parser, which performs a recursive
+** descent parse and builds the resulting GlobalConfig.
+**
+** @param str Path to the configuration file to parse.
+** 
+** @return ...
+**/
 int parse_file(const std::string &str)
 {
     std::ifstream file(str.c_str());
@@ -192,12 +199,18 @@ int parse_file(const std::string &str)
 ** ============================================================================
 */
 
-/*
-** Entry point of the recursive descent parser. Builds the Abstract
-** Syntax Tree (AST) of the configuration file by reading the token
-** chain and producing a GlobalConfig object containing all server
-** blocks. Throws ParseError if the syntax is invalid.
-*/
+/**
+** @brief Entry point of the recursive descent parser.
+**
+** Builds the Abstract Syntax Tree (AST) of the configuration file by
+** reading the token chain and producing a GlobalConfig object
+** containing all server blocks.
+**
+** @throws ExpectedWord if an unexpected token is found in the global context.
+** @throws NoServerDefined if no server was found.
+** 
+** @return GlobalConfig object.
+**/
 GlobalConfig Parser::parse()
 {
     GlobalConfig config;
@@ -218,13 +231,19 @@ GlobalConfig Parser::parse()
     return config;
 }
 
-/*
-** Recursive descent step that parses a single "server { ... }" block,
-** one node of the configuration AST. Consumes the "server" keyword,
-** the opening and closing brackets, and dispatches each directive
-** found inside to the matching parser. Throws ParseError if the
-** block is malformed.
-*/
+/**
+** @brief Recursive descent step that parses a single "server { ... }"
+** block, one node of the configuration AST.
+**
+** Consumes the "server" keyword, the opening and closing brackets,
+** and dispatches each directive found inside to the matching parser.
+**
+** @throws ExpectedLBracket if "{" is missing after "server".
+** @throws ExpectedRBracket if "}" is missing at the end of the block.
+** @throws ExpectedWord if an unexpected token is found inside the block.
+**
+** @return ServerConfig object.
+**/
 ServerConfig Parser::parseServer()
 {
     ServerConfig server;
@@ -256,12 +275,18 @@ ServerConfig Parser::parseServer()
     return server;
 }
 
-/*
-** Recursive descent step that parses a single "location <path> { ... }"
-** block, the deepest node of the configuration AST. Consumes the
-** "location" keyword, the path, the opening and closing brackets, and
-** dispatches each directive found inside to the matching parser.
-** Throws ParseError if the block is malformed.
+/**
+** @brief Recursive descent step that parses a single
+** "location <path> { ... }" block, the deepest node of the configuration AST.
+**
+** Consumes the "location" keyword, the path, the opening and closing
+** brackets, and dispatches each directive found inside to the matching parser.
+**
+** @throws ExpectedWord if the path is missing or invalid.
+** @throws ExpectedLBracket if "{" is missing after the path.
+** @throws ExpectedRBracket if "}" is missing at the end of the block.
+**
+** @return LocationConfig object.
 */
 LocationConfig Parser::parseLocation()
 {
@@ -296,12 +321,15 @@ LocationConfig Parser::parseLocation()
     return location;
 }
 
-/*
-** Dispatches a directive shared by the global, server and location
-** nodes of the AST (root, index, error_page, autoindex,
+/**
+** @brief Dispatches a directive shared by the global, server and
+** location nodes of the AST (root, index, error_page, autoindex,
 ** client_max_body_size) to its matching parser, using the common
-** AConfig interface. Throws UnknownDirective if the directive is
-** not recognized.
+** AConfig interface.
+**
+** @param ref The AConfig context to fill (GlobalConfig, ServerConfig
+**            or LocationConfig).
+** @throws UnknownDirective if the directive is not recognized.
 */
 void Parser::parseInheritableDirective(AConfig &ref)
 {

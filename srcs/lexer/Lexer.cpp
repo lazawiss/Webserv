@@ -44,13 +44,13 @@ Lexer::~Lexer() {}
 */
  
 /**
- * @brief Splits _line into a list of tokens.
- *
- * Skips whitespace, stops at '#' (line comment), emits sign tokens
- * for punctuation, and accumulates consecutive characters into Word tokens.
- *
- * @return A vector of tokens terminated by an End token.
-*/
+** @brief Splits _line into a list of tokens.
+**
+** Skips whitespace, stops at '#' (line comment), emits sign tokens
+** for punctuation, and accumulates consecutive characters into Word tokens.
+**
+** @return A vector of tokens terminated by an End token.
+**/
 std::vector<Token> Lexer::tokenize()
 {
     std::vector<Token> tokens;
@@ -92,11 +92,11 @@ std::vector<Token> Lexer::tokenize()
 }
 
 /**
- * @brief Maps a sign character to its corresponding TokenType.
- *
- * @param c The character to convert.
- * @return The matching TokenType, or Unknown if unrecognized.
- */
+** @brief Maps a sign character to its corresponding TokenType.
+**
+** @param c The character to convert.
+** @return The matching TokenType, or Unknown if unrecognized.
+**/
 static enum TokenType charToType(char c)
 {
     switch (c)
@@ -110,8 +110,8 @@ static enum TokenType charToType(char c)
     }
 }
 /**
- * @brief Returns true if c is a recognized sign character.
- */
+** @brief Returns true if c is a recognized sign character.
+**/
 static bool isSign(char c)
 {
     return c == '{' || c == '}' || c == ';' || c == '#';
