@@ -2,8 +2,6 @@
 
 #include "../lexer/Lexer.hpp"
 
-// void print_token_chain(const std::vector <Token> &tokens);
-
 /*
 ** ============================================================================
 ** Parser - Constructors & Destructor
@@ -81,7 +79,6 @@ int parse_file(const std::string &str)
     }
 
     allTokens.push_back(Token(End, ""));
-    // print_token_chain(allTokens);
 
     try
     {
@@ -186,20 +183,20 @@ int parse_file(const std::string &str)
         std::cerr << e.what() << std::endl;
     }
 
-
     return SUCCESS;
 }
 
 /*
 ** ============================================================================
-** Parser – Member functions
+** Parser – Recursive descent parser
 ** ============================================================================
 */
 
 /*
-** Entry point of the parser. Reads the token chain and builds
-** a GlobalConfig object containing all server blocks.
-** Throws ParseError if the syntax is invalid.
+** Entry point of the recursive descent parser. Builds the Abstract
+** Syntax Tree (AST) of the configuration file by reading the token
+** chain and producing a GlobalConfig object containing all server
+** blocks. Throws ParseError if the syntax is invalid.
 */
 GlobalConfig Parser::parse()
 {
@@ -221,6 +218,13 @@ GlobalConfig Parser::parse()
     return config;
 }
 
+/*
+** Recursive descent step that parses a single "server { ... }" block,
+** one node of the configuration AST. Consumes the "server" keyword,
+** the opening and closing brackets, and dispatches each directive
+** found inside to the matching parser. Throws ParseError if the
+** block is malformed.
+*/
 ServerConfig Parser::parseServer()
 {
     ServerConfig server;
@@ -233,9 +237,9 @@ ServerConfig Parser::parseServer()
     while (current().type != RBracket && current().type != End)
     {
         if (current().type == Word && current().value == "listen")
-            parseConfigListen(server);
+            parseDirectiveListen(server);
         else if (current().type == Word && current().value == "server_name")
-            parseConfigServerName(server);
+            parseDirectiveServerName(server);
         else if (current().type == Word && current().value == "location")
             server.addLocation(parseLocation());
         else if (current().type == Word)
@@ -252,6 +256,13 @@ ServerConfig Parser::parseServer()
     return server;
 }
 
+/*
+** Recursive descent step that parses a single "location <path> { ... }"
+** block, the deepest node of the configuration AST. Consumes the
+** "location" keyword, the path, the opening and closing brackets, and
+** dispatches each directive found inside to the matching parser.
+** Throws ParseError if the block is malformed.
+*/
 LocationConfig Parser::parseLocation()
 {
     LocationConfig location;
@@ -270,7 +281,7 @@ LocationConfig Parser::parseLocation()
     while (current().type != RBracket && current().type != End)
     {
         if (current().type == Word && current().value == "methods")
-            parseConfigMethod(location);
+            parseDirectiveMethods(location);
         else if (current().type == Word)
             parseInheritableDirective(location);
         else
@@ -285,23 +296,36 @@ LocationConfig Parser::parseLocation()
     return location;
 }
 
+/*
+** Dispatches a directive shared by the global, server and location
+** nodes of the AST (root, index, error_page, autoindex,
+** client_max_body_size) to its matching parser, using the common
+** AConfig interface. Throws UnknownDirective if the directive is
+** not recognized.
+*/
 void Parser::parseInheritableDirective(AConfig &ref)
 {
     if (current().value == "root")
-        parseConfigRoot(ref);
+        parseDirectiveRoot(ref);
     else if (current().value == "index")
-        parseConfigIndex(ref);
+        parseDirectiveIndex(ref);
     else if (current().value == "error_page")
-        parseConfigErrorPage(ref);
+        parseDirectiveErrorPage(ref);
     else if (current().value == "autoindex")
-        parseConfigAutoIndex(ref);
+        parseDirectiveAutoIndex(ref);
     else if (current().value == "client_max_body_size")
-        parseConfigClientMaxBodySize(ref);
+        parseDirectiveClientMaxBodySize(ref);
     else
         throw UnknownDirective();
 }
 
-void Parser::parseConfigRoot(AConfig &ref)
+/*
+** ============================================================================
+** Parser – Class methods
+** ============================================================================
+*/
+
+void Parser::parseDirectiveRoot(AConfig &ref)
 {
     next();
     if (current().type != Word)
@@ -312,7 +336,7 @@ void Parser::parseConfigRoot(AConfig &ref)
     next();
 }
 
-void Parser::parseConfigIndex(AConfig &ref)
+void Parser::parseDirectiveIndex(AConfig &ref)
 {
     next();
     if (current().type != Word)
@@ -326,7 +350,7 @@ void Parser::parseConfigIndex(AConfig &ref)
     next();
 }
 
-void Parser::parseConfigAutoIndex(AConfig &ref)
+void Parser::parseDirectiveAutoIndex(AConfig &ref)
 {
     next();
     if (current().type != Word)
@@ -339,7 +363,7 @@ void Parser::parseConfigAutoIndex(AConfig &ref)
     next();
 }
 
-void Parser::parseConfigClientMaxBodySize(AConfig &ref)
+void Parser::parseDirectiveClientMaxBodySize(AConfig &ref)
 {
     (void)ref;
     next();
@@ -380,21 +404,7 @@ size_t Parser::parseSize(const std::string &word) const
     throw ExpectedCorrectUnit();
 }
 
-size_t Parser::parseCode(const std::string &word) const
-{
-    if (word.size() != 3)
-        throw ExpectedCorrectCode();
-
-    for (size_t i = 0; i < word.size(); i++)
-    {
-        if (!std::isdigit(word[i]))
-            throw ExpectedCorrectCode();
-    }
-
-    return std::atoi(word.c_str());
-}
-
-void Parser::parseConfigErrorPage(AConfig &ref)
+void Parser::parseDirectiveErrorPage(AConfig &ref)
 {
     next();
     if (current().type != Word)
@@ -416,7 +426,21 @@ void Parser::parseConfigErrorPage(AConfig &ref)
     next();
 }
 
-void Parser::parseConfigListen(ServerConfig &ref)
+size_t Parser::parseCode(const std::string &word) const
+{
+    if (word.size() != 3)
+        throw ExpectedCorrectCode();
+
+    for (size_t i = 0; i < word.size(); i++)
+    {
+        if (!std::isdigit(word[i]))
+            throw ExpectedCorrectCode();
+    }
+
+    return std::atoi(word.c_str());
+}
+
+void Parser::parseDirectiveListen(ServerConfig &ref)
 {
     next();
     if (current().type != Word)
@@ -427,7 +451,7 @@ void Parser::parseConfigListen(ServerConfig &ref)
     next();
 }
 
-void Parser::parseConfigServerName(ServerConfig &ref)
+void Parser::parseDirectiveServerName(ServerConfig &ref)
 {
     next();
     if (current().type != Word)
@@ -441,7 +465,7 @@ void Parser::parseConfigServerName(ServerConfig &ref)
     next();
 }
 
-void Parser::parseConfigMethod(LocationConfig &ref)
+void Parser::parseDirectiveMethods(LocationConfig &ref)
 {
     next();
     if (current().type != Word)
@@ -523,37 +547,3 @@ const char* Parser::ExpectedCorrectCode::what() const throw()
     return "Invalid HTTP error code: expected a value between 400 and "
         "599 (e.g. '404', '500')";
 }
-
-/*
-** ============================================================================
-** Print Tokens - DEBUG!!
-** ============================================================================
-*/
-
-// static std::string tokenTypeToString(TokenType type)
-// {
-//     switch(type)
-//     {
-//         case Word:      return "Word";
-//         case LBracket:  return "LBracket";
-//         case RBracket:  return "RBracket";
-//         case Semicolon: return "Semicolon";
-//         case Hashtag:   return "Hashtag";
-//         case End:       return "End";
-
-//         default:        return "Unknown";
-//     }
-// }
-
-// void print_token_chain(const std::vector <Token> &tokens)
-// {
-//     for (size_t i = 0; i < tokens.size(); i++)
-//     {
-//         std::cout
-//             << tokenTypeToString(tokens[i].type)
-//             << " => "
-//             << tokens[i].value
-//             << std::endl;
-//     }
-//     return ;
-// }

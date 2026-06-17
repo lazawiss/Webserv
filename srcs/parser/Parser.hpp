@@ -34,20 +34,20 @@ public:
     GlobalConfig parse();
 
     void parseInheritableDirective(AConfig &ref);
-    void parseConfigRoot(AConfig &ref);
-    void parseConfigIndex(AConfig &ref);
-    void parseConfigAutoIndex(AConfig &ref);
-    void parseConfigClientMaxBodySize(AConfig &ref);
-    void parseConfigErrorPage(AConfig &ref);
+    void parseDirectiveRoot(AConfig &ref);
+    void parseDirectiveIndex(AConfig &ref);
+    void parseDirectiveAutoIndex(AConfig &ref);
+    void parseDirectiveClientMaxBodySize(AConfig &ref);
+    void parseDirectiveErrorPage(AConfig &ref);
 	size_t parseSize(const std::string &word) const;
 	size_t parseCode(const std::string &word) const;
 
     ServerConfig parseServer();
-    void parseConfigListen(ServerConfig &ref);
-    void parseConfigServerName(ServerConfig &ref);
+    void parseDirectiveListen(ServerConfig &ref);
+    void parseDirectiveServerName(ServerConfig &ref);
 
     LocationConfig parseLocation();
-    void parseConfigMethod(LocationConfig &ref);
+    void parseDirectiveMethods(LocationConfig &ref);
 
 
     class NoServerDefined : public std::exception

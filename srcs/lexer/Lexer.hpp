@@ -58,12 +58,13 @@ private:
     std::string _line;
 
 public:
+    // ── Orthodox canonical form ───────────────────────────
     Lexer(const std::string &line);
-
     Lexer(Lexer const &ref);
     Lexer& operator=(Lexer const &ref);
     ~Lexer();
 
+    // ── Member methods ────────────────────────────────────
     std::vector<Token> tokenize();
 };
 

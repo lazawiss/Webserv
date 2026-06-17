@@ -4,6 +4,7 @@
 # include <iostream>
 # include <string>
 # include <map>
+# include <vector>
 
 /*
 ** ============================================================================
@@ -20,7 +21,10 @@ private:
     size_t                      _client_max_body_size;
 
 public:
+    // ── Orthodox canonical form ───────────────────────────
     AConfig();
+    AConfig(const AConfig &ref);
+    AConfig& operator=(const AConfig &ref);
     virtual ~AConfig();
 
     // ── Getters ───────────────────────────────────────────

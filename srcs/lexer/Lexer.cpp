@@ -23,13 +23,13 @@ static bool isSign(char c);
 
 Lexer::Lexer(const std::string &line) : _line(line) {}
 
-Lexer::Lexer(Lexer const& other) : _line(other._line) {}
+Lexer::Lexer(const Lexer &ref) : _line(ref._line) {}
 
-Lexer& Lexer::operator=(Lexer const& other)
+Lexer& Lexer::operator=(const Lexer &ref)
 {
-    if (this != &other)
+    if (this != &ref)
     {
-        _line = other._line;
+        _line = ref._line;
     }
     return *this;
 }
