@@ -7,6 +7,7 @@
 # include <iostream>
 # include <string>
 # include <map>
+# include <vector>
 
 /*
 ** ============================================================================
@@ -22,15 +23,18 @@ private:
     std::vector<LocationConfig>     _locations;
 
 public:
+    // ── Orthodox canonical form ─────────────────────────────────────────────
     ServerConfig();
+    ServerConfig(const ServerConfig &ref);
+    ServerConfig& operator=(const ServerConfig &ref);
     ~ServerConfig();
 
-    // ── Getters ───────────────────────────────────────────
+    // ── Getters ─────────────────────────────────────────────────────────────
     const std::vector<std::string>&     getListen()         const;
     const std::vector<std::string>&     getServerNames()    const;
     const std::vector<LocationConfig>&  getLocations()      const;
 
-    // ── Setters ───────────────────────────────────────────
+    // ── Setters ─────────────────────────────────────────────────────────────
     void addListen(const std::string& listen);
     void addServerName(const std::string& name);
     void addLocation(const LocationConfig& location);

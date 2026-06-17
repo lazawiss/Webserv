@@ -2,7 +2,7 @@
 
 /*
 ** ============================================================================
-** GlobalConfig - Constructors & Destructor
+** GlobalConfig - Orthodox canonical form
 ** ============================================================================
 */
 
@@ -35,7 +35,7 @@ const std::vector<ServerConfig>& GlobalConfig::getServers() const
     return _servers;
 }
 
-void GlobalConfig::addServer(const ServerConfig& server)
+void GlobalConfig::addServer(const ServerConfig &server)
 {
     _servers.push_back(server);
 }

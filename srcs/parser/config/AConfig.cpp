@@ -2,7 +2,7 @@
 
 /*
 ** ============================================================================
-** AConfig - Constructors & Destructor
+** AConfig - Orthodox canonical form
 ** ============================================================================
 */
 
@@ -39,7 +39,7 @@ const std::string& AConfig::getRoot() const
     return _root;
 }
 
-void AConfig::setRoot(const std::string& root)
+void AConfig::setRoot(const std::string &root)
 {
     _root = root;
 }
@@ -50,7 +50,7 @@ const std::vector<std::string>& AConfig::getIndex() const
     return _index;
 }
 
-void AConfig::addIndex(const std::string& index)
+void AConfig::addIndex(const std::string &index)
 {
     _index.push_back(index);
 }
@@ -61,7 +61,7 @@ const std::map<int, std::string>& AConfig::getErrorPages() const
     return _error_pages;
 }
 
-void AConfig::addErrorPage(int code, const std::string& uri)
+void AConfig::addErrorPage(int code, const std::string &uri)
 {
     _error_pages[code] = uri;
 }

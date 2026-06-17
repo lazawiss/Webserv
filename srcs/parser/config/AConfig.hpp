@@ -21,25 +21,25 @@ private:
     size_t                      _client_max_body_size;
 
 public:
-    // ── Orthodox canonical form ───────────────────────────
+    // ── Orthodox canonical form ─────────────────────────────────────────────
     AConfig();
     AConfig(const AConfig &ref);
     AConfig& operator=(const AConfig &ref);
     virtual ~AConfig();
 
-    // ── Getters ───────────────────────────────────────────
+    // ── Getters ─────────────────────────────────────────────────────────────
     const std::string&                    getRoot()              const;
     const std::vector<std::string>&       getIndex()             const;
     const std::map<int, std::string>&     getErrorPages()        const;
     bool                                  getAutoindex()         const;
     size_t                                getClientMaxBodySize() const;
 
-    // ── Setters ───────────────────────────────────────────
-    void setRoot(const std::string& root);
-    void addIndex(const std::string& index);
+    // ── Setters ─────────────────────────────────────────────────────────────
+    void setRoot(const std::string &root);
+    void addIndex(const std::string &index);
     void setAutoindex(bool autoindex);
     void setClientMaxBodySize(size_t size);
-    void addErrorPage(int code, const std::string& uri);
+    void addErrorPage(int code, const std::string &uri);
 };
 
 #endif

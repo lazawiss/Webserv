@@ -17,17 +17,17 @@ private:
     std::vector<ServerConfig> _servers;
 
 public:
-    // ── Orthodox canonical form ───────────────────────────
+    // ── Orthodox canonical form ─────────────────────────────────────────────
     GlobalConfig();
     GlobalConfig(const GlobalConfig &ref);
     GlobalConfig& operator=(const GlobalConfig &ref);
     ~GlobalConfig();
 
-    // ── Getters ───────────────────────────────────────────
+    // ── Getters ─────────────────────────────────────────────────────────────
     const std::vector<ServerConfig>& getServers() const;
 
-    // ── Setters ───────────────────────────────────────────
-    void addServer(const ServerConfig& server);
+    // ── Setters ─────────────────────────────────────────────────────────────
+    void addServer(const ServerConfig &server);
 
 };
 
