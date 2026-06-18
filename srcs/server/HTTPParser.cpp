@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/16 15:51:14 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/18 16:26:38 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,6 +65,16 @@ std::string HTTPParser::getType() const{
 
 bool    HTTPParser::checkSize(){
     
+    if (_allTokens.size() > BUF_SIZE){
+        
+        _code = "414";
+        _type = "text/html";
+
+        return false;
+    }
+
+    return true;
+
 }
 
 // Check if the entry Host: correspond to the config file info
@@ -130,15 +140,7 @@ bool    HTTPParser::findMethods(){
     
     std::vector<Token>::iterator found;
     
-    if (_allTokens.size() > BUF_SIZE){
-        
-        _code = "414";
-        _type = "text/html";
-
-
-        return false;
-    }
-
+    
   
     found = find_if(_allTokens.begin(), _allTokens.end(), isTokenWord);
     if (found != _allTokens.end()){ // same as EOF
@@ -150,6 +152,8 @@ bool    HTTPParser::findMethods(){
            
             if (found->value == "/"){
                 
+                // _code = "400";
+                // _type = "text/html";
                 _code = "index";
                 _type = "text/html";
                 

@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/16 14:46:00 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/18 14:15:32 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -255,6 +255,9 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
     HTTPParser HTTPParser(_listTokens);
 
     //  check request
+    if (HTTPParser.checkSize() == false){
+        std::cerr << "Error Size too big: " << strerror(errno) << std::endl;
+    }
     
     if (HTTPParser.checkHost(listen) == false){
         std::cerr << "Error Host not found: " << strerror(errno) << std::endl;
