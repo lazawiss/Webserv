@@ -29,34 +29,43 @@ void print_token_chain(const std::vector <Token> &tokens)
     return ;
 }
 
-bool precheck_token_chain(const std::vector<Token> &tokens)
+/*
+** read request, then tokenizes its content
+** line by line into a single token chain.
+** Returns vector<Token>.
+*/
+std::vector<Token>   HTTPparse_file(const std::string &str)
 {
-    int server = 0;
-    int b = 0;
-    if (tokens.size() == 0)
-        return (false);
-    std::vector<Token>::const_iterator it = tokens.begin();
-    if (!tokens[tokens.size() - 1].type == End)
-        return (false);
-    while (it != tokens.end())
+
+    // if (file.peek() == std::ifstream::traits_type::eof())
+    // {
+    //     std::cerr << "Error: file '" << str << "' is empty" << std::endl;
+    //     throw std::logic_error("File is empty");
+    // }
+
+
+    std::istringstream iss(str);
+    std::string line;
+    std::vector<Token> allTokens;
+
+    while (std::getline(iss, line))
     {
-        if (it->type == LBracket)
-            b++;
-        if (it->type == RBracket)
-            b--;
-        if (it->type == Word && (it->value == "server"))
+        std::cout << line << "\n";
+        Lexer lexer(line);
+        std::vector<Token> lineTokens = lexer.tokenize();
+
+        for (size_t i = 0; i < lineTokens.size(); i++)
         {
-            if (it + 1 != tokens.end())
-            {
-                if ((it + 1)->type == LBracket)
-                    server++;
-            }
+            if (lineTokens[i].type != End)
+                allTokens.push_back(lineTokens[i]);
         }
-        it++;
     }
-    if (server == 1 || (b != 0))
-        return false;
-    return true;
+
+    allTokens.push_back(Token(End, ""));
+    print_token_chain(allTokens);
+    
+
+    return allTokens;
 }
 
 /*
