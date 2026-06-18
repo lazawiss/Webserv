@@ -5,6 +5,7 @@
 ** AConfig - Orthodox canonical form
 ** ============================================================================
 */
+// Sets max allowed size of the client request body 
 // _client_max_body_size is 1m if never set
 // this is why we hit 413 errors
 // 0 disables the check entirely
