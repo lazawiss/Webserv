@@ -415,36 +415,36 @@ size_t Parser::parseSize(const std::string &word) const
 
     while (i < word.size() && std::isdigit(word[i]))
         i++;
-    // 10 len for 4 or 20 len for 8 
     if (i == 0)
         throw ExpectedCorrectSize();
 
     // size_t value = std::atoi(word.c_str());
     char *end;
+    errno = 0;
     unsigned long value = std::strtoul(word.c_str(), &end, 10);
-    if (*end == '\0')
-    {
-        size_t n = static_cast<size_t>(value);
-    }
-
-    if (n == 0 || n > 10 || n > 20)
-        n = SIZE_MAX;
+    if (errno == ERANGE)
+        throw ExpectedLowerValue();
 
     if (i == word.size())
-        return value;
+        return static_cast<size_t>(value);
     
     if (i != word.size() - 1)
         throw ExpectedCorrectSize();
-    // how to check the viability of K , m , or G? overflow danger
-    char unit = word[i];
-    if (unit == 'K' || unit == 'k')
-        return value * 1024;
-    if (unit == 'M' || unit == 'm')
-        return value * 1024 * 1024;
-    if (unit == 'G' || unit == 'g')
-        return value * 1024 * 1024 * 1024;
 
-    throw ExpectedCorrectUnit();
+    char unit = word[i];
+    size_t multiply;
+    if (unit == 'K' || unit == 'k')
+        multiply = 1024;
+    if (unit == 'M' || unit == 'm')
+        multiply = 1024 * 1024;
+    if (unit == 'G' || unit == 'g')
+        multiply = 1024 * 1024 * 1024;
+    else
+        throw ExpectedCorrectUnit();
+
+    if (value > SIZE_MAX / multiply)
+        throw ExpectedLowerValue();
+    return std::static_cast<size_t>(value) * multiply;
 }
 
 void Parser::parseDirectiveErrorPage(AConfig &ref)

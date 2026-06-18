@@ -18,6 +18,10 @@ class LocationConfig : public AConfig
 private:
     std::string                         _path;
     std::vector<std::string>            _methods;
+    int                                 _returnCode;
+    std::string                         _returnValue;
+    // for location, only requests matching this specific path 
+    // gets this response
 
 public:
     // ── Orthodox canonical form ─────────────────────────────────────────────
