@@ -435,7 +435,7 @@ size_t Parser::parseSize(const std::string &word) const
     
     if (i != word.size() - 1)
         throw ExpectedCorrectSize();
-    // how to check the viability of K , m , or G?
+    // how to check the viability of K , m , or G? overflow danger
     char unit = word[i];
     if (unit == 'K' || unit == 'k')
         return value * 1024;
