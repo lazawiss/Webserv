@@ -123,6 +123,12 @@ public:
 		public:
 			const char* what() const throw();
 	};
+
+	class ExpectedLowerValue : public std::exception
+	{
+		public:
+			const char* what() const throw();
+	}
 };
 
 #endif

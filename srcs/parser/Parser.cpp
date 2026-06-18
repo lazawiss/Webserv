@@ -393,6 +393,12 @@ void Parser::parseDirectiveAutoIndex(AConfig &ref)
 
 void Parser::parseDirectiveClientMaxBodySize(AConfig &ref)
 {
+// ANKIM : 1m is default
+// Directive's job is just to set a ceiling on upload size; doesn't have
+// ceiling of its own beyond whatever fits in the int type nginx stores in
+// off_t, 64-bit which is HUGE
+// edge case: setting size to 0 ? (size == 0) means disable check of clinet req bs
+// size_T max SIZE_MAX
     (void)ref;
     next();
     if (current().type != Word)
@@ -409,18 +415,27 @@ size_t Parser::parseSize(const std::string &word) const
 
     while (i < word.size() && std::isdigit(word[i]))
         i++;
-    
+    // 10 len for 4 or 20 len for 8 
     if (i == 0)
         throw ExpectedCorrectSize();
 
-    size_t value = std::atoi(word.c_str());
-    
+    // size_t value = std::atoi(word.c_str());
+    char *end;
+    unsigned long value = std::strtoul(word.c_str(), &end, 10);
+    if (*end == '\0')
+    {
+        size_t n = static_cast<size_t>(value);
+    }
+
+    if (n == 0 || n > 10 || n > 20)
+        n = SIZE_MAX;
+
     if (i == word.size())
         return value;
     
     if (i != word.size() - 1)
         throw ExpectedCorrectSize();
-
+    // how to check the viability of K , m , or G?
     char unit = word[i];
     if (unit == 'K' || unit == 'k')
         return value * 1024;
