@@ -16,7 +16,7 @@ static std::string tokenTypeToString(TokenType type)
     }
 }
 
-void print_token_chain(std::vector <Token> tokens)
+void print_token_chain(const std::vector <Token> &tokens)
 {
     for (size_t i = 0; i < tokens.size(); i++)
     {
@@ -79,7 +79,7 @@ int parse_file(const std::string &str)
 
     if (file.is_open() == false)
     {
-        std::cerr << "Error: file '" << str << "' don't exist" << std::endl;
+        std::cerr << "Error: file '" << str << "' doesn't exist" << std::endl;
         return ERROR;
     }
 
@@ -107,7 +107,10 @@ int parse_file(const std::string &str)
 
     allTokens.push_back(Token(End, ""));
     print_token_chain(allTokens);
-
-
+    if (precheck_token_chain(allTokens) == false)
+    {
+        std::cerr << "Error: file '" << str << "' does not have server, end, or correct brackets" << std::endl;
+        return ERR_PREVALIDATION_CONFIG;
+    }
     return SUCCESS;
 }

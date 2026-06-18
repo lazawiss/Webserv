@@ -10,7 +10,7 @@
 typedef enum error_code
 {
     SUCCESS,
-
+    ERR_PREVALIDATION_CONFIG,
     ERROR,
 	ERROR_ARGS,
 
