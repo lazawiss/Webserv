@@ -9,7 +9,11 @@
 # include <exception>
 # include <fstream>
 # include <iostream>
+# include <sstream>
 # include <string>
+# include <vector>
+# include <algorithm>
+# include <stdexcept>
 
 int parse_file(const std::string& path);
 
@@ -128,7 +132,8 @@ public:
 	{
 		public:
 			const char* what() const throw();
-	}
+	};
+
 };
 
 #endif
