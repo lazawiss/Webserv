@@ -3,6 +3,10 @@ NAME = webserv
 SRC = \
 	srcs/main.cpp \
 	srcs/parser/Parser.cpp \
+	srcs/parser/config/AConfig.cpp \
+	srcs/parser/config/GlobalConfig.cpp \
+	srcs/parser/config/LocationConfig.cpp \
+	srcs/parser/config/ServerConfig.cpp \
 	srcs/lexer/Lexer.cpp \
 	srcs/server/Server.cpp \
 	srcs/server/SignalManager.cpp \

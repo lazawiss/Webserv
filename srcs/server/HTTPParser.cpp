@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/20 15:45:12 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/20 17:47:13 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,11 +19,12 @@
 ** ============================================================================
 */
 
-HTTPParser:: HTTPParser( std::vector<Token> allTokens ) : _allTokens(allTokens), _code(), _method(){
+HTTPParser:: HTTPParser(  std::string const & request ) : _allTokens(), _request(request), _code(), _type(){
     
 }
 
-HTTPParser::HTTPParser( HTTPParser const & src ) : _allTokens(src._allTokens), _code(src._code), _method(src._method){
+HTTPParser::HTTPParser( HTTPParser const & src ) : _allTokens(src._allTokens), _request(src._request), 
+_code(src._code), _type(src._type){
     
 }
 
@@ -36,8 +37,10 @@ HTTPParser &    HTTPParser::operator=( HTTPParser const & other ){
     if (this != &other ){
 
         this->_allTokens = other._allTokens;
+        this->_request = other._request;
         this->_code = other._code;
         this->_method = other._method;
+        this->_type = other._type;
 
     }
     
@@ -57,6 +60,74 @@ std::string HTTPParser::getType() const{
 std::string HTTPParser::getMethod() const{
     
     return _method;
+}
+
+/*
+** ============================================================================
+** Lexer HTTP
+** ============================================================================
+*/
+
+static std::string tokenTypeToString(TokenType type)
+{
+    switch(type)
+    {
+        case Word:      return "Word";
+        case LBracket:  return "LBracket";
+        case RBracket:  return "RBracket";
+        case Semicolon: return "Semicolon";
+        case Hashtag:   return "Hashtag";
+        case End:       return "End";
+
+        default:        return "Unknown";
+    }
+}
+
+
+void print_token_chain(std::vector <Token> tokens)
+{
+    for (size_t i = 0; i < tokens.size(); i++)
+    {
+        std::cout
+            << tokenTypeToString(tokens[i].type)
+            << " => "
+            << tokens[i].value
+            << std::endl;
+    }
+    return ;
+}
+
+void HTTPParser::HTTPparse_file(const std::string &str)
+{
+
+    // if (file.peek() == std::ifstream::traits_type::eof())
+    // {
+    //     std::cerr << "Error: file '" << str << "' is empty" << std::endl;
+    //     throw std::logic_error("File is empty");
+    // }
+
+
+    std::istringstream iss(str);
+    std::string line;
+    // std::vector<Token> allTokens;
+
+    while (std::getline(iss, line))
+    {
+        std::cout << line << "\n";
+        Lexer lexer(line);
+        std::vector<Token> lineTokens = lexer.tokenize();
+
+        for (size_t i = 0; i < lineTokens.size(); i++)
+        {
+            if (lineTokens[i].type != End)
+                _allTokens.push_back(lineTokens[i]);
+        }
+    }
+
+    _allTokens.push_back(Token(End, ""));
+    print_token_chain(_allTokens);
+    
+
 }
 
 /*

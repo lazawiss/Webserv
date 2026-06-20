@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/18 14:15:32 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/20 17:48:11 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,12 +21,12 @@
 ** ============================================================================
 */
 
-RequestHandler:: RequestHandler( std::vector<Token> listTokens ) : _listTokens(listTokens),
+RequestHandler:: RequestHandler( std::string const & request ) : _request(request),
 _root("data/html"), _header(), _size(), _buffer(""), _n_read_index(0){
     
 }
 
-RequestHandler::RequestHandler( RequestHandler const & src ) : _listTokens(src._listTokens),
+RequestHandler::RequestHandler( RequestHandler const & src ) : _request(src._request),
 _root(src._root),_header(src._header), _size(src._size),_n_read_index(src._n_read_index){
     
     _buffer[BUF_SIZE] = src._buffer[BUF_SIZE];
@@ -40,7 +40,7 @@ RequestHandler::~RequestHandler(){
 RequestHandler & RequestHandler::operator=( RequestHandler const & other ){
     
     if ( this != &other){
-        this->_listTokens = other._listTokens;
+        this->_request = other._request;
         this->_root = other._root;
         this->_header = other._header;
         this->_size = other._size;
@@ -252,7 +252,10 @@ bool    RequestHandler::answerFileImage(){
 // build answer depending of content to sent
 bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
     
-    HTTPParser HTTPParser(_listTokens);
+    HTTPParser HTTPParser(_request);
+
+    HTTPParser.HTTPparse_file(_request);
+    
 
     //  check request
     if (HTTPParser.checkSize() == false){
