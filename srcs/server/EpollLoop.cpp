@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/16 14:14:03 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/20 16:47:09 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -114,10 +114,8 @@ bool    EpollLoop::do_use_fd(  int fd, ListenerManager const & listen ){
     
     // Parse request
     
-    std::vector<Token> list = HTTPparse_file(request);
     
-    
-    RequestHandler requestHandler(list);
+    RequestHandler requestHandler(request);
     
     if (requestHandler.handleRequest(listen) == false){
         std::cerr << "Reading of html file failed: " << strerror(errno) << std::endl;

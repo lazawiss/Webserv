@@ -442,9 +442,9 @@ size_t Parser::parseSize(const std::string &word) const
     else
         throw ExpectedCorrectUnit();
 
-    if (value > SIZE_MAX / multiply)
+    if (value > ULLONG_MAX / multiply)
         throw ExpectedLowerValue();
-    return std::static_cast<size_t>(value) * multiply;
+    return (static_cast<size_t>(value) * multiply);
 }
 
 void Parser::parseDirectiveErrorPage(AConfig &ref)
@@ -589,4 +589,10 @@ const char* Parser::ExpectedCorrectCode::what() const throw()
 {
     return "Invalid HTTP error code: expected a value between 400 and "
         "599 (e.g. '404', '500')";
+}
+
+const char* Parser::ExpectedLowerValue::what() const throw()
+{
+    return "Invalid size value: expected at least one digit (e.g. '10M', "
+        "'512K', '1G', or '1024')";
 }
