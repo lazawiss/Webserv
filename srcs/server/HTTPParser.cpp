@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/18 16:26:38 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/20 15:45:12 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,11 +19,11 @@
 ** ============================================================================
 */
 
-HTTPParser:: HTTPParser( std::vector<Token> allTokens ) : _allTokens(allTokens), _code(){
+HTTPParser:: HTTPParser( std::vector<Token> allTokens ) : _allTokens(allTokens), _code(), _method(){
     
 }
 
-HTTPParser::HTTPParser( HTTPParser const & src ) : _allTokens(src._allTokens), _code(src._code){
+HTTPParser::HTTPParser( HTTPParser const & src ) : _allTokens(src._allTokens), _code(src._code), _method(src._method){
     
 }
 
@@ -37,6 +37,8 @@ HTTPParser &    HTTPParser::operator=( HTTPParser const & other ){
 
         this->_allTokens = other._allTokens;
         this->_code = other._code;
+        this->_method = other._method;
+
     }
     
     return *this;
@@ -50,6 +52,11 @@ std::string HTTPParser::getCode() const{
 std::string HTTPParser::getType() const{
         
     return _type;
+}
+
+std::string HTTPParser::getMethod() const{
+    
+    return _method;
 }
 
 /*
@@ -67,7 +74,7 @@ bool    HTTPParser::checkSize(){
     
     if (_allTokens.size() > BUF_SIZE){
         
-        _code = "414";
+        _code = "413";
         _type = "text/html";
 
         return false;
@@ -75,6 +82,46 @@ bool    HTTPParser::checkSize(){
 
     return true;
 
+}
+
+static bool isTokenWord( Token const & t ){
+    
+    return t.type == Word;
+}
+
+static bool isMethodGet( Token const & t ){
+    
+    return t.value == "GET";
+}
+
+static bool isMethodPost( Token const & t ){
+    
+    return t.value == "POST";
+}
+
+static bool isMethodDelete( Token const & t ){
+    
+    return t.value == "DELETE";
+}
+
+// Check if it respect the standard form :
+// request-line   = method SP request-target SP HTTP-version
+bool    HTTPParser::checkRequestLine(){
+    
+    std::vector<Token>::iterator found;
+    
+    found = find_if(_allTokens.begin(), _allTokens.end(), isTokenWord);
+    if (found != _allTokens.end()){ // same as EOF
+        
+        found = find_if(_allTokens.begin(), _allTokens.end(), isMethodGet);
+        if (found != _allTokens.end()){
+            
+            _method = found->value;
+            found++;
+        }
+    }
+
+    return true;
 }
 
 // Check if the entry Host: correspond to the config file info
@@ -114,26 +161,6 @@ bool    HTTPParser::checkHost( ListenerManager const & listener ){
         }
     }
     return true;
-}
-
-static bool isTokenWord( Token const & t ){
-    
-    return t.type == Word;
-}
-
-static bool isMethodGet( Token const & t ){
-    
-    return t.value == "GET";
-}
-
-static bool isMethodPost( Token const & t ){
-    
-    return t.value == "POST";
-}
-
-static bool isMethodDelete( Token const & t ){
-    
-    return t.value == "DELETE";
 }
 
 bool    HTTPParser::findMethods(){

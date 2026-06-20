@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/16 15:49:10 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/20 15:32:00 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,6 +50,8 @@ private:
     std::vector<Token>  _allTokens;
     std::string         _code;
     std::string         _type;
+    std::string         _method;
+    
 
 
 protected:
@@ -63,8 +65,12 @@ public:
 
     std::string     getCode() const;
     std::string     getType() const;
+    std::string     getMethod() const;
+    
 
     bool            checkSize();
+    bool            checkRequestLine();
+
     bool            checkHost( ListenerManager const & listener );
     
     bool            findMethods();

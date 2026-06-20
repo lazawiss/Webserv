@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/16 14:14:03 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/19 16:14:57 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,17 +86,17 @@ bool    EpollLoop::do_use_fd(  int fd, ListenerManager const & listen ){
     ssize_t n_read = read(fd, buf, BUF_SIZE); // read HTTP requests
     
     std::cout << "n_read:" << n_read << std::endl;
-    if (n_read == -1){
-        if (errno == EAGAIN || errno == EWOULDBLOCK) // FOR PORTABILITY
-            return true;
-        else{
+    // if (n_read == -1){
+    //     if (errno == EAGAIN || errno == EWOULDBLOCK) // FOR PORTABILITY
+    //         return true;
+    //     else{
             
-            std::cerr << " Do_use_fd : Error reading from fd "<< fd << strerror(errno) << std::endl;
-            close(fd);
-            return false;
-        }
-    }
-    else if (n_read == 0){
+    //         std::cerr << " Do_use_fd : Error reading from fd "<< fd << strerror(errno) << std::endl;
+    //         close(fd);
+    //         return false;
+    //     }
+    // }
+    if (n_read == 0){
         
         std::cout << "Client closed connection : "<< fd << std::endl;
         close(fd);
