@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:00:06 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/11 17:13:19 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/20 17:05:54 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,7 +48,7 @@ class RequestHandler {
   
 private:
 
-    std::vector<Token>  _listTokens;
+    std::string         _request;
     std::string         _root;
     std::string         _header;
     std::string         _size;
@@ -60,7 +60,7 @@ private:
 protected:
 public:
 
-                        RequestHandler( std::vector<Token> listTokens );
+                        RequestHandler( std::string const & request );
                         RequestHandler( RequestHandler const & src );
                         ~RequestHandler();
     RequestHandler &    operator=( RequestHandler const & other );

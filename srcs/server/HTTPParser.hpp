@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/09 19:26:04 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/20 17:05:16 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,6 +48,7 @@ class HTTPParser {
 private:
 
     std::vector<Token>  _allTokens;
+    std::string         _request;
     std::string         _code;
     std::string         _type;
 
@@ -56,7 +57,7 @@ protected:
 
 public:
 
-                    HTTPParser( std::vector<Token> allTokens );
+                    HTTPParser( std::string const & request );
                     HTTPParser( HTTPParser const & src );    
                     ~HTTPParser();    
     HTTPParser &    operator=( HTTPParser const & other );
@@ -64,6 +65,8 @@ public:
     std::string     getCode() const;
     std::string     getType() const;
 
+    
+    void            HTTPparse_file(const std::string& path);
     
     bool            checkHost( ListenerManager const & listener );
     
