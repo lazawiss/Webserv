@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/20 17:48:11 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/20 18:03:39 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -262,10 +262,13 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         std::cerr << "Error Size too big: " << strerror(errno) << std::endl;
     }
     
+    if (HTTPParser.checkRequestLine() == false){
+        std::cerr << "Error Request Line wrong: " << strerror(errno) << std::endl;
+    }
+    
     if (HTTPParser.checkHost(listen) == false){
         std::cerr << "Error Host not found: " << strerror(errno) << std::endl;
     }
-    
     // find method 
     else if (HTTPParser.findMethods() == false){
         std::cerr << "Error Method not implemented: " << strerror(errno) << std::endl;

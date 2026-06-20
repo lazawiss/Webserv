@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/20 17:47:13 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/20 18:02:29 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -160,6 +160,12 @@ static bool isTokenWord( Token const & t ){
     return t.type == Word;
 }
 
+
+static bool isMethod( Token const & t ){
+    
+    return t.value == "GET" || t.value == "POST" || t.value == "DELETE";
+}
+
 static bool isMethodGet( Token const & t ){
     
     return t.value == "GET";
@@ -184,15 +190,22 @@ bool    HTTPParser::checkRequestLine(){
     found = find_if(_allTokens.begin(), _allTokens.end(), isTokenWord);
     if (found != _allTokens.end()){ // same as EOF
         
-        found = find_if(_allTokens.begin(), _allTokens.end(), isMethodGet);
+        found = find_if(_allTokens.begin(), _allTokens.end(), isMethod);
         if (found != _allTokens.end()){
             
             _method = found->value;
+            std::cout << "Method:" << _method << std::endl;
             found++;
+            
+            return true;
+
         }
     }
 
-    return true;
+    _code = "400";
+    _type = "text/html";
+            
+    return false;
 }
 
 // Check if the entry Host: correspond to the config file info
