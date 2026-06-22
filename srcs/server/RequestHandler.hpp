@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:00:06 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/20 17:48:44 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/20 19:45:52 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +31,8 @@
 #include <cstring>
 #include <arpa/inet.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/sysmacros.h>
 #include <sys/socket.h>
 #include <sys/epoll.h>
 #include <csignal>

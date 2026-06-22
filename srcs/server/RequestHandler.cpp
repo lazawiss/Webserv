@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/20 18:03:39 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/20 19:56:17 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -87,6 +87,7 @@ std::string RequestHandler::getFile( std::string code ){
     file += ".";
     file += "html";
  
+    std::cout << "File:" << file << std::endl;
     return file;
 }
  
@@ -95,11 +96,12 @@ std::string RequestHandler::getFile( std::string code ){
 std::string RequestHandler::buildAnswerHeader( std::string code, std::string type ){
     
     //cherche dans tableau >> code + reason
-    std::string codeName[6] = {
+    std::string codeName[7] = {
         "index",
         "400",
         "404",
         "405",
+        "413",
         "414",
         "421"
 
@@ -107,13 +109,14 @@ std::string RequestHandler::buildAnswerHeader( std::string code, std::string typ
     };
     
     int index = 0;
-    for (int i = 0 ;i < 6; i++){
+    for (int i = 0 ;i < 7; i++){
         
         if (codeName[i] == code){
             index = i;
             break;
         }
     }
+    
     std::string str;
     switch (index){
         
@@ -134,10 +137,14 @@ std::string RequestHandler::buildAnswerHeader( std::string code, std::string typ
         break;
         
         case(4):
-        str = "414 URI TOO LONG";
+        str = "413 CONTENT TOO LARGE";
         break;
         
         case(5):
+        str = "414 URI TOO LONG";
+        break;
+        
+        case(6):
         str = "421 MISDIRECTED REQUEST";
         break;
 
@@ -152,14 +159,14 @@ std::string RequestHandler::buildAnswerHeader( std::string code, std::string typ
     _header += "\r\n";
     _header += "Content-Type: ";
     _header += type;
+    _header += "\r\n";
+    _header += "Content-Length: ";
+    std::stringstream ss;
+    ss << _n_read_index;
+    std::string size = ss.str();
+    _header += size;
     if ( type == "image/jpeg" ||  type == "image/png" ){
         
-        _header += "\r\n";
-        _header += "Context-Length: ";
-        std::stringstream ss;
-        ss << _n_read_index;
-        std::string size = ss.str();
-        _header += size;
         _header += "\r\n";
         _header += "Connection: keep-alive";
 
@@ -172,6 +179,14 @@ std::string RequestHandler::buildAnswerHeader( std::string code, std::string typ
 // content = text
 bool    RequestHandler::answerFile( std::string file ){
 
+    struct stat sb;
+    
+    if (stat(file.c_str(), &sb) == -1){
+        std::cerr << "Error stat: " << strerror(errno) << std::endl;
+        return false;
+    }
+    std::cout << "File Size : " << sb.st_size <<std::endl;
+    
     int indexfd = open(file.c_str(), O_RDONLY);
     if (indexfd == -1){
         std::cerr << "Error file failed to open on indexfd:" << indexfd << std::endl;
@@ -262,11 +277,11 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         std::cerr << "Error Size too big: " << strerror(errno) << std::endl;
     }
     
-    if (HTTPParser.checkRequestLine() == false){
+     else if (HTTPParser.checkRequestLine() == false){
         std::cerr << "Error Request Line wrong: " << strerror(errno) << std::endl;
     }
     
-    if (HTTPParser.checkHost(listen) == false){
+    else if (HTTPParser.checkHost(listen) == false){
         std::cerr << "Error Host not found: " << strerror(errno) << std::endl;
     }
     // find method 

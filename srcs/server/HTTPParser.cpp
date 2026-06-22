@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/20 18:02:29 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/20 20:11:56 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -196,8 +196,12 @@ bool    HTTPParser::checkRequestLine(){
             _method = found->value;
             std::cout << "Method:" << _method << std::endl;
             found++;
+            if (found->value == "/"){
             
-            return true;
+                _requesttarget = found->value;
+                std::cout << "RequestTarget: " << _requesttarget<< std::endl;
+                return true;
+            }
 
         }
     }
@@ -263,10 +267,10 @@ bool    HTTPParser::findMethods(){
            
             if (found->value == "/"){
                 
-                // _code = "400";
-                // _type = "text/html";
-                _code = "index";
+                _code = "400";
                 _type = "text/html";
+                // _code = "index";
+                // _type = "text/html";
                 
                 return true;
             }

@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/20 17:47:33 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/20 18:55:18 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,6 +52,9 @@ private:
     std::string         _code;
     std::string         _type;
     std::string         _method;
+    std::string         _requesttarget;
+    std::string         _httpversion;
+
     
 
 
