@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:00:06 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/20 19:45:52 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/22 19:15:22 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,8 +77,8 @@ public:
     std::string         getFile( std::string code );
     bool                answerFile( std::string file );
     bool                answerFileImage();
+    bool                answerFileIcon();
 
-    
     bool                handleRequest(  ListenerManager const & listen );
 
 };

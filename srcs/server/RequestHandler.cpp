@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/20 19:56:17 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/22 19:16:17 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -126,6 +126,8 @@ std::string RequestHandler::buildAnswerHeader( std::string code, std::string typ
 
         case(1):
         str = "400 BAD REQUEST";
+        // str = "302 FOUND\r\nLocation: /html/400.html";
+
         break;
 
         case(2):
@@ -133,7 +135,7 @@ std::string RequestHandler::buildAnswerHeader( std::string code, std::string typ
         break;
 
         case(3):
-        str = "405 METHOD NOT ALLOWED";
+        str = "405 METHOD NOT ALLOWED\r\nAllow: GET, POST, DELETE";
         break;
         
         case(4):
@@ -169,9 +171,15 @@ std::string RequestHandler::buildAnswerHeader( std::string code, std::string typ
         
         _header += "\r\n";
         _header += "Connection: keep-alive";
-
     }
+    // if (atoi(str.c_str()) >= 400){
+        
+        // _header += "Cache-Control: no-store, no-cache, must-revalidate, max-age=0\r\n";
+        // _header += "Pragma: no-cache\r\n";
+        // _header += "Expires: 0\r\n";
+    // }
     _header += "\r\n\r\n";
+    
     return _header;
 }
 
@@ -258,7 +266,61 @@ bool    RequestHandler::answerFileImage(){
 
     return true;
 }
- 
+
+bool    RequestHandler::answerFileIcon(){
+
+    std::ifstream source("data/favicon.ico",std::ios::binary);
+
+    if (source.is_open() == false)
+    {
+        std::cerr << "Error: file doesn't exist" << std::endl;
+        return false;
+    }
+
+    if (source.peek() == std::ifstream::traits_type::eof())
+    {
+        std::cerr << "Error: file is empty" << std::endl;
+        return false;
+    }
+
+    // source.seekg(0, std::ios::end);
+    size_t size = source.tellg();
+    // source.seekg(0, std::ios::beg);
+    // char file_buffer[size];
+    // source.read(file_buffer, size);
+    
+    std::cout << "Size: " << size << std::endl;
+
+    std::stringstream ss;
+    ss << size;
+    _size = ss.str();
+    
+    std::cout << "Size: " << _size << std::endl;
+    if (size > BUF_SIZE){
+        std::cerr << "Image size is too big." << std::endl;
+        return false;
+    }
+
+    int indexfd = open("data/favicon.ico", O_RDONLY);
+    if (indexfd == -1){
+        std::cerr << "Error file failed to open on indexfd:" << indexfd << std::endl;
+        close(indexfd);
+        return false;
+    }
+    _n_read_index = read(indexfd, _buffer, size);
+    close(indexfd);
+    std::cout << "n_read_index:" << _n_read_index << std::endl;
+    if (_n_read_index == -1)
+        return false;
+
+    if (_n_read_index > BUF_SIZE){
+        std::cerr << "Image size is too big." << std::endl;
+        return false;
+    }
+
+    return true;
+}
+
 // main function : 
 // instanciate HTTPParser 
 // checks if request valid
@@ -271,21 +333,15 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
 
     HTTPParser.HTTPparse_file(_request);
     
+    bool    requestValid = true;
 
     //  check request
-    if (HTTPParser.checkSize() == false){
-        std::cerr << "Error Size too big: " << strerror(errno) << std::endl;
-    }
-    
-     else if (HTTPParser.checkRequestLine() == false){
-        std::cerr << "Error Request Line wrong: " << strerror(errno) << std::endl;
-    }
-    
-    else if (HTTPParser.checkHost(listen) == false){
-        std::cerr << "Error Host not found: " << strerror(errno) << std::endl;
+    if (HTTPParser.isRequestValid(listen) == false){
+        std::cout << "Request Invalid." << std::endl;
+        requestValid = false;
     }
     // find method 
-    else if (HTTPParser.findMethods() == false){
+    else if (requestValid == true && HTTPParser.findMethods() == false){
         std::cerr << "Error Method not implemented: " << strerror(errno) << std::endl;
     }
 
@@ -295,17 +351,16 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         if (answerFile(file) == false)
             return false;
     }
-    if (HTTPParser.getType() == "image/jpeg"){
+    if (HTTPParser.getType() == "image/jpeg" || HTTPParser.getType() == "image/png"){
         
         if (answerFileImage() == false)
             return false;
     }
-    if (HTTPParser.getType() == "image/png"){
+    if (HTTPParser.getType() == "image/x-icon"){
         
         if (answerFileImage() == false)
             return false;
     }
-    
     buildAnswerHeader(HTTPParser.getCode(), HTTPParser.getType());
 
     

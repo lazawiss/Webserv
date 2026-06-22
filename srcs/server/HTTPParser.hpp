@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/20 18:55:18 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/22 16:20:24 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,8 +56,6 @@ private:
     std::string         _httpversion;
 
     
-
-
 protected:
 
 public:
@@ -74,10 +72,12 @@ public:
 
     bool            checkSize();
     bool            checkRequestLine();
+    bool            checkHost( ListenerManager const & listener );
+    bool            isRequestValid( ListenerManager const & listen );
+
 
     void            HTTPparse_file(const std::string& path);
     
-    bool            checkHost( ListenerManager const & listener );
     
     bool            findMethods();
     bool            findPath();

@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/20 20:11:56 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/22 19:19:11 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -166,20 +166,6 @@ static bool isMethod( Token const & t ){
     return t.value == "GET" || t.value == "POST" || t.value == "DELETE";
 }
 
-static bool isMethodGet( Token const & t ){
-    
-    return t.value == "GET";
-}
-
-static bool isMethodPost( Token const & t ){
-    
-    return t.value == "POST";
-}
-
-static bool isMethodDelete( Token const & t ){
-    
-    return t.value == "DELETE";
-}
 
 // Check if it respect the standard form :
 // request-line   = method SP request-target SP HTTP-version
@@ -196,14 +182,30 @@ bool    HTTPParser::checkRequestLine(){
             _method = found->value;
             std::cout << "Method:" << _method << std::endl;
             found++;
-            if (found->value == "/"){
             
+            char const *slash = strrchr(found->value.c_str(), '/');
+            if (slash){
+          
                 _requesttarget = found->value;
                 std::cout << "RequestTarget: " << _requesttarget<< std::endl;
-                return true;
+                found++;
+                
+                if (found->value == "HTTP/1.1"){
+                
+                    _httpversion = found->value;
+                    std::cout << "HTTP version: " << _httpversion << std::endl;
+                    return true;
+                } 
             }
 
         }
+        else{
+            _code = "405";
+            _type = "text/html";
+            return false;
+            
+        }
+    
     }
 
     _code = "400";
@@ -251,74 +253,74 @@ bool    HTTPParser::checkHost( ListenerManager const & listener ){
     return true;
 }
 
+bool    HTTPParser::isRequestValid( ListenerManager const & listen ){
+    
+    if (checkSize() == false){
+        std::cerr << "Error Size too big: " << strerror(errno) << std::endl;
+        return false;
+    }
+    
+    if (checkRequestLine() == false){
+        std::cerr << "Error Request Line wrong: " << strerror(errno) << std::endl;
+        return false;
+    }
+    
+    if (checkHost(listen) == false){
+        std::cerr << "Error Host not found: " << strerror(errno) << std::endl;
+        return false;
+    }
+    
+    return true;
+}
+
 bool    HTTPParser::findMethods(){
     
-    std::vector<Token>::iterator found;
-    
-    
-  
-    found = find_if(_allTokens.begin(), _allTokens.end(), isTokenWord);
-    if (found != _allTokens.end()){ // same as EOF
+    if (_method == "GET"){
         
-        found = find_if(_allTokens.begin(), _allTokens.end(), isMethodGet);
-        if (found != _allTokens.end()){
+        if (_requesttarget == "/"){
             
-            found++;
-           
-            if (found->value == "/"){
-                
-                _code = "400";
-                _type = "text/html";
-                // _code = "index";
-                // _type = "text/html";
-                
-                return true;
-            }
-            if (found->value.find("/images") != std::string::npos){
-                
-                std::cout <<  "found /images " << std::endl;
-
-                char const *lastSlash = strrchr(found->value.c_str(), '.');
-                if (lastSlash)
-                    std::cout <<  "lastSlash:" << lastSlash << std::endl;
-                std::string suffix = std::string(lastSlash);
-                if (suffix  == ".jpg"){
-                    
-                    
-                    _code = "index";
-                    _type = "image/jpeg";
-                    
-                    return true;
-                }
-                if (suffix == ".png"){
-                
-                    
-                    _code = "index";
-                    _type = "image/png";
-                    
-                    return true;
-                }
-            }
-            _code = "400";
+            _code = "index";
             _type = "text/html";
             
             return true;
         }
-        found = find_if(_allTokens.begin(), _allTokens.end(), isMethodPost);
-        if (found != _allTokens.end()){
+        else if (_requesttarget.find("/images") != std::string::npos){
             
-            _code = "200"; //? fichier specifique 
-            return true;
+            std::cout <<  "found /images " << std::endl;
+            
+            char const *lastSlash = strrchr(_requesttarget.c_str(), '.');
+            if (lastSlash)
+            std::cout <<  "lastSlash:" << lastSlash << std::endl;
+            std::string suffix = std::string(lastSlash);
+            if (suffix  == ".jpg"){
+                
+                _code = "index";
+                _type = "image/jpeg";
+                
+                return true;
+            }
         }
-        found = find_if(_allTokens.begin(), _allTokens.end(), isMethodDelete);
-        if (found != _allTokens.end()){
+        if (_requesttarget == "/favicon.ico"){
             
-            _code = "200"; //? fichier specifique
+            _code = "favicon.ico";
+            _type = "image/x-icon";
+            
             return true;
         }
     }
+    else if (_method == "POST"){
+        
+        _code = "200"; //? fichier specifique 
+        return true;
+    }
+    else if (_method == "DELETE"){
+        
+        _code = "200"; //? fichier specifique 
+        return true;
+        
+    }
     else {
-        _code = "405";
+        _code = "404";
         _type = "text/html";
 
         return false;
