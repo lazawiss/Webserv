@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/20 17:46:13 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/23 18:04:28 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -125,11 +125,19 @@ bool    EpollLoop::do_use_fd(  int fd, ListenerManager const & listen ){
         
     // // should fork() here : ONLY FORK() FOR CGI
     
-    // // send response  
+    // // send response 
+    
     std::cout << "header:" << requestHandler.getHeader() << std::endl;
     std::string header = std::string (requestHandler.getHeader());
-    std::string content = std::string(requestHandler.getBuffer().c_str(), requestHandler.getNReadIndex());
+    std::cout << "First 10 bytes of buffer: ";
+    for (size_t i = 0; i < 10; i++) {
+        std::cout << std::hex << (int)(unsigned char)requestHandler.getBuffer().c_str()[i] << " ";
+    }
+    std::cout << std::endl;
+    std::cout << "NreadIndex: "<< requestHandler.getNReadIndex() << std::endl;
     
+    std::string content = std::string(requestHandler.getBuffer().c_str(), requestHandler.getNReadIndex());
+     
     ResponseSender  responseSender( header, content, fd);
     
     

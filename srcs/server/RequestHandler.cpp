@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/22 19:16:17 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/23 18:00:55 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,14 +22,15 @@
 */
 
 RequestHandler:: RequestHandler( std::string const & request ) : _request(request),
-_root("data/html"), _header(), _size(), _buffer(""), _n_read_index(0){
-    
+_root("data/html"), _header(), _size(), _n_read_index(0){
+
+    memset(_buffer, 0, BUF_SIZE);
 }
 
 RequestHandler::RequestHandler( RequestHandler const & src ) : _request(src._request),
 _root(src._root),_header(src._header), _size(src._size),_n_read_index(src._n_read_index){
     
-    _buffer[BUF_SIZE] = src._buffer[BUF_SIZE];
+     memcpy(_buffer, src._buffer, BUF_SIZE);
 
 }
 
@@ -44,7 +45,7 @@ RequestHandler & RequestHandler::operator=( RequestHandler const & other ){
         this->_root = other._root;
         this->_header = other._header;
         this->_size = other._size;
-        this->_buffer[BUF_SIZE] = other._buffer[BUF_SIZE];
+         memcpy(this->_buffer, other._buffer, BUF_SIZE);
         this->_n_read_index = other._n_read_index;
     }
 
@@ -53,7 +54,7 @@ RequestHandler & RequestHandler::operator=( RequestHandler const & other ){
 
 std::string RequestHandler::getBuffer() const{
 
-    return _buffer;
+    return std::string(_buffer, _n_read_index);
 }
 
 std::string RequestHandler::getHeader() const{
@@ -67,7 +68,7 @@ std::string RequestHandler::getSize() const{
 }
 
 
-int RequestHandler::getNReadIndex() const{
+ssize_t RequestHandler::getNReadIndex() const{
     
     return _n_read_index;
 }
@@ -163,15 +164,21 @@ std::string RequestHandler::buildAnswerHeader( std::string code, std::string typ
     _header += type;
     _header += "\r\n";
     _header += "Content-Length: ";
-    std::stringstream ss;
-    ss << _n_read_index;
-    std::string size = ss.str();
-    _header += size;
-    if ( type == "image/jpeg" ||  type == "image/png" ){
+    // if ( type == "text/html"){
         
-        _header += "\r\n";
-        _header += "Connection: keep-alive";
-    }
+        std::stringstream ss;
+        ss << _n_read_index;
+        std::string size = ss.str();
+        _header += size;
+    // }
+    // if ( type == "image/jpeg" ||  type == "image/png" || type == "image/gif" || type == "image/x-icon"){
+        
+    //     _header += _size;
+    //     _header += "\r\n";
+    //     _header += "Connection: keep-alive";
+    //     // _header += "Connection: close";
+
+    // }
     // if (atoi(str.c_str()) >= 400){
         
         // _header += "Cache-Control: no-store, no-cache, must-revalidate, max-age=0\r\n";
@@ -215,37 +222,49 @@ bool    RequestHandler::answerFile( std::string file ){
 // content = image
 bool    RequestHandler::answerFileImage(){
 
-    std::ifstream source("data/images/cat.png",std::ios::binary);
+    // std::ifstream source("data/images/cat.png",std::ios::binary);
 
-    if (source.is_open() == false)
-    {
-        std::cerr << "Error: file doesn't exist" << std::endl;
-        return false;
-    }
+    // if (source.is_open() == false)
+    // {
+    //     std::cerr << "Error: file doesn't exist" << std::endl;
+    //     return false;
+    // }
 
-    if (source.peek() == std::ifstream::traits_type::eof())
-    {
-        std::cerr << "Error: file is empty" << std::endl;
-        return false;
-    }
+    // if (source.peek() == std::ifstream::traits_type::eof())
+    // {
+    //     std::cerr << "Error: file is empty" << std::endl;
+    //     return false;
+    // }
 
     // source.seekg(0, std::ios::end);
-    size_t size = source.tellg();
+    // size_t size = source.tellg();
     // source.seekg(0, std::ios::beg);
-    // char file_buffer[size];
-    // source.read(file_buffer, size);
     
-    std::cout << "Size: " << size << std::endl;
+    // std::cout << "Size: " << size << std::endl;
 
-    std::stringstream ss;
-    ss << size;
-    _size = ss.str();
+    // std::stringstream ss;
+    // ss << size;
+    // _size = ss.str();
     
-    std::cout << "Size: " << _size << std::endl;
-    if (size > BUF_SIZE){
-        std::cerr << "Image size is too big." << std::endl;
+    // std::cout << "Size: " << _size << std::endl;
+    // if (size > BUF_SIZE){
+    //     std::cerr << "Image size is too big." << std::endl;
+    //     return false;
+    // }
+
+    //  source.read(_buffer, size);
+    // if (source.gcount() != static_cast<std::streamsize>(size)){
+    //     std::cerr << "Error: failed to read entire image file." << std::endl;
+    //     return false;
+    // }
+    // _n_read_index = size;
+    struct stat sb;
+    
+    if (stat("data/images/cat.png", &sb) == -1){
+        std::cerr << "Error stat: " << strerror(errno) << std::endl;
         return false;
     }
+    std::cout << "File Size : " << sb.st_size <<std::endl;
 
     int indexfd = open("data/images/cat.png", O_RDONLY);
     if (indexfd == -1){
@@ -253,7 +272,9 @@ bool    RequestHandler::answerFileImage(){
         close(indexfd);
         return false;
     }
-    _n_read_index = read(indexfd, _buffer, size);
+    // _n_read_index = read(indexfd, _buffer, size);
+    _n_read_index = read(indexfd, _buffer, BUF_SIZE);
+
     close(indexfd);
     std::cout << "n_read_index:" << _n_read_index << std::endl;
     if (_n_read_index == -1)
@@ -269,45 +290,57 @@ bool    RequestHandler::answerFileImage(){
 
 bool    RequestHandler::answerFileIcon(){
 
-    std::ifstream source("data/favicon.ico",std::ios::binary);
+    // std::ifstream source("data/favicon.ico/favicon-16x16.png",std::ios::binary);
 
-    if (source.is_open() == false)
-    {
-        std::cerr << "Error: file doesn't exist" << std::endl;
-        return false;
-    }
+    // if (source.is_open() == false)
+    // {
+    //     std::cerr << "Error: file doesn't exist" << std::endl;
+    //     return false;
+    // }
 
-    if (source.peek() == std::ifstream::traits_type::eof())
-    {
-        std::cerr << "Error: file is empty" << std::endl;
-        return false;
-    }
+    // if (source.peek() == std::ifstream::traits_type::eof())
+    // {
+    //     std::cerr << "Error: file is empty" << std::endl;
+    //     return false;
+    // }
 
     // source.seekg(0, std::ios::end);
-    size_t size = source.tellg();
+    // size_t size = source.tellg();
     // source.seekg(0, std::ios::beg);
-    // char file_buffer[size];
-    // source.read(file_buffer, size);
     
-    std::cout << "Size: " << size << std::endl;
+    
+    // std::cout << "Size Icon: " << size << std::endl;
 
-    std::stringstream ss;
-    ss << size;
-    _size = ss.str();
+    // std::stringstream ss;
+    // ss << size;
+    // _size = ss.str();
     
-    std::cout << "Size: " << _size << std::endl;
-    if (size > BUF_SIZE){
-        std::cerr << "Image size is too big." << std::endl;
+    // std::cout << "Size Icon: " << _size << std::endl;
+    // if (size > BUF_SIZE){
+    //     std::cerr << "Image size is too big." << std::endl;
+    //     return false;
+    // }
+
+    // source.read(_buffer, size);
+    // if (source.gcount() != static_cast<std::streamsize>(size)){
+    //     std::cerr << "Error: failed to read entire favicon file." << std::endl;
+    //     return false;
+    // }
+     struct stat sb;
+    
+    if (stat("data/favicon.ico/favicon-16x16.png", &sb) == -1){
+        std::cerr << "Error stat: " << strerror(errno) << std::endl;
         return false;
     }
+    std::cout << "File Size : " << sb.st_size <<std::endl;
 
-    int indexfd = open("data/favicon.ico", O_RDONLY);
+    int indexfd = open("data/favicon.ico/favicon-16x16.png", O_RDONLY);
     if (indexfd == -1){
         std::cerr << "Error file failed to open on indexfd:" << indexfd << std::endl;
         close(indexfd);
         return false;
     }
-    _n_read_index = read(indexfd, _buffer, size);
+    _n_read_index = read(indexfd, _buffer, BUF_SIZE);
     close(indexfd);
     std::cout << "n_read_index:" << _n_read_index << std::endl;
     if (_n_read_index == -1)
@@ -317,6 +350,9 @@ bool    RequestHandler::answerFileIcon(){
         std::cerr << "Image size is too big." << std::endl;
         return false;
     }
+    
+    // _n_read_index = size;
+    
 
     return true;
 }
@@ -348,18 +384,28 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
     if (HTTPParser.getType() == "text/html"){
         
         std::string file = getFile(HTTPParser.getCode()); 
-        if (answerFile(file) == false)
-            return false;
+        if (answerFile(file) == false){
+            
+            HTTPParser.setCode("404");
+            HTTPParser.setCode("text/html");
+        }
+            
     }
     if (HTTPParser.getType() == "image/jpeg" || HTTPParser.getType() == "image/png"){
         
-        if (answerFileImage() == false)
-            return false;
+        if (answerFileImage() == false){
+         
+            HTTPParser.setCode("404");
+            HTTPParser.setCode("text/html");
+        }
     }
     if (HTTPParser.getType() == "image/x-icon"){
         
-        if (answerFileImage() == false)
-            return false;
+        if (answerFileIcon() == false){
+         
+            HTTPParser.setCode("404");
+            HTTPParser.setCode("text/html");
+        }
     }
     buildAnswerHeader(HTTPParser.getCode(), HTTPParser.getType());
 

@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:00:06 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/22 19:15:22 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/23 17:40:14 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,7 +43,7 @@
 #include <limits>
 
 
-#define BUF_SIZE 80000
+#define BUF_SIZE 800000
 
 
 class RequestHandler {
@@ -70,7 +70,7 @@ public:
     std::string         getBuffer() const;
     std::string         getHeader() const;
     std::string         getSize() const;
-    int                 getNReadIndex() const;
+    ssize_t                getNReadIndex() const;
 
     
     std::string         buildAnswerHeader( std::string code, std::string type );

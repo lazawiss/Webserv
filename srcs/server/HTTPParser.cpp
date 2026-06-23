@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/22 19:19:11 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/23 13:54:40 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,6 +61,19 @@ std::string HTTPParser::getMethod() const{
     
     return _method;
 }
+
+std::string HTTPParser::setCode( std::string const & code ){
+    
+    _code = code;
+    return _code;
+}
+
+std::string HTTPParser::setType( std::string const & type ){
+
+    _type =type;
+    return _type;
+}
+
 
 /*
 ** ============================================================================
@@ -296,6 +309,20 @@ bool    HTTPParser::findMethods(){
                 
                 _code = "index";
                 _type = "image/jpeg";
+                
+                return true;
+            }
+            if (suffix  == ".png"){
+                
+                _code = "index";
+                _type = "image/png";
+                
+                return true;
+            }
+            if (suffix  == ".gif"){
+                
+                _code = "index";
+                _type = "image/gif";
                 
                 return true;
             }

@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/22 16:20:24 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/23 13:52:49 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,7 @@
 #include <limits>
 
 
-#define BUF_SIZE 80000
+#define BUF_SIZE 800000
 
 
 class HTTPParser {
@@ -68,6 +68,10 @@ public:
     std::string     getCode() const;
     std::string     getType() const;
     std::string     getMethod() const;
+    
+    std::string     setCode( std::string const & code );
+    std::string     setType( std::string const & type );
+
     
 
     bool            checkSize();
