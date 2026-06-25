@@ -412,15 +412,14 @@ void Parser::parseDirectiveClientMaxBodySize(AConfig &ref)
 size_t Parser::parseSize(const std::string &word) const
 {
     size_t i = 0;
+    char *end;
+    errno = 0;
 
     while (i < word.size() && std::isdigit(word[i]))
         i++;
     if (i == 0)
         throw ExpectedCorrectSize();
 
-    // size_t value = std::atoi(word.c_str());
-    char *end;
-    errno = 0;
     unsigned long value = std::strtoul(word.c_str(), &end, 10);
     if (errno == ERANGE)
         throw ExpectedLowerValue();
@@ -435,15 +434,16 @@ size_t Parser::parseSize(const std::string &word) const
     size_t multiply;
     if (unit == 'K' || unit == 'k')
         multiply = 1024;
-    if (unit == 'M' || unit == 'm')
+    else if (unit == 'M' || unit == 'm')
         multiply = 1024 * 1024;
-    if (unit == 'G' || unit == 'g')
+    else if (unit == 'G' || unit == 'g')
         multiply = 1024 * 1024 * 1024;
     else
         throw ExpectedCorrectUnit();
 
     if (value > ULLONG_MAX / multiply)
         throw ExpectedLowerValue();
+
     return (static_cast<size_t>(value) * multiply);
 }
 

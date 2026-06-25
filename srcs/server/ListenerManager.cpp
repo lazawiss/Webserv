@@ -19,14 +19,14 @@
 ** ============================================================================
 */
 
-ListenerManager::ListenerManager() : _sockfd(0), _res(NULL), _p(NULL),
+ListenerManager::ListenerManager() : _res(NULL), _p(NULL), _sockfd(0),
     _node("localhost"), _service("8080")
 {
     LOG_SYSTEM("STARTING on " + _node + ":" + _service);
 }
 
 ListenerManager::ListenerManager( ListenerManager const & src ) :
-    _sockfd(src._sockfd), _res(NULL), _p(NULL),
+    _res(NULL), _p(NULL),_sockfd(src._sockfd),
     _node(src._node), _service(src._service)
 {
     LOG_SYSTEM("STARTING on " + _node + ":" + _service);
