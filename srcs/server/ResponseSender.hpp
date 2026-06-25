@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:40:00 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/08 18:13:21 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/23 13:38:40 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,7 @@
 #include <cstdio>
 #include <limits>
 
-#define BUF_SIZE 8000
+#define BUF_SIZE 800000
 
 class ResponseSender {
 

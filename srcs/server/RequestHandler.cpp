@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/20 17:06:24 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/25 21:06:57 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,14 +22,15 @@
 */
 
 RequestHandler:: RequestHandler( std::string const & request ) : _request(request),
-_root("data/html"), _header(), _size(), _buffer(""), _n_read_index(0){
-    
+_root("data/html"), _header(), _size(), _n_read_index(0){
+
+    memset(_buffer, 0, BUF_SIZE);
 }
 
 RequestHandler::RequestHandler( RequestHandler const & src ) : _request(src._request),
 _root(src._root),_header(src._header), _size(src._size),_n_read_index(src._n_read_index){
     
-    _buffer[BUF_SIZE] = src._buffer[BUF_SIZE];
+     memcpy(_buffer, src._buffer, BUF_SIZE);
 
 }
 
@@ -44,7 +45,7 @@ RequestHandler & RequestHandler::operator=( RequestHandler const & other ){
         this->_root = other._root;
         this->_header = other._header;
         this->_size = other._size;
-        this->_buffer[BUF_SIZE] = other._buffer[BUF_SIZE];
+         memcpy(this->_buffer, other._buffer, BUF_SIZE);
         this->_n_read_index = other._n_read_index;
     }
 
@@ -53,7 +54,7 @@ RequestHandler & RequestHandler::operator=( RequestHandler const & other ){
 
 std::string RequestHandler::getBuffer() const{
 
-    return _buffer;
+    return std::string(_buffer, _n_read_index);
 }
 
 std::string RequestHandler::getHeader() const{
@@ -67,7 +68,7 @@ std::string RequestHandler::getSize() const{
 }
 
 
-int RequestHandler::getNReadIndex() const{
+ssize_t RequestHandler::getNReadIndex() const{
     
     return _n_read_index;
 }
@@ -87,6 +88,7 @@ std::string RequestHandler::getFile( std::string code ){
     file += ".";
     file += "html";
  
+    std::cout << "File:" << file << std::endl;
     return file;
 }
  
@@ -95,11 +97,12 @@ std::string RequestHandler::getFile( std::string code ){
 std::string RequestHandler::buildAnswerHeader( std::string code, std::string type ){
     
     //cherche dans tableau >> code + reason
-    std::string codeName[6] = {
+    std::string codeName[7] = {
         "index",
         "400",
         "404",
         "405",
+        "413",
         "414",
         "421"
 
@@ -107,13 +110,14 @@ std::string RequestHandler::buildAnswerHeader( std::string code, std::string typ
     };
     
     int index = 0;
-    for (int i = 0 ;i < 6; i++){
+    for (int i = 0 ;i < 7; i++){
         
         if (codeName[i] == code){
             index = i;
             break;
         }
     }
+    
     std::string str;
     switch (index){
         
@@ -123,6 +127,8 @@ std::string RequestHandler::buildAnswerHeader( std::string code, std::string typ
 
         case(1):
         str = "400 BAD REQUEST";
+        // str = "302 FOUND\r\nLocation: /html/400.html";
+
         break;
 
         case(2):
@@ -130,14 +136,18 @@ std::string RequestHandler::buildAnswerHeader( std::string code, std::string typ
         break;
 
         case(3):
-        str = "405 METHOD NOT ALLOWED";
+        str = "405 METHOD NOT ALLOWED\r\nAllow: GET, POST, DELETE";
         break;
         
         case(4):
-        str = "414 URI TOO LONG";
+        str = "413 CONTENT TOO LARGE";
         break;
         
         case(5):
+        str = "414 URI TOO LONG";
+        break;
+        
+        case(6):
         str = "421 MISDIRECTED REQUEST";
         break;
 
@@ -152,19 +162,31 @@ std::string RequestHandler::buildAnswerHeader( std::string code, std::string typ
     _header += "\r\n";
     _header += "Content-Type: ";
     _header += type;
-    if ( type == "image/jpeg" ||  type == "image/png" ){
+    _header += "\r\n";
+    _header += "Content-Length: ";
+    // if ( type == "text/html"){
         
-        _header += "\r\n";
-        _header += "Context-Length: ";
         std::stringstream ss;
         ss << _n_read_index;
         std::string size = ss.str();
         _header += size;
-        _header += "\r\n";
-        _header += "Connection: keep-alive";
+    // }
+    // if ( type == "image/jpeg" ||  type == "image/png" || type == "image/gif" || type == "image/x-icon"){
+        
+    //     _header += _size;
+    //     _header += "\r\n";
+    //     _header += "Connection: keep-alive";
+    //     // _header += "Connection: close";
 
-    }
+    // }
+    // if (atoi(str.c_str()) >= 400){
+        
+        // _header += "Cache-Control: no-store, no-cache, must-revalidate, max-age=0\r\n";
+        // _header += "Pragma: no-cache\r\n";
+        // _header += "Expires: 0\r\n";
+    // }
     _header += "\r\n\r\n";
+    
     return _header;
 }
 
@@ -172,6 +194,14 @@ std::string RequestHandler::buildAnswerHeader( std::string code, std::string typ
 // content = text
 bool    RequestHandler::answerFile( std::string file ){
 
+    struct stat sb;
+    
+    if (stat(file.c_str(), &sb) == -1){
+        std::cerr << "Error stat: " << strerror(errno) << std::endl;
+        return false;
+    }
+    std::cout << "File Size : " << sb.st_size <<std::endl;
+    
     int indexfd = open(file.c_str(), O_RDONLY);
     if (indexfd == -1){
         std::cerr << "Error file failed to open on indexfd:" << indexfd << std::endl;
@@ -192,35 +222,13 @@ bool    RequestHandler::answerFile( std::string file ){
 // content = image
 bool    RequestHandler::answerFileImage(){
 
-    std::ifstream source("data/images/cat.png",std::ios::binary);
-
-    // if (source.is_open() == false)
-    // {
-    //     std::cerr << "Error: file doesn't exist" << std::endl;
-    //     return false;
-    // }
-
-    // if (source.peek() == std::ifstream::traits_type::eof())
-    // {
-    //     std::cerr << "Error: file is empty" << std::endl;
-    //     return false;
-    // }
-
-    // source.seekg(0, std::ios::end);
-    size_t size = source.tellg();
-    // source.seekg(0, std::ios::beg);
-    // char file_buffer[size];
-    // source.read(file_buffer, size);
+    struct stat sb;
     
-    // std::stringstream ss;
-    // ss << size;
-    // _size = ss.str();
-    
-    // std::cout << "Size: " << _size << std::endl;
-    // if (size > BUF_SIZE){
-    //     std::cerr << "Image size is too big." << std::endl;
-    //     return false;
-    // }
+    if (stat("data/images/cat.png", &sb) == -1){
+        std::cerr << "Error stat: " << strerror(errno) << std::endl;
+        return false;
+    }
+    std::cout << "File Size : " << sb.st_size <<std::endl;
 
     int indexfd = open("data/images/cat.png", O_RDONLY);
     if (indexfd == -1){
@@ -228,7 +236,8 @@ bool    RequestHandler::answerFileImage(){
         close(indexfd);
         return false;
     }
-    this->_n_read_index = read(indexfd, _buffer, size);
+    
+    _n_read_index = read(indexfd, _buffer, BUF_SIZE);
     close(indexfd);
     std::cout << "n_read_index:" << _n_read_index << std::endl;
     if (_n_read_index == -1)
@@ -241,7 +250,37 @@ bool    RequestHandler::answerFileImage(){
 
     return true;
 }
- 
+
+bool    RequestHandler::answerFileIcon(){
+
+    struct stat sb;
+    
+    if (stat("data/favicon.ico/favicon-16x16.png", &sb) == -1){
+        std::cerr << "Error stat: " << strerror(errno) << std::endl;
+        return false;
+    }
+    std::cout << "File Size : " << sb.st_size <<std::endl;
+
+    int indexfd = open("data/favicon.ico/favicon-16x16.png", O_RDONLY);
+    if (indexfd == -1){
+        std::cerr << "Error file failed to open on indexfd:" << indexfd << std::endl;
+        close(indexfd);
+        return false;
+    }
+    _n_read_index = read(indexfd, _buffer, BUF_SIZE);
+    close(indexfd);
+    std::cout << "n_read_index:" << _n_read_index << std::endl;
+    if (_n_read_index == -1)
+        return false;
+
+    if (_n_read_index > BUF_SIZE){
+        std::cerr << "Image size is too big." << std::endl;
+        return false;
+    }
+    
+    return true;
+}
+
 // main function : 
 // instanciate HTTPParser 
 // checks if request valid
@@ -254,34 +293,44 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
 
     HTTPParser.HTTPparse_file(_request);
     
+    bool    requestValid = true;
 
     //  check request
-    if (HTTPParser.checkHost(listen) == false){
-        std::cerr << "Error Host not found: " << strerror(errno) << std::endl;
+    if (HTTPParser.isRequestValid(listen) == false){
+        std::cout << "Request Invalid." << std::endl;
+        requestValid = false;
     }
-    
     // find method 
-    else if (HTTPParser.findMethods() == false){
+    else if (requestValid == true && HTTPParser.findMethods() == false){
         std::cerr << "Error Method not implemented: " << strerror(errno) << std::endl;
     }
 
     if (HTTPParser.getType() == "text/html"){
         
         std::string file = getFile(HTTPParser.getCode()); 
-        if (answerFile(file) == false)
-            return false;
+        if (answerFile(file) == false){
+            
+            HTTPParser.setCode("404");
+            HTTPParser.setCode("text/html");
+        }
+            
     }
-    if (HTTPParser.getType() == "image/jpeg"){
+    if (HTTPParser.getType() == "image/jpeg" || HTTPParser.getType() == "image/png"){
         
-        if (answerFileImage() == false)
-            return false;
+        if (answerFileImage() == false){
+         
+            HTTPParser.setCode("404");
+            HTTPParser.setCode("text/html");
+        }
     }
-    if (HTTPParser.getType() == "image/png"){
+    if (HTTPParser.getType() == "image/x-icon"){
         
-        if (answerFileImage() == false)
-            return false;
+        if (answerFileIcon() == false){
+         
+            HTTPParser.setCode("404");
+            HTTPParser.setCode("text/html");
+        }
     }
-    
     buildAnswerHeader(HTTPParser.getCode(), HTTPParser.getType());
 
     

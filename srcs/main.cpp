@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/05 17:44:47 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/05 17:48:24 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/23 13:37:51 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,7 @@
 #include <ctime>
 #include <cstdio>
 
-#define BUF_SIZE 8000
+#define BUF_SIZE 800000
 
 int parse_arguments(int argc);
 
