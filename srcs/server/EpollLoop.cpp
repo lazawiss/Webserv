@@ -171,10 +171,9 @@ bool    EpollLoop::readingSocket( ListenerManager const & listen ){
 
     // create epoll instance in the kernel, returns epollfd (e.g. fd 4)
     int epollfd = epoll_create(sizeof ev);
-    std::cout << "epollfd:" << epollfd << std::endl;
     if (epollfd == -1)
     {
-        std::cerr << "epollfd:" << epollfd << " " << strerror(errno) << std::endl;
+        LOG_ERROR("epoll_create() failed - " + std::string(strerror(errno)));
         return false;
     }
 
@@ -184,7 +183,7 @@ bool    EpollLoop::readingSocket( ListenerManager const & listen ){
     ev.data.fd = listen.getSockfd();
     if (epoll_ctl(epollfd, EPOLL_CTL_ADD, listen.getSockfd(), &ev) == -1)
     {
-        std::cerr << "Call to epoll_ctl(1) failed: "<< strerror(errno) << std::endl;
+        LOG_ERROR("epoll_ctl(1) failed - " + std::string(strerror(errno)));
         close(epollfd);
         return false;
     }
@@ -200,7 +199,7 @@ bool    EpollLoop::readingSocket( ListenerManager const & listen ){
             // EINTR = signal received (Ctl+C) → go back to while to check _quit
             if (errno == EINTR)
                 continue;
-            std::cerr << "Error epoll_wait " << nfds << ": "<< strerror(errno) << std::endl;
+            LOG_ERROR("epoll_wait() failed — " + std::string(strerror(errno)));
             close(epollfd);
             break;
         } 
@@ -220,14 +219,14 @@ bool    EpollLoop::readingSocket( ListenerManager const & listen ){
                     (struct sockaddr *) &peer_addr, &peer_addr_len);
                 if (clientfd == -1)
                 {
-                    std::cerr << strerror(errno) << std::endl;
+                    LOG_ERROR("accept() failed - " + std::string(strerror(errno)));
                     break;
                 }
                 // set client fd non-blocking: read() returns EAGAIN if no data
                 // yet required with EPOLLET to avoid blocking the program
                 if (setnonblocking(clientfd) < 0)
                 {
-                    std::cerr << strerror(errno) << std::endl;
+                    LOG_ERROR("setnonblocking() failed - " + std::string(strerror(errno)));
                     close(clientfd);
                     break;
                 }
@@ -237,7 +236,7 @@ bool    EpollLoop::readingSocket( ListenerManager const & listen ){
                 ev.data.fd = clientfd;
                 if (epoll_ctl(epollfd,EPOLL_CTL_ADD,clientfd, &ev) == -1)
                 {
-                    std::cerr << "Call to epoll_ctl(2) failed: "<< strerror(errno) << std::endl;
+                    LOG_ERROR("epoll_ctl(2) failed - " + std::string(strerror(errno)));
                     close(clientfd);
                     break;
                 }

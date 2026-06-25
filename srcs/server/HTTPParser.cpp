@@ -105,6 +105,7 @@ void HTTPParser::HTTPparse_file(const std::string &str)
     std::string line;
     // std::vector<Token> allTokens;
 
+    std::cout << "\n";
     while (std::getline(iss, line))
     {
         std::cout << line << "\n";
@@ -119,7 +120,7 @@ void HTTPParser::HTTPparse_file(const std::string &str)
     }
 
     _allTokens.push_back(Token(End, ""));
-    print_token_chain(_allTokens);
+    //print_token_chain(_allTokens);
     
 }
 

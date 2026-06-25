@@ -170,12 +170,12 @@ bool   ListenerManager::listeningSocket(){
     
     if (listen(_sockfd,LISTEN_BACKLOG) == -1)
     {
-        LOG_ERROR("listen() failed - " + strerror(errno));
+        LOG_ERROR("listen() failed - " + std::string(strerror(errno)));
         return false;
     }
 
-    LOG_SYSTEM("Socket is now listening for incoming connections");
     LOG_INFO("Server is up and running at http://" + _node + ":" + _service);
+    LOG_SYSTEM("Server is now listening for incoming connections");
     
     return true;
 }
