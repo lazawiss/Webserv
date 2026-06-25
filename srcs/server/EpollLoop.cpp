@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/23 18:04:28 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/25 21:09:51 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -104,13 +104,6 @@ bool    EpollLoop::do_use_fd(  int fd, ListenerManager const & listen ){
     }
     
     std::string request = std::string(buf, n_read);
-    // std::cout << "Request on fd " << fd << ": " << request << std::endl;
-    
-    // int s = getsockname(fd, (struct sockaddr *) &peer_addr, &peer_addr_len);
-    // if (fd == 0)
-    // std::cout << "Received " << static_cast<long>(n_read) << "bytes from " << peer_addr.ss_family << ":" << std::endl;
-    // else
-    // std::cout << "getnameinfo: " << gai_strerror(s) << std::endl;
     
     // Parse request
     
@@ -129,17 +122,10 @@ bool    EpollLoop::do_use_fd(  int fd, ListenerManager const & listen ){
     
     std::cout << "header:" << requestHandler.getHeader() << std::endl;
     std::string header = std::string (requestHandler.getHeader());
-    std::cout << "First 10 bytes of buffer: ";
-    for (size_t i = 0; i < 10; i++) {
-        std::cout << std::hex << (int)(unsigned char)requestHandler.getBuffer().c_str()[i] << " ";
-    }
-    std::cout << std::endl;
-    std::cout << "NreadIndex: "<< requestHandler.getNReadIndex() << std::endl;
     
     std::string content = std::string(requestHandler.getBuffer().c_str(), requestHandler.getNReadIndex());
      
     ResponseSender  responseSender( header, content, fd);
-    
     
     if (responseSender.sendResponse() == false){
             std::cerr << "Error sending response: " << strerror(errno) << std::endl;
@@ -147,29 +133,6 @@ bool    EpollLoop::do_use_fd(  int fd, ListenerManager const & listen ){
             return false;
         } 
         
-    // if (send(fd, header.c_str(), header.size(), 0) < 0){
-    //     std::cerr << "Error sending response: " << strerror(errno) << std::endl;
-    //     close(fd);
-    //     return false;
-    // }
-    
-    // ssize_t totalSent = 0;
-        
-    // while (totalSent < requestHandler.getNReadIndex()){
-        
-    //     // ssize_t sent = send(fd, content.c_str(), content.size(), 0) < 0;
-    //     ssize_t sent = send(fd, content.c_str() + totalSent, content.size() - totalSent, 0) < 0;
-        
-        
-    //     if (sent == -1){
-    //         std::cerr << "Error sending response: " << strerror(errno) << std::endl;
-    //         close(fd);
-    //         return false;
-    //     }
-            
-    //     totalSent += sent;
-    // }
-    
     close(fd);
     return true;
 }

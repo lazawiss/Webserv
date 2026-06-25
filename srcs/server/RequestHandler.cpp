@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/23 18:00:55 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/25 21:06:57 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -222,42 +222,6 @@ bool    RequestHandler::answerFile( std::string file ){
 // content = image
 bool    RequestHandler::answerFileImage(){
 
-    // std::ifstream source("data/images/cat.png",std::ios::binary);
-
-    // if (source.is_open() == false)
-    // {
-    //     std::cerr << "Error: file doesn't exist" << std::endl;
-    //     return false;
-    // }
-
-    // if (source.peek() == std::ifstream::traits_type::eof())
-    // {
-    //     std::cerr << "Error: file is empty" << std::endl;
-    //     return false;
-    // }
-
-    // source.seekg(0, std::ios::end);
-    // size_t size = source.tellg();
-    // source.seekg(0, std::ios::beg);
-    
-    // std::cout << "Size: " << size << std::endl;
-
-    // std::stringstream ss;
-    // ss << size;
-    // _size = ss.str();
-    
-    // std::cout << "Size: " << _size << std::endl;
-    // if (size > BUF_SIZE){
-    //     std::cerr << "Image size is too big." << std::endl;
-    //     return false;
-    // }
-
-    //  source.read(_buffer, size);
-    // if (source.gcount() != static_cast<std::streamsize>(size)){
-    //     std::cerr << "Error: failed to read entire image file." << std::endl;
-    //     return false;
-    // }
-    // _n_read_index = size;
     struct stat sb;
     
     if (stat("data/images/cat.png", &sb) == -1){
@@ -272,9 +236,8 @@ bool    RequestHandler::answerFileImage(){
         close(indexfd);
         return false;
     }
-    // _n_read_index = read(indexfd, _buffer, size);
+    
     _n_read_index = read(indexfd, _buffer, BUF_SIZE);
-
     close(indexfd);
     std::cout << "n_read_index:" << _n_read_index << std::endl;
     if (_n_read_index == -1)
@@ -290,43 +253,7 @@ bool    RequestHandler::answerFileImage(){
 
 bool    RequestHandler::answerFileIcon(){
 
-    // std::ifstream source("data/favicon.ico/favicon-16x16.png",std::ios::binary);
-
-    // if (source.is_open() == false)
-    // {
-    //     std::cerr << "Error: file doesn't exist" << std::endl;
-    //     return false;
-    // }
-
-    // if (source.peek() == std::ifstream::traits_type::eof())
-    // {
-    //     std::cerr << "Error: file is empty" << std::endl;
-    //     return false;
-    // }
-
-    // source.seekg(0, std::ios::end);
-    // size_t size = source.tellg();
-    // source.seekg(0, std::ios::beg);
-    
-    
-    // std::cout << "Size Icon: " << size << std::endl;
-
-    // std::stringstream ss;
-    // ss << size;
-    // _size = ss.str();
-    
-    // std::cout << "Size Icon: " << _size << std::endl;
-    // if (size > BUF_SIZE){
-    //     std::cerr << "Image size is too big." << std::endl;
-    //     return false;
-    // }
-
-    // source.read(_buffer, size);
-    // if (source.gcount() != static_cast<std::streamsize>(size)){
-    //     std::cerr << "Error: failed to read entire favicon file." << std::endl;
-    //     return false;
-    // }
-     struct stat sb;
+    struct stat sb;
     
     if (stat("data/favicon.ico/favicon-16x16.png", &sb) == -1){
         std::cerr << "Error stat: " << strerror(errno) << std::endl;
@@ -351,9 +278,6 @@ bool    RequestHandler::answerFileIcon(){
         return false;
     }
     
-    // _n_read_index = size;
-    
-
     return true;
 }
 
