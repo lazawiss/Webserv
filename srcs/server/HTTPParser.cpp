@@ -141,23 +141,25 @@ bool    HTTPParser::checkHost( ListenerManager const & listener ){
 
     for (it = _allTokens.begin(); it != _allTokens.end(); ++it)
     {
-        if (it->type == Word){
-            
-            if (it->value == "Host:"){
+        if (it->type == Word)
+        {
+            if (it->value == "Host:")
+            {
                 it++;
-                if (it->type == Word){
-                    
-                    if (it->value != hostname){
-                        
+                if (it->type == Word)
+                {
+                    if (it->value != hostname)
+                    {
                         _code = "421";
                         _type = "text/html";
+
                         return false;
                     }
                 }
             }
         }
-        else if (it->type != Semicolon && it->type != End) {
-            
+        else if (it->type != Semicolon && it->type != End)
+        {
             _code = "400";
             _type = "text/html";
 
@@ -191,32 +193,34 @@ bool    HTTPParser::findMethods(){
     
     std::vector<Token>::iterator found;
     
-    if (_allTokens.size() > BUF_SIZE){
-        
+    if (_allTokens.size() > BUF_SIZE)
+    {
         _code = "414";
         _type = "text/html";
-
 
         return false;
     }
 
   
     found = find_if(_allTokens.begin(), _allTokens.end(), isTokenWord);
-    if (found != _allTokens.end()){ // same as EOF
+    if (found != _allTokens.end())
+    { // same as EOF
         
         found = find_if(_allTokens.begin(), _allTokens.end(), isMethodGet);
-        if (found != _allTokens.end()){
+        if (found != _allTokens.end())
+        {
             
             found++;
            
-            if (found->value == "/"){
-                
+            if (found->value == "/")
+            {
                 _code = "index";
                 _type = "text/html";
                 
                 return true;
             }
-            if (found->value.find("/images") != std::string::npos){
+            if (found->value.find("/images") != std::string::npos)
+            {
                 
                 std::cout <<  "found /images " << std::endl;
 
@@ -224,17 +228,17 @@ bool    HTTPParser::findMethods(){
                 if (lastSlash)
                     std::cout <<  "lastSlash:" << lastSlash << std::endl;
                 std::string suffix = std::string(lastSlash);
-                if (suffix  == ".jpg"){
-                    
-                    
+                if (suffix  == ".jpg")
+                {
+
                     _code = "index";
                     _type = "image/jpeg";
                     
                     return true;
                 }
-                if (suffix == ".png"){
+                if (suffix == ".png")
+                {
                 
-                    
                     _code = "index";
                     _type = "image/png";
                     
@@ -247,19 +251,20 @@ bool    HTTPParser::findMethods(){
             return true;
         }
         found = find_if(_allTokens.begin(), _allTokens.end(), isMethodPost);
-        if (found != _allTokens.end()){
-            
+        if (found != _allTokens.end())
+        {
             _code = "200"; //? fichier specifique 
             return true;
         }
         found = find_if(_allTokens.begin(), _allTokens.end(), isMethodDelete);
-        if (found != _allTokens.end()){
-            
+        if (found != _allTokens.end())
+        {
             _code = "200"; //? fichier specifique
             return true;
         }
     }
-    else {
+    else
+    {
         _code = "405";
         _type = "text/html";
 
@@ -284,5 +289,3 @@ bool    HTTPParser::findCGI(){
     return true;
     
 }
-
-

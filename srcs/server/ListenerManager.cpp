@@ -15,26 +15,20 @@
 
 /*
 ** ============================================================================
-** ListenerManager - Orthodox canonical form
+** Orthodox canonical form
 ** ============================================================================
 */
 
 ListenerManager::ListenerManager() : _res(NULL), _p(NULL), _sockfd(0),
-    _node("localhost"), _service("8080")
-{
-    LOG_SYSTEM("STARTING on " + _node + ":" + _service);
-}
+    _node("localhost"), _service("8080") {}
 
 ListenerManager::ListenerManager( ListenerManager const & src ) :
     _res(NULL), _p(NULL),_sockfd(src._sockfd),
-    _node(src._node), _service(src._service)
+    _node(src._node), _service(src._service) {}
+
+ListenerManager::~ListenerManager()
 {
-    LOG_SYSTEM("STARTING on " + _node + ":" + _service);
-}
 
-ListenerManager::~ListenerManager(){
-
-    LOG_SYSTEM("STOPPING");
     if (_res)
         freeaddrinfo(_res);
     if (_sockfd > 0)
@@ -54,7 +48,7 @@ ListenerManager &   ListenerManager::operator=( ListenerManager const & other ){
 
 /*
 ** ============================================================================
-** ListenerManager - Getters & Setters
+** Getters & Setters
 ** ============================================================================
 */
 
@@ -78,7 +72,7 @@ std::string ListenerManager:: getService() const {
 
 /*
 ** ============================================================================
-** ListenerManager – Member methods
+** Member methods
 ** ============================================================================
 */
 
@@ -119,7 +113,7 @@ bool    ListenerManager::initRes(){
     int status = getaddrinfo(_node.c_str(), _service.c_str(), &_hints, &_res);
     if (status != 0)
     {
-        LOG_ERROR(std::string("getaddrinfo: ") + gai_strerror(status));
+        LOG_ERROR(std::string("getaddrinfo() failed: ") + gai_strerror(status));
         return false;
     }
     return true;
@@ -148,7 +142,7 @@ bool   ListenerManager::loopBindingSocket(){
         }
         if (bind(_sockfd, _p->ai_addr, _p->ai_addrlen) == 0)
         {
-            LOG_SYSTEM("Socket bound on port " + _service);
+            LOG_SYSTEM("Socket successfully bound to port " + _service);
             return true;
         }
         close(_sockfd);
@@ -176,19 +170,19 @@ bool   ListenerManager::listeningSocket(){
     
     if (listen(_sockfd,LISTEN_BACKLOG) == -1)
     {
-        LOG_ERROR("listen() failed");
+        LOG_ERROR("listen() failed - " + strerror(errno));
         return false;
     }
 
-    LOG_SYSTEM("Socket is now listening");
-    LOG_INFO("Server ready on http://" + _node + ":" + _service);
+    LOG_SYSTEM("Socket is now listening for incoming connections");
+    LOG_INFO("Server is up and running at http://" + _node + ":" + _service);
     
     return true;
 }
 
 /*
 ** ============================================================================
-** ListenerManager – Debug
+** Debug
 ** ============================================================================
 */
 

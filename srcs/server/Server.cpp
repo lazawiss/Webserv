@@ -15,17 +15,6 @@
 #include "ListenerManager.hpp"
 #include "EpollLoop.hpp"
 
-std::string logTimestamp(){
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    struct tm *tm_info = localtime(&tv.tv_sec);
-    char buf[16];
-    strftime(buf, sizeof(buf), "%H:%M:%S", tm_info);
-    std::ostringstream oss;
-    oss << buf << "." << std::setw(3) << std::setfill('0') << (tv.tv_usec / 1000);
-    return oss.str();
-}
-
 /*
 ** ============================================================================
 ** Constructors & Destructor
@@ -44,7 +33,8 @@ Server::Server( Server const & src ){
 
 Server::~Server(){
 
-    std::cout << "Destructor Server" << std::endl;
+    LOG_SEP();
+    LOG_SYSTEM("Server STOP...");
     
 }
     
@@ -86,5 +76,25 @@ void    Server::run(){
     
 }
 
-
 volatile sig_atomic_t Server::_quit = 0;
+
+/*
+** ============================================================================
+** Member methods
+** ============================================================================
+*/
+
+std::string logTimestamp()
+{
+    struct timeval tv;
+    char buf[16];
+
+    gettimeofday(&tv, NULL);
+    struct tm *tm_info = localtime(&tv.tv_sec);
+    strftime(buf, sizeof(buf), "%H:%M:%S", tm_info);
+
+    std::ostringstream oss;
+    oss << buf << "." << std::setw(3) << std::setfill('0') << (tv.tv_usec / 1000);
+
+    return oss.str();
+}

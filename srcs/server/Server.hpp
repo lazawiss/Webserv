@@ -47,7 +47,7 @@ std::string logTimestamp();
 #define LOG_INFO(msg)   std::cout << logTimestamp() << " [Info]    " << msg << std::endl
 #define LOG_DEBUG(msg)  std::cout << logTimestamp() << " [Debug]   " << msg << std::endl
 #define LOG_ERROR(msg)  std::cerr << logTimestamp() << " [Error]   " << msg << std::endl
-#define LOG_SEP()       std::cout << logTimestamp() << " ------------------------------------------------------------" << std::endl
+#define LOG_SEP()       std::cout << logTimestamp() << " ---------------------------------------------------" << std::endl
 
 #define BUF_SIZE 8000
 #define MY_SOCK_PATH "home/lzannis/Projets/Weberv/data/html/index.html"

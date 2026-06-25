@@ -251,7 +251,6 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
 
     HTTPParser.HTTPparse_file(_request);
     
-
     //  check request
     if (HTTPParser.checkHost(listen) == false){
         std::cerr << "Error Host not found: " << strerror(errno) << std::endl;

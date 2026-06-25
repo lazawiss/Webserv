@@ -96,89 +96,89 @@ int parse_file(const std::string &str)
     /* ============================================================================ */
     /* ============================================================================ */
 
-    std::cout << "===========================" << std::endl;
-    std::cout << "[GLOBAL]" << std::endl;
-    std::cout << std::endl;
-    std::cout << "root:                 " << config.getRoot()            << std::endl;
-    std::cout << "autoindex:            " << config.getAutoindex()       << std::endl;
-    std::cout << "client_max_body_size: " << config.getClientMaxBodySize() << std::endl;
+    // std::cout << "===========================" << std::endl;
+    // std::cout << "[GLOBAL]" << std::endl;
+    // std::cout << std::endl;
+    // std::cout << "root:                 " << config.getRoot()            << std::endl;
+    // std::cout << "autoindex:            " << config.getAutoindex()       << std::endl;
+    // std::cout << "client_max_body_size: " << config.getClientMaxBodySize() << std::endl;
 
-    std::cout << "index:                ";
-    for (size_t i = 0; i < config.getIndex().size(); i++)
-        std::cout << config.getIndex()[i] << " ";
-    std::cout << std::endl;
+    // std::cout << "index:                ";
+    // for (size_t i = 0; i < config.getIndex().size(); i++)
+    //     std::cout << config.getIndex()[i] << " ";
+    // std::cout << std::endl;
 
-    std::cout << "error_pages:          ";
-    const std::map<int, std::string>& ep = config.getErrorPages();
-    for (std::map<int, std::string>::const_iterator it = ep.begin(); it != ep.end(); it++)
-        std::cout << it->first << " -> " << it->second << " ";
-    std::cout << std::endl;
-    std::cout << std::endl;
+    // std::cout << "error_pages:          ";
+    // const std::map<int, std::string>& ep = config.getErrorPages();
+    // for (std::map<int, std::string>::const_iterator it = ep.begin(); it != ep.end(); it++)
+    //     std::cout << it->first << " -> " << it->second << " ";
+    // std::cout << std::endl;
+    // std::cout << std::endl;
 
-    std::cout << "===========================" << std::endl;
-    std::cout << "[SERVER] [LOCATION]" << std::endl;
-    std::cout << std::endl;
-    std::cout << "nb servers:           " << config.getServers().size() << std::endl;
+    // std::cout << "===========================" << std::endl;
+    // std::cout << "[SERVER] [LOCATION]" << std::endl;
+    // std::cout << std::endl;
+    // std::cout << "nb servers:           " << config.getServers().size() << std::endl;
 
-    for (size_t i = 0; i < config.getServers().size(); i++)
-    {
-        std::cout << std::endl;
-        std::cout << "-------- server[" << i << "] --------" << std::endl;
+    // for (size_t i = 0; i < config.getServers().size(); i++)
+    // {
+    //     std::cout << std::endl;
+    //     std::cout << "-------- server[" << i << "] --------" << std::endl;
 
-        std::cout << "listen:               ";
-        for (size_t j = 0; j < config.getServers()[i].getListen().size(); j++)
-            std::cout << config.getServers()[i].getListen()[j] << " ";
-        std::cout << std::endl;
+    //     std::cout << "listen:               ";
+    //     for (size_t j = 0; j < config.getServers()[i].getListen().size(); j++)
+    //         std::cout << config.getServers()[i].getListen()[j] << " ";
+    //     std::cout << std::endl;
 
-        std::cout << "server_name:          ";
-        for (size_t j = 0; j < config.getServers()[i].getServerNames().size(); j++)
-            std::cout << config.getServers()[i].getServerNames()[j] << " ";
-        std::cout << std::endl;
+    //     std::cout << "server_name:          ";
+    //     for (size_t j = 0; j < config.getServers()[i].getServerNames().size(); j++)
+    //         std::cout << config.getServers()[i].getServerNames()[j] << " ";
+    //     std::cout << std::endl;
 
-        std::cout << "root:                 " << config.getServers()[i].getRoot()            << std::endl;
-        std::cout << "autoindex:            " << config.getServers()[i].getAutoindex()       << std::endl;
-        std::cout << "client_max_body_size: " << config.getServers()[i].getClientMaxBodySize() << std::endl;
+    //     std::cout << "root:                 " << config.getServers()[i].getRoot()            << std::endl;
+    //     std::cout << "autoindex:            " << config.getServers()[i].getAutoindex()       << std::endl;
+    //     std::cout << "client_max_body_size: " << config.getServers()[i].getClientMaxBodySize() << std::endl;
 
-        std::cout << "index:                ";
-        for (size_t j = 0; j < config.getServers()[i].getIndex().size(); j++)
-            std::cout << config.getServers()[i].getIndex()[j] << " ";
-        std::cout << std::endl;
+    //     std::cout << "index:                ";
+    //     for (size_t j = 0; j < config.getServers()[i].getIndex().size(); j++)
+    //         std::cout << config.getServers()[i].getIndex()[j] << " ";
+    //     std::cout << std::endl;
 
-        std::cout << "error_pages:          ";
-        const std::map<int, std::string>& sep = config.getServers()[i].getErrorPages();
-        for (std::map<int, std::string>::const_iterator it = sep.begin(); it != sep.end(); it++)
-            std::cout << it->first << " -> " << it->second << " ";
-        std::cout << std::endl;
+    //     std::cout << "error_pages:          ";
+    //     const std::map<int, std::string>& sep = config.getServers()[i].getErrorPages();
+    //     for (std::map<int, std::string>::const_iterator it = sep.begin(); it != sep.end(); it++)
+    //         std::cout << it->first << " -> " << it->second << " ";
+    //     std::cout << std::endl;
 
-        std::cout << "nb locations:         " << config.getServers()[i].getLocations().size() << std::endl;
-        std::cout << std::endl;
+    //     std::cout << "nb locations:         " << config.getServers()[i].getLocations().size() << std::endl;
+    //     std::cout << std::endl;
 
-        for (size_t j = 0; j < config.getServers()[i].getLocations().size(); j++)
-        {
-            std::cout << "  ----- location[" << j << "] -----" << std::endl;
-            std::cout << "  path:               " << config.getServers()[i].getLocations()[j].getPath()      << std::endl;
-            std::cout << "  root:               " << config.getServers()[i].getLocations()[j].getRoot()      << std::endl;
-            std::cout << "  autoindex:          " << config.getServers()[i].getLocations()[j].getAutoindex() << std::endl;
+    //     for (size_t j = 0; j < config.getServers()[i].getLocations().size(); j++)
+    //     {
+    //         std::cout << "  ----- location[" << j << "] -----" << std::endl;
+    //         std::cout << "  path:               " << config.getServers()[i].getLocations()[j].getPath()      << std::endl;
+    //         std::cout << "  root:               " << config.getServers()[i].getLocations()[j].getRoot()      << std::endl;
+    //         std::cout << "  autoindex:          " << config.getServers()[i].getLocations()[j].getAutoindex() << std::endl;
 
-            std::cout << "  index:              ";
-            for (size_t k = 0; k < config.getServers()[i].getLocations()[j].getIndex().size(); k++)
-                std::cout << config.getServers()[i].getLocations()[j].getIndex()[k] << " ";
-            std::cout << std::endl;
+    //         std::cout << "  index:              ";
+    //         for (size_t k = 0; k < config.getServers()[i].getLocations()[j].getIndex().size(); k++)
+    //             std::cout << config.getServers()[i].getLocations()[j].getIndex()[k] << " ";
+    //         std::cout << std::endl;
 
-            std::cout << "  methods:            ";
-            for (size_t k = 0; k < config.getServers()[i].getLocations()[j].getMethods().size(); k++)
-                std::cout << config.getServers()[i].getLocations()[j].getMethods()[k] << " ";
-            std::cout << std::endl;
+    //         std::cout << "  methods:            ";
+    //         for (size_t k = 0; k < config.getServers()[i].getLocations()[j].getMethods().size(); k++)
+    //             std::cout << config.getServers()[i].getLocations()[j].getMethods()[k] << " ";
+    //         std::cout << std::endl;
 
-            std::cout << "  error_pages:        ";
-            const std::map<int, std::string>& lep = config.getServers()[i].getLocations()[j].getErrorPages();
-            for (std::map<int, std::string>::const_iterator it = lep.begin(); it != lep.end(); it++)
-                std::cout << it->first << " -> " << it->second << " ";
-            std::cout << std::endl;
-        }
-    }
-    std::cout << std::endl;
-    std::cout << "==========================" << std::endl;
+    //         std::cout << "  error_pages:        ";
+    //         const std::map<int, std::string>& lep = config.getServers()[i].getLocations()[j].getErrorPages();
+    //         for (std::map<int, std::string>::const_iterator it = lep.begin(); it != lep.end(); it++)
+    //             std::cout << it->first << " -> " << it->second << " ";
+    //         std::cout << std::endl;
+    //     }
+    // }
+    // std::cout << std::endl;
+    // std::cout << "==========================" << std::endl;
     
     /* ============================================================================ */
     /* ============================================================================ */
