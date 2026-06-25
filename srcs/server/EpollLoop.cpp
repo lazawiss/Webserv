@@ -26,18 +26,14 @@
 ** ============================================================================
 */
 
-EpollLoop:: EpollLoop(){
-
-}
+EpollLoop:: EpollLoop() {}
 
 EpollLoop::EpollLoop( EpollLoop const & src ){
     
     *this = src;
 }
 
-EpollLoop::~EpollLoop(){
-    
-}
+EpollLoop::~EpollLoop() {}
 
 EpollLoop & EpollLoop::operator=( EpollLoop const & other ){
     
@@ -54,7 +50,16 @@ EpollLoop & EpollLoop::operator=( EpollLoop const & other ){
 ** ============================================================================
 */
 
-//set flags for fcntl():
+/**
+** @brief Sets a file descriptor to non-blocking mode.
+**
+** Uses fcntl() to read the current flags of the fd and adds O_NONBLOCK.
+** After this call, read() on this fd returns immediately with EAGAIN 
+** instead of blocking if no data is available.
+**
+** @param fd  the file descriptor to modify
+** @return    result of fcntl(F_SETFL), -1 on error
+**/
 int EpollLoop::setnonblocking( int fd ){
     
     int result;
@@ -82,21 +87,22 @@ bool    EpollLoop::do_use_fd(  int fd, ListenerManager const & listen ){
     
     char    buf[BUF_SIZE];
 
-    // read request :
-    ssize_t n_read = read(fd, buf, BUF_SIZE); // read HTTP requests
+    ssize_t n_read = read(fd, buf, BUF_SIZE);           // read HTTP requests
     
-    std::cout << "n_read:" << n_read << std::endl;
-    if (n_read == -1){
-        if (errno == EAGAIN || errno == EWOULDBLOCK) // FOR PORTABILITY
+    if (n_read == -1)
+    {
+        if (errno == EAGAIN || errno == EWOULDBLOCK)    // FOR PORTABILITY
             return true;
-        else{
+        else
+        {
             
             std::cerr << " Do_use_fd : Error reading from fd "<< fd << strerror(errno) << std::endl;
             close(fd);
             return false;
         }
     }
-    else if (n_read == 0){
+    else if (n_read == 0)
+    {
         
         std::cout << "Client closed connection : "<< fd << std::endl;
         close(fd);
@@ -104,17 +110,8 @@ bool    EpollLoop::do_use_fd(  int fd, ListenerManager const & listen ){
     }
     
     std::string request = std::string(buf, n_read);
-    // std::cout << "Request on fd " << fd << ": " << request << std::endl;
-    
-    // int s = getsockname(fd, (struct sockaddr *) &peer_addr, &peer_addr_len);
-    // if (fd == 0)
-    // std::cout << "Received " << static_cast<long>(n_read) << "bytes from " << peer_addr.ss_family << ":" << std::endl;
-    // else
-    // std::cout << "getnameinfo: " << gai_strerror(s) << std::endl;
     
     // Parse request
-    
-    
     RequestHandler requestHandler(request);
     
     if (requestHandler.handleRequest(listen) == false){
@@ -122,7 +119,7 @@ bool    EpollLoop::do_use_fd(  int fd, ListenerManager const & listen ){
         close(fd);
         return false;
     }
-        
+
     // // should fork() here : ONLY FORK() FOR CGI
     
     // // send response  
@@ -166,78 +163,95 @@ bool    EpollLoop::do_use_fd(  int fd, ListenerManager const & listen ){
     return true;
 }
 
-// main loop event : 
-// accept : create dynamically a new connected socket for each new client, return a new int fd
-// 
-// getsockname : returns current socket address
 bool    EpollLoop::readingSocket( ListenerManager const & listen ){
-    
 
-    std::cout << "_quit:" << Server::_quit << std::endl;
-
+    // ev     : reused form for each epoll_ctl() call to register a fd
+    // events : filled by epoll_wait() with the currently active fds
     struct epoll_event ev, events[MAX_EVENTS];
 
-    int epollfd = epoll_create(sizeof ev); //instantiate epoll 
-    if (epollfd == -1){
+    // create epoll instance in the kernel, returns epollfd (e.g. fd 4)
+    int epollfd = epoll_create(sizeof ev);
+    std::cout << "epollfd:" << epollfd << std::endl;
+    if (epollfd == -1)
+    {
         std::cerr << "epollfd:" << epollfd << " " << strerror(errno) << std::endl;
         return false;
     }
 
+    // register server fd (_socketfd) in the kernel epoll table
+    // EPOLLIN = notify when a client wants to connect
     ev.events = EPOLLIN;
     ev.data.fd = listen.getSockfd();
-    if (epoll_ctl(epollfd, EPOLL_CTL_ADD, listen.getSockfd(), &ev) == -1){
+    if (epoll_ctl(epollfd, EPOLL_CTL_ADD, listen.getSockfd(), &ev) == -1)
+    {
         std::cerr << "Call to epoll_ctl(1) failed: "<< strerror(errno) << std::endl;
         close(epollfd);
         return false;
     }
  
-// epoll loop :
-    while(Server::_quit != 1){
+// main loop : runs until Ctrl+C signal (_quit = 1)
+    while (Server::_quit != 1){
         
+        // sleep until a fd becomes active (max 100ms)
+        // returns nfds = number of active fds, 0 if timeout, -1 if error
         int nfds = epoll_wait(epollfd, events, MAX_EVENTS, 100);
-        
-        // std::cout << "nfds:" << nfds << std::endl;
-        if (nfds == -1){
+        if (nfds == -1)
+        {
+            // EINTR = signal received (Ctl+C) → go back to while to check _quit
             if (errno == EINTR)
                 continue;
             std::cerr << "Error epoll_wait " << nfds << ": "<< strerror(errno) << std::endl;
             close(epollfd);
             break;
         } 
-        for ( int n = 0; n < nfds; ++n){
+        
+        // process each active fd returned by epoll_wait
+        for (int n = 0; n < nfds; ++n){
             
             struct sockaddr_storage peer_addr;
             socklen_t               peer_addr_len = sizeof(peer_addr);
             
-            if (events[n].data.fd == listen.getSockfd()){
-                
-                int clientfd = accept(listen.getSockfd(), (struct sockaddr *) &peer_addr, &peer_addr_len );
-                std::cout << "clientfd:" << clientfd << std::endl;
-                if (clientfd == -1){
+            // active fd == server fd → new client trying to connect
+            if (events[n].data.fd == listen.getSockfd())
+            {
+                // create a dedicated fd for this client (e.g. fd 5)
+                // peer_addr holds the client IP address
+                int clientfd = accept(listen.getSockfd(),
+                    (struct sockaddr *) &peer_addr, &peer_addr_len);
+                if (clientfd == -1)
+                {
                     std::cerr << strerror(errno) << std::endl;
                     break;
                 }
-                if (setnonblocking(clientfd) < 0){
+                // set client fd non-blocking: read() returns EAGAIN if no data
+                // yet required with EPOLLET to avoid blocking the program
+                if (setnonblocking(clientfd) < 0)
+                {
                     std::cerr << strerror(errno) << std::endl;
                     close(clientfd);
                     break;
                 }
-                ev.events = EPOLLIN | EPOLLET; // EPOLLET>>EAGAIN
+                // add client fd to the kernel epoll table
+                // EPOLLET = notify only once when data arrives
+                ev.events = EPOLLIN | EPOLLET;
                 ev.data.fd = clientfd;
-                if (epoll_ctl(epollfd,EPOLL_CTL_ADD,clientfd, &ev) == -1){
+                if (epoll_ctl(epollfd,EPOLL_CTL_ADD,clientfd, &ev) == -1)
+                {
                     std::cerr << "Call to epoll_ctl(2) failed: "<< strerror(errno) << std::endl;
                     close(clientfd);
                     break;
                 }
             }
-            else{
-                
-                if(do_use_fd(events[n].data.fd, listen) == false)
+            // active fd == client fd → client is sending its HTTP request
+            else
+            {
+                if (do_use_fd(events[n].data.fd, listen) == false)
                     break;
             }
         }
     }
 
     close(epollfd);
+
     return true;
 }
