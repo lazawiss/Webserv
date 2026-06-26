@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/23 13:54:40 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/26 20:51:09 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -290,31 +290,42 @@ bool    HTTPParser::findMethods(){
             
             return true;
         }
+        else if (_requesttarget == "/image.html"){
+            
+            _code = "image";
+            _type = "text/html";
+        }
         else if (_requesttarget.find("/images") != std::string::npos){
             
             std::cout <<  "found /images " << std::endl;
             
-            char const *lastSlash = strrchr(_requesttarget.c_str(), '.');
-            if (lastSlash)
-            std::cout <<  "lastSlash:" << lastSlash << std::endl;
-            std::string suffix = std::string(lastSlash);
+            char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
+            if (lastPoint)
+            std::cout <<  "lastPoint:" << lastPoint << std::endl;
+            char const *lastSlash = strrchr(_requesttarget.c_str(), '/');
+            std::string name = std::string(lastSlash, strlen(lastSlash));
+            name.erase(name.begin());
+
+            std::cout <<  "name:" << name << std::endl;
+            
+            std::string suffix = std::string(lastPoint);
             if (suffix  == ".jpg"){
                 
-                _code = "index";
+                _code = name;
                 _type = "image/jpeg";
                 
                 return true;
             }
             if (suffix  == ".png"){
                 
-                _code = "index";
+                _code = name;
                 _type = "image/png";
                 
                 return true;
             }
             if (suffix  == ".gif"){
                 
-                _code = "index";
+                _code = name;
                 _type = "image/gif";
                 
                 return true;
