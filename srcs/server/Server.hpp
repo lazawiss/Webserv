@@ -58,7 +58,8 @@ class SignalManager;
 class EpollLoop;
 
 
-class Server {
+class Server
+{
 
 private:
     
@@ -72,7 +73,7 @@ public:
     
     static volatile sig_atomic_t    _quit;
 
-                Server();
+                //Server();
                 Server( const GlobalConfig &config );
                 Server( Server const & src );
                 ~Server();
