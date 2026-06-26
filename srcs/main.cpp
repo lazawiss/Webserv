@@ -46,26 +46,24 @@ int parse_arguments(int argc)
 int main(int argc, char **argv)
 {
     int             result;
-
-    // TO DO: try/catch 
     
     if ((result = parse_arguments(argc)) != SUCCESS)
         return result;
 
-    if ((result = parse_file(argv[1])) != SUCCESS)
-        return result;
-
-    Server      server;
-    
-    try{
+    try
+    {
+        GlobalConfig config;
         
+        config = parse_file(argv[1]);
+        Server server(config);
+  
         server.start();
-        
         server.run();
     }
-    catch(std::logic_error & e){
-        
+    catch(const std::exception &e)
+    {
         std::cerr << e.what() << std::endl;
+        return ERROR;
     }
   
     return 0;

@@ -14,6 +14,7 @@
 #include "SignalManager.hpp"
 #include "ListenerManager.hpp"
 #include "EpollLoop.hpp"
+#include "../parser/config/GlobalConfig.hpp"
 
 /*
 ** ============================================================================
@@ -21,7 +22,8 @@
 ** ============================================================================
 */
 
-Server::Server(){
+Server::Server( const GlobalConfig &config ) : _config(config)
+{
     LOG_SEP();
     LOG_SYSTEM("Server STARTING...");
 }
@@ -53,27 +55,56 @@ Server & Server::operator=( Server const & other ){
 ** ============================================================================
 */
 
-void    Server::start(){
-    
-    _listenermanager.initHints();
-    if (_listenermanager.initRes() == false)
-        throw std::logic_error("Error initRes");
-    if (_listenermanager.loopBindingSocket() == false)
-        throw std::logic_error("Error loopBindingSocket");
-    if (_listenermanager.listeningSocket() == false)
-        throw std::logic_error("Error listeningSocket");
+void    Server::start()
+{
+    const std::vector<ServerConfig> &servers = _config.getServers();
+
+    // Pre-reserve to avoid reallocation: a realloc copies + destructs existing
+    // ListenerManagers, whose destructor closes _sockfd — invalidating live fds.
+    size_t total = 0;
+    for (size_t i = 0; i < servers.size(); i++)
+        total += servers[i].getListen().size();
+    _listenermanagers.reserve(total);
+
+    for (size_t i = 0; i < servers.size(); i++)
+    {
+        const std::vector<std::string> &listens = servers[i].getListen();
+
+        for (size_t j = 0; j < listens.size(); j++)
+        {
+            const std::string &listen = listens[j];
+
+            size_t point = listen.find(':');
+            if (point == std::string::npos)
+                throw std::runtime_error("Invalid listen directive: " + listen);
+
+            std::string host = listen.substr(0, point);
+            std::string port = listen.substr(point + 1);
+
+            ListenerManager listenermanagers(host, port);
+            listenermanagers.initHints();
+            if (listenermanagers.initRes() == false)
+                throw std::logic_error("Error initRes");
+            if (listenermanagers.loopBindingSocket() == false)
+                throw std::logic_error("Error loopBindingSocket");
+            if (listenermanagers.listeningSocket() == false)
+                throw std::logic_error("Error listeningSocket");
+
+            _listenermanagers.push_back(listenermanagers);
+            listenermanagers.releaseSockfd();
+        }
+    }
 
 }
     
-void    Server::run(){
-         
+void    Server::run()
+{
     _signalManager.setupSignals();
 
-    if (_epollloop.readingSocket( _listenermanager ) == false){
+    if (_epollloop.readingSocket( _listenermanagers ) == false){
         
         throw std::logic_error("Error readingSocket");
     }
-    
 }
 
 volatile sig_atomic_t Server::_quit = 0;

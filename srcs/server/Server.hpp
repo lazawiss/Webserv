@@ -15,6 +15,7 @@
 #include "SignalManager.hpp"
 #include "ListenerManager.hpp"
 #include "EpollLoop.hpp"
+#include "../parser/config/GlobalConfig.hpp"
 
 #include <iostream>
 #include <string>
@@ -50,7 +51,6 @@ std::string logTimestamp();
 #define LOG_SEP()       std::cout << logTimestamp() << " ---------------------------------------------------" << std::endl
 
 #define BUF_SIZE 800000
-#define MY_SOCK_PATH "home/lzannis/Projets/Weberv/data/html/index.html"
 #define LISTEN_BACKLOG 50 //max connections accepted by socket
 #define MAX_EVENTS 10
 
@@ -58,21 +58,23 @@ class SignalManager;
 class EpollLoop;
 
 
-class Server {
+class Server
+{
 
 private:
     
-    SignalManager   _signalManager;
-    ListenerManager _listenermanager;
-    EpollLoop       _epollloop;
+    GlobalConfig                    _config;
+    SignalManager                   _signalManager;
+    std::vector<ListenerManager>    _listenermanagers;
+    EpollLoop                       _epollloop;
 
-    
 protected:
 public:
     
     static volatile sig_atomic_t    _quit;
 
-                Server();
+                //Server();
+                Server( const GlobalConfig &config );
                 Server( Server const & src );
                 ~Server();
     Server &    operator=( Server const & other );

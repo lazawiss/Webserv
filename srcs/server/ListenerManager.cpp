@@ -22,6 +22,9 @@
 ListenerManager::ListenerManager() : _res(NULL), _p(NULL), _sockfd(0),
     _node("localhost"), _service("8080") {}
 
+ListenerManager::ListenerManager( const std::string &host, const std::string &port ) :
+    _res(NULL), _p(NULL), _sockfd(0), _node(host), _service(port) {}
+
 ListenerManager::ListenerManager( ListenerManager const & src ) :
     _res(NULL), _p(NULL),_sockfd(src._sockfd),
     _node(src._node), _service(src._service) {}
@@ -178,6 +181,11 @@ bool   ListenerManager::listeningSocket(){
     LOG_SYSTEM("Server is now listening for incoming connections");
     
     return true;
+}
+
+void ListenerManager::releaseSockfd(){
+
+    _sockfd = 0;
 }
 
 /*

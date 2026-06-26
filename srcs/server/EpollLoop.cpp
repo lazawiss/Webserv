@@ -83,24 +83,11 @@ int EpollLoop::setnonblocking( int fd ){
 // handle fds : no closing fds in other classes only in EpollLoop 
 // TO ENSURE NO HANGING FDS : if boolean == false > error caught fd closed in EPollLoop
 // then throw in Server >> quit program
-bool    EpollLoop::do_use_fd(  int fd, ListenerManager const & listen ){
+bool    EpollLoop::do_use_fd(  int fd, std::vector<ListenerManager> const & listeners ){
     
     char    buf[BUF_SIZE];
 
     ssize_t n_read = read(fd, buf, BUF_SIZE);           // read HTTP requests
-
-    // if (n_read == -1)
-    // {
-    //     if (errno == EAGAIN || errno == EWOULDBLOCK)    // FOR PORTABILITY
-    //         return true;
-    //     else
-    //     {
-            
-    //         std::cerr << " Do_use_fd : Error reading from fd "<< fd << strerror(errno) << std::endl;
-    //         return (close(fd), false);
-    //     }
-    // }
-    // else if (n_read == 0)
     if (n_read == 0)
     {
         LOG_ERROR("Client closed connection: - " + std::string(strerror(errno)));
@@ -112,7 +99,24 @@ bool    EpollLoop::do_use_fd(  int fd, ListenerManager const & listen ){
     // Parse request
     RequestHandler requestHandler(request);
 
-    if (requestHandler.handleRequest(listen) == false)
+    // find which listener accepted this client
+    int listenerSockfd = _clientToListener[fd];
+    const ListenerManager *listener = NULL;
+    for (size_t i = 0; i < listeners.size(); i++)
+    {
+        if (listeners[i].getSockfd() == listenerSockfd)
+        {
+            listener = &listeners[i];
+            break;
+        }
+    }
+    if (listener == NULL)
+    {
+        LOG_ERROR("No listener found for fd " + std::string(strerror(errno)));
+        return (close(fd), false);
+    }
+
+    if (requestHandler.handleRequest(*listener) == false)
     {
         std::cerr << "Reading of html file failed: " << strerror(errno) << std::endl;
         return (close(fd), false);
@@ -132,12 +136,12 @@ bool    EpollLoop::do_use_fd(  int fd, ListenerManager const & listen ){
             std::cerr << "Error sending response: " << strerror(errno) << std::endl;
             return (close(fd), false);
         } 
-        
-    close(fd);
-    return true;
+    
+    _clientToListener.erase(fd);  
+    return close(fd), true;
 }
 
-bool    EpollLoop::readingSocket( ListenerManager const & listen ){
+bool EpollLoop::readingSocket( std::vector<ListenerManager> const & listeners ){
 
     // ev     : reused form for each epoll_ctl() call to register a fd
     // events : filled by epoll_wait() with the currently active fds
@@ -151,15 +155,17 @@ bool    EpollLoop::readingSocket( ListenerManager const & listen ){
         return false;
     }
 
-    // register server fd (_socketfd) in the kernel epoll table
+    // register all listener fds in the kernel epoll table
     // EPOLLIN = notify when a client wants to connect
     ev.events = EPOLLIN;
-    ev.data.fd = listen.getSockfd();
-    if (epoll_ctl(epollfd, EPOLL_CTL_ADD, listen.getSockfd(), &ev) == -1)
+    for (size_t i = 0; i < listeners.size(); i++)
     {
-        LOG_ERROR("epoll_ctl(1) failed - " + std::string(strerror(errno)));
-        close(epollfd);
-        return false;
+        ev.data.fd = listeners[i].getSockfd();
+        if (epoll_ctl(epollfd, EPOLL_CTL_ADD, listeners[i].getSockfd(), &ev) == -1)
+        {
+            LOG_ERROR("epoll_ctl(1) failed - " + std::string(strerror(errno)));
+            return close(epollfd), false;
+        }
     }
  
 // main loop : runs until Ctrl+C signal (_quit = 1)
@@ -184,12 +190,22 @@ bool    EpollLoop::readingSocket( ListenerManager const & listen ){
             struct sockaddr_storage peer_addr;
             socklen_t               peer_addr_len = sizeof(peer_addr);
             
-            // active fd == server fd → new client trying to connect
-            if (events[n].data.fd == listen.getSockfd())
+            // check if active fd is one of the listener fds → new client connecting
+            int listenerSockfd = -1;
+            for (size_t i = 0; i < listeners.size(); i++)
+            {
+                if (events[n].data.fd == listeners[i].getSockfd())
+                {
+                    listenerSockfd = listeners[i].getSockfd();
+                    break;
+                }
+            }
+
+            if (listenerSockfd != -1)
             {
                 // create a dedicated fd for this client (e.g. fd 5)
                 // peer_addr holds the client IP address
-                int clientfd = accept(listen.getSockfd(),
+                int clientfd = accept(listenerSockfd,
                     (struct sockaddr *) &peer_addr, &peer_addr_len);
                 if (clientfd == -1)
                 {
@@ -208,17 +224,18 @@ bool    EpollLoop::readingSocket( ListenerManager const & listen ){
                 // EPOLLET = notify only once when data arrives
                 ev.events = EPOLLIN | EPOLLET;
                 ev.data.fd = clientfd;
-                if (epoll_ctl(epollfd,EPOLL_CTL_ADD,clientfd, &ev) == -1)
+                if (epoll_ctl(epollfd, EPOLL_CTL_ADD, clientfd, &ev) == -1)
                 {
                     LOG_ERROR("epoll_ctl(2) failed - " + std::string(strerror(errno)));
                     close(clientfd);
                     break;
                 }
+                _clientToListener[clientfd] = listenerSockfd;
             }
             // active fd == client fd → client is sending its HTTP request
             else
             {
-                if (do_use_fd(events[n].data.fd, listen) == false)
+                if (do_use_fd(events[n].data.fd, listeners) == false)
                     break;
             }
         }

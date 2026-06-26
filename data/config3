@@ -1,0 +1,37 @@
+
+# ─────────────────────────────────────────
+#  SERVEUR 2 — Second virtual host (port 8081)
+# ─────────────────────────────────────────
+server {
+    listen       0.0.0.0:8080;
+    server_name  second.localhost;
+
+    error_page 400 /errors/404.html;
+
+    location / {
+        root        /var/www/internal;
+        index       index.html;
+        methods     GET;
+        autoindex   off;
+    }
+
+}
+
+# ─────────────────────────────────────────
+#  SERVEUR 3 — Même port, autre interface
+# ─────────────────────────────────────────
+server {
+    listen       127.0.0.1:8081;     # même port, mais interface différente
+    listen       127.0.0.1:8082;
+    server_name  internal.localhost;
+
+    error_page 400 /errors/404.html;
+
+    location / {
+        root        /var/www/internal;
+        index       index.html;
+        methods     GET;
+        autoindex   off;
+    }
+}
+
