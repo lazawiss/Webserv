@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:00:06 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/20 17:05:54 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/23 17:40:14 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +31,8 @@
 #include <cstring>
 #include <arpa/inet.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/sysmacros.h>
 #include <sys/socket.h>
 #include <sys/epoll.h>
 #include <csignal>
@@ -41,7 +43,7 @@
 #include <limits>
 
 
-#define BUF_SIZE 8000
+#define BUF_SIZE 800000
 
 
 class RequestHandler {
@@ -68,15 +70,15 @@ public:
     std::string         getBuffer() const;
     std::string         getHeader() const;
     std::string         getSize() const;
-    int                 getNReadIndex() const;
+    ssize_t                getNReadIndex() const;
 
     
     std::string         buildAnswerHeader( std::string code, std::string type );
     std::string         getFile( std::string code );
     bool                answerFile( std::string file );
     bool                answerFileImage();
+    bool                answerFileIcon();
 
-    
     bool                handleRequest(  ListenerManager const & listen );
 
 };

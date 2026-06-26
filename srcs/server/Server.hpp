@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/21 14:12:24 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/08 18:36:54 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/23 13:38:47 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,7 +49,7 @@ std::string logTimestamp();
 #define LOG_ERROR(msg)  std::cerr << logTimestamp() << " [Error]   " << msg << std::endl
 #define LOG_SEP()       std::cout << logTimestamp() << " ---------------------------------------------------" << std::endl
 
-#define BUF_SIZE 8000
+#define BUF_SIZE 800000
 #define MY_SOCK_PATH "home/lzannis/Projets/Weberv/data/html/index.html"
 #define LISTEN_BACKLOG 50 //max connections accepted by socket
 #define MAX_EVENTS 10
