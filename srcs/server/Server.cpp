@@ -59,6 +59,13 @@ void    Server::start()
 {
     const std::vector<ServerConfig> &servers = _config.getServers();
 
+    // Pre-reserve to avoid reallocation: a realloc copies + destructs existing
+    // ListenerManagers, whose destructor closes _sockfd — invalidating live fds.
+    size_t total = 0;
+    for (size_t i = 0; i < servers.size(); i++)
+        total += servers[i].getListen().size();
+    _listenermanagers.reserve(total);
+
     for (size_t i = 0; i < servers.size(); i++)
     {
         const std::vector<std::string> &listens = servers[i].getListen();
