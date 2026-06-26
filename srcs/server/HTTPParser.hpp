@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HTTPParser.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: andikim <andikim@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/23 13:52:49 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/26 20:38:37 by andikim          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,8 +54,13 @@ private:
     std::string         _method;
     std::string         _requesttarget;
     std::string         _httpversion;
-
-    
+/* ADD INS FOR CGI------*/
+    std::string         _path;
+    std::string         _query_string;
+    std::string         _body;
+    std::string         _content_type;
+    std::string         _content_length;
+/* -------------------*/
 protected:
 
 public:
@@ -68,7 +73,16 @@ public:
     std::string     getCode() const;
     std::string     getType() const;
     std::string     getMethod() const;
-    
+
+    /* ADD INS FOR CGI-------------*/
+    std::string     getPath() const;
+    std::string     getQueryString() const;
+    std::string     getBody() const;
+    std::string     getContentType() const;
+    std::string     getContentLength() const;
+    bool            isCGI() const;
+    /*------------------------- */
+
     std::string     setCode( std::string const & code );
     std::string     setType( std::string const & type );
 
