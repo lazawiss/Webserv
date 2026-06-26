@@ -74,12 +74,9 @@ void    Server::start()
         {
             const std::string &listen = listens[j];
 
-            size_t point = listen.find(':');
-            if (point == std::string::npos)
-                throw std::runtime_error("Invalid listen directive: " + listen);
-
-            std::string host = listen.substr(0, point);
-            std::string port = listen.substr(point + 1);
+            size_t nbr = listen.find(':');
+            std::string host = listen.substr(0, nbr);
+            std::string port = listen.substr(nbr + 1);
 
             ListenerManager listenermanagers(host, port);
             listenermanagers.initHints();

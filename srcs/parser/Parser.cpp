@@ -114,11 +114,12 @@ GlobalConfig Parser::parse()
         else if (current().type == Word)
             parseInheritableDirective(config);
         else
-            throw ExpectedWord();
+            throw std::runtime_error("Unexpected token '" +  current().value
+                + "', should be a 'word' type");
     }
 
     if (config.getServers().empty())
-        throw NoServerDefined();
+        throw std::runtime_error("At least one server is required");
 
     return config;
 }
@@ -142,7 +143,9 @@ ServerConfig Parser::parseServer()
 
     next();
     if (current().type != LBracket)
-        throw ExpectedLBracket();
+        throw std::runtime_error("Unexpected token '" +  current().value
+            + "', should be a 'left braket' type");
+
     next();
 
     while (current().type != RBracket && current().type != End)
@@ -156,11 +159,13 @@ ServerConfig Parser::parseServer()
         else if (current().type == Word)
             parseInheritableDirective(server);
         else
-            throw ExpectedWord();
+            throw std::runtime_error("Unexpected token '" +  current().value
+                + "', should be a 'word' type");
     }
     
     if (current().type != RBracket)
-        throw ExpectedRBracket();
+        throw std::runtime_error("Unexpected token '" +  current().value
+            + "', should be a 'right braket' type");
 
     next();
 
@@ -187,12 +192,15 @@ LocationConfig Parser::parseLocation()
     next();
     
     if (current().type != Word || current().value[0] != '/')
-        throw ExpectedWord();
+        throw std::runtime_error("Unexpected token '" +  current().value
+            + "', should be a 'word' type");
 
     location.setPath(next().value);
 
     if (current().type != LBracket)
-        throw ExpectedLBracket();
+        throw std::runtime_error("Unexpected token '" +  current().value
+            + "', should be a 'left braket' type");
+
     next();
 
     while (current().type != RBracket && current().type != End)
@@ -202,11 +210,13 @@ LocationConfig Parser::parseLocation()
         else if (current().type == Word)
             parseInheritableDirective(location);
         else
-            throw ExpectedWord();
+            throw std::runtime_error("Unexpected token '" +  current().value
+            + "', should be a 'word' type");
     }
     
     if (current().type != RBracket)
-        throw ExpectedRBracket();
+        throw std::runtime_error("Unexpected token '" +  current().value
+            + "', should be a 'right braket' type");
 
     next();
 
@@ -236,7 +246,8 @@ void Parser::parseInheritableDirective(AConfig &ref)
     else if (current().value == "client_max_body_size")
         parseDirectiveClientMaxBodySize(ref);
     else
-        throw UnknownDirective();
+        throw std::runtime_error("Unexpected token'" +  current().value
+            + "', unknown directive in global, server or location context");
 }
 
 /*
@@ -248,56 +259,75 @@ void Parser::parseInheritableDirective(AConfig &ref)
 void Parser::parseDirectiveRoot(AConfig &ref)
 {
     next();
+
     if (current().type != Word)
-        throw ExpectedWord();
+        throw std::runtime_error("Unexpected token '" +  current().value
+            + "', should be a 'word' type");
+
     ref.setRoot(next().value);
+
     if (current().type != Semicolon)
-        throw ExpectedSemicolon();
+        throw std::runtime_error("Unexpected token '" +  current().value
+            + "', should be a 'semi colon' type");
+
     next();
 }
 
 void Parser::parseDirectiveIndex(AConfig &ref)
 {
     next();
+
     if (current().type != Word)
-        throw ExpectedWord();
+        throw std::runtime_error("Unexpected token '" +  current().value
+            + "', should be a 'word' type");
+
     while (current().type == Word)
     {
         ref.addIndex(next().value);
     }
+
     if (current().type != Semicolon)
-        throw ExpectedSemicolon();
+        throw std::runtime_error("Unexpected token '" +  current().value
+            + "', should be a 'semi colon' type");
+
     next();
 }
 
 void Parser::parseDirectiveAutoIndex(AConfig &ref)
 {
     next();
+
     if (current().type != Word)
-        throw ExpectedWord();
+        throw std::runtime_error("Unexpected token '" +  current().value
+            + "', should be a 'word' type");
+
     if (current().value != "on" && current().value != "off")
-        throw ExpectedCorrectAutoIndex();
+        throw std::runtime_error("Unexpected token '" +  current().value
+            + "', auto index can be 'on' or 'off'");
+
     ref.setAutoindex(next().value == "on" ? true : false);
+
     if (current().type != Semicolon)
-        throw ExpectedSemicolon();
+        throw std::runtime_error("Unexpected token '" +  current().value
+            + "', should be a 'semi colon' type");
+
     next();
 }
 
 void Parser::parseDirectiveClientMaxBodySize(AConfig &ref)
 {
-// ANKIM : 1m is default
-// Directive's job is just to set a ceiling on upload size; doesn't have
-// ceiling of its own beyond whatever fits in the int type nginx stores in
-// off_t, 64-bit which is HUGE
-// edge case: setting size to 0 ? (size == 0) means disable check of clinet req bs
-// size_T max SIZE_MAX
-    (void)ref;
     next();
+
     if (current().type != Word)
-        throw ExpectedWord();
+        throw std::runtime_error("Unexpected token '" +  current().value
+            + "', should be a 'word' type");
+
     ref.setClientMaxBodySize(parseSize(next().value));
+
     if (current().type != Semicolon)
-        throw ExpectedSemicolon();
+        throw std::runtime_error("Unexpected token '" +  current().value
+            + "', should be a 'semi colon' type");
+
     next();
 }
 
@@ -310,17 +340,20 @@ size_t Parser::parseSize(const std::string &word) const
     while (i < word.size() && std::isdigit(word[i]))
         i++;
     if (i == 0)
-        throw ExpectedCorrectSize();
+        throw std::runtime_error("Invalid size value (e.g. '10M', "
+            "'512K', '1G', or '1024')");
 
     unsigned long value = std::strtoul(word.c_str(), &end, 10);
     if (errno == ERANGE)
-        throw ExpectedLowerValue();
+        throw std::runtime_error("Invalid size value: expected at least "
+            "one digit (e.g. '10M', '512K', '1G', or '1024')");
 
     if (i == word.size())
         return static_cast<size_t>(value);
     
     if (i != word.size() - 1)
-        throw ExpectedCorrectSize();
+        throw std::runtime_error("Invalid size value: expected at least "
+            "one digit (e.g. '10M', '512K', '1G', or '1024')");
 
     char unit = word[i];
     size_t multiply;
@@ -331,10 +364,12 @@ size_t Parser::parseSize(const std::string &word) const
     else if (unit == 'G' || unit == 'g')
         multiply = 1024 * 1024 * 1024;
     else
-        throw ExpectedCorrectUnit();
+        throw std::runtime_error("Invalid size unit: expected 'K', 'M' or "
+            "'G' after the number (e.g. '10M', '512K', '1G')");
 
     if (value > ULLONG_MAX / multiply)
-        throw ExpectedLowerValue();
+        throw std::runtime_error("Invalid size value: expected at least "
+            "one digit (e.g. '10M', '512K', '1G', or '1024')");
 
     return (static_cast<size_t>(value) * multiply);
 }
@@ -342,34 +377,42 @@ size_t Parser::parseSize(const std::string &word) const
 void Parser::parseDirectiveErrorPage(AConfig &ref)
 {
     next();
+
     if (current().type != Word)
-        throw ExpectedWord();
+        throw std::runtime_error("Unexpected token '" +  current().value
+            + "', should be a 'word' type");
 
     int code = parseCode(next().value);
 
     if (code < 400 || code > 599)
-        throw ExpectedCorrectCode();
+        throw std::runtime_error("Invalid HTTP error code: expected a "
+            "value between 400 and 599 (e.g. '404', '500')");
 
     if (current().type != Word)
-        throw ExpectedWord();
+        throw std::runtime_error("Unexpected token '" +  current().value
+            + "', should be a 'word' type");
 
     std::string uri = next().value;
     ref.addErrorPage(code, uri);
 
     if (current().type != Semicolon)
-        throw ExpectedSemicolon();
+        throw std::runtime_error("Unexpected token '" +  current().value
+            + "', should be a 'semi colon' type");
+
     next();
 }
 
 size_t Parser::parseCode(const std::string &word) const
 {
     if (word.size() != 3)
-        throw ExpectedCorrectCode();
+        throw std::runtime_error("Invalid HTTP error code: expected a "
+            "value between 400 and 599 (e.g. '404', '500')");
 
     for (size_t i = 0; i < word.size(); i++)
     {
         if (!std::isdigit(word[i]))
-            throw ExpectedCorrectCode();
+            throw std::runtime_error("Invalid HTTP error code: expected a "
+                "value between 400 and 599 (e.g. '404', '500')");
     }
 
     return std::atoi(word.c_str());
@@ -378,113 +421,74 @@ size_t Parser::parseCode(const std::string &word) const
 void Parser::parseDirectiveListen(ServerConfig &ref)
 {
     next();
+
     if (current().type != Word)
-        throw ExpectedWord();
+        throw std::runtime_error("Unexpected token '" +  current().value
+            + "', should be a 'word' type");
+
+    const std::string listen = current().value;
+    size_t nbr = listen.find(':');
+    if (nbr == std::string::npos || nbr == 0 || nbr == listen.size() - 1)
+        throw std::runtime_error("Invalid listen directive: " + listen);
+    
+    std::string str = listen.substr(nbr + 1);
+    for (size_t i = 0; i < str.size(); i++)
+        if (!std::isdigit(str[i]))
+            throw std::runtime_error("Invalid port in listen directive: " + listen);
+    
+    int port = std::atoi(str.c_str());
+    if (port < 1 || port > 65535)
+        throw std::runtime_error("Port out of range in listen directive: " + listen);
+
     ref.addListen(next().value);
     if (current().type != Semicolon)
-        throw ExpectedSemicolon();
+        throw std::runtime_error("Unexpected token '" +  current().value
+            + "', should be a 'semi colon' type");
+
     next();
 }
 
 void Parser::parseDirectiveServerName(ServerConfig &ref)
 {
     next();
+
     if (current().type != Word)
-        throw ExpectedWord();
+        throw std::runtime_error("Unexpected token '" +  current().value
+            + "', should be a 'word' type");
+    
     while (current().type == Word)
     {
         ref.addServerName(next().value);
     }
+
     if (current().type != Semicolon)
-        throw ExpectedSemicolon();
+        throw std::runtime_error("Unexpected token '" +  current().value
+            + "', should be a 'semi colon' type");
+
     next();
 }
 
 void Parser::parseDirectiveMethods(LocationConfig &ref)
 {
     next();
+
     if (current().type != Word)
-        throw ExpectedWord();
+        throw std::runtime_error("Unexpected token '" +  current().value
+            + "', should be a 'word' type");
+
     while (current().type == Word)
     {
         if (current().value != "GET" && current().value != "POST"
-            && current().value != "PUT" && current().value != "DELETE")
-                throw ExpectedCorrectMethod();
+            && current().value != "DELETE")
+                throw std::runtime_error("Invalid HTTP method, should be 'GET'"
+                    ", 'POST' or 'DELETE'");
 
         ref.addMethod(next().value);
     }
+
     if (current().type != Semicolon)
-        throw ExpectedSemicolon();
+       throw std::runtime_error("Unexpected token '" +  current().value
+            + "', should be a 'semi colon' type");
+
     next();
-}
-
-/*
-** ============================================================================
-** Parser – handle error with try/catch
-** ============================================================================
-*/
-
-const char* Parser::NoServerDefined::what() const throw()
-{
-    return "At least one server block is required";
-}
-
-const char* Parser::ExpectedWord::what() const throw()
-{
-    return "Unexpected token, should be a 'word' type";
-}
-
-const char* Parser::ExpectedSemicolon::what() const throw()
-{
-    return "Unexpected token, should be a 'semi colon' type";
-}
-
-const char* Parser::ExpectedLBracket::what() const throw()
-{
-    return "Unexpected token, should be a 'left braket' type";
-}
-
-const char* Parser::ExpectedRBracket::what() const throw()
-{
-    return "Unexpected token, should be a 'right braket' type";
-}
-
-const char* Parser::UnknownDirective::what() const throw()
-{
-    return "Unexpected token, unknown directive in global, "
-        "server or location context";
-}
-
-const char* Parser::ExpectedCorrectMethod::what() const throw()
-{
-    return "Invalid HTTP method, should be 'GET', 'POST', 'PUT' or 'DELETE'";
-}
-
-const char* Parser::ExpectedCorrectAutoIndex::what() const throw()
-{
-    return "Unexpected token, auto index can be 'on' or 'off'";
-}
-
-const char* Parser::ExpectedCorrectSize::what() const throw()
-{
-    return "Invalid size value: expected at least one digit (e.g. '10M', "
-        "'512K', '1G', or '1024')";
-}
-
-const char* Parser::ExpectedCorrectUnit::what() const throw()
-{
-    return "Invalid size unit: expected 'K', 'M' or 'G' after the number "
-        "(e.g. '10M', '512K', '1G')";
-}
-
-const char* Parser::ExpectedCorrectCode::what() const throw()
-{
-    return "Invalid HTTP error code: expected a value between 400 and "
-        "599 (e.g. '404', '500')";
-}
-
-const char* Parser::ExpectedLowerValue::what() const throw()
-{
-    return "Invalid size value: expected at least one digit (e.g. '10M', "
-        "'512K', '1G', or '1024')";
 }
