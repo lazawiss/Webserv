@@ -93,14 +93,6 @@ void print_token_chain(std::vector <Token> tokens)
 
 void HTTPParser::HTTPparse_file(const std::string &str)
 {
-
-    // if (file.peek() == std::ifstream::traits_type::eof())
-    // {
-    //     std::cerr << "Error: file '" << str << "' is empty" << std::endl;
-    //     throw std::logic_error("File is empty");
-    // }
-
-
     std::istringstream iss(str);
     std::string line;
     // std::vector<Token> allTokens;

@@ -88,7 +88,7 @@ bool    EpollLoop::do_use_fd(  int fd, ListenerManager const & listen ){
     char    buf[BUF_SIZE];
 
     ssize_t n_read = read(fd, buf, BUF_SIZE);           // read HTTP requests
-    
+
     if (n_read == -1)
     {
         if (errno == EAGAIN || errno == EWOULDBLOCK)    // FOR PORTABILITY
@@ -97,43 +97,38 @@ bool    EpollLoop::do_use_fd(  int fd, ListenerManager const & listen ){
         {
             
             std::cerr << " Do_use_fd : Error reading from fd "<< fd << strerror(errno) << std::endl;
-            close(fd);
-            return false;
+            return (close(fd), false);
         }
     }
     else if (n_read == 0)
     {
-        
-        std::cout << "Client closed connection : "<< fd << std::endl;
-        close(fd);
-        return false;
+        LOG_ERROR("Client closed connection: - " + std::string(strerror(errno)));
+        return (close(fd), false);
     }
-    
+
     std::string request = std::string(buf, n_read);
-    
+
     // Parse request
     RequestHandler requestHandler(request);
-    
-    if (requestHandler.handleRequest(listen) == false){
+
+    if (requestHandler.handleRequest(listen) == false)
+    {
         std::cerr << "Reading of html file failed: " << strerror(errno) << std::endl;
-        close(fd);
-        return false;
+        return (close(fd), false);
     }
 
     // // should fork() here : ONLY FORK() FOR CGI
     
     // // send response  
     std::cout << "header:" << requestHandler.getHeader() << std::endl;
-    std::string header = std::string (requestHandler.getHeader());
+    std::string header = std::string(requestHandler.getHeader());
     std::string content = std::string(requestHandler.getBuffer().c_str(), requestHandler.getNReadIndex());
     
     ResponseSender  responseSender( header, content, fd);
     
-    
     if (responseSender.sendResponse() == false){
             std::cerr << "Error sending response: " << strerror(errno) << std::endl;
-            close(fd);
-            return false;
+            return (close(fd), false);
         } 
         
     // if (send(fd, header.c_str(), header.size(), 0) < 0){
