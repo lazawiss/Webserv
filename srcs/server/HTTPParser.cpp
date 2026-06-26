@@ -112,18 +112,11 @@ void print_token_chain(std::vector <Token> tokens)
 
 void HTTPParser::HTTPparse_file(const std::string &str)
 {
-
-    // if (file.peek() == std::ifstream::traits_type::eof())
-    // {
-    //     std::cerr << "Error: file '" << str << "' is empty" << std::endl;
-    //     throw std::logic_error("File is empty");
-    // }
-
-
     std::istringstream iss(str);
     std::string line;
     // std::vector<Token> allTokens;
 
+    std::cout << "\n";
     while (std::getline(iss, line))
     {
         std::cout << line << "\n";
@@ -138,9 +131,8 @@ void HTTPParser::HTTPparse_file(const std::string &str)
     }
 
     _allTokens.push_back(Token(End, ""));
-    print_token_chain(_allTokens);
+    //print_token_chain(_allTokens);
     
-
 }
 
 /*
@@ -231,32 +223,33 @@ bool    HTTPParser::checkRequestLine(){
 // or if it exist at all
 bool    HTTPParser::checkHost( ListenerManager const & listener ){
 
-
     std::string hostname = listener.getNode();
     hostname += ":";
     hostname += listener.getService();
     
     std::vector<Token>::iterator it;
 
-    for (it = _allTokens.begin(); it != _allTokens.end(); ++it){
-    
-        if (it->type == Word){
-            
-            if (it->value == "Host:"){
+    for (it = _allTokens.begin(); it != _allTokens.end(); ++it)
+    {
+        if (it->type == Word)
+        {
+            if (it->value == "Host:")
+            {
                 it++;
-                if (it->type == Word){
-                    
-                    if (it->value != hostname){
-                        
+                if (it->type == Word)
+                {
+                    if (it->value != hostname)
+                    {
                         _code = "421";
                         _type = "text/html";
+
                         return false;
                     }
                 }
             }
         }
-        else if (it->type != Semicolon && it->type != End) {
-            
+        else if (it->type != Semicolon && it->type != End)
+        {
             _code = "400";
             _type = "text/html";
 
@@ -371,5 +364,3 @@ bool    HTTPParser::findCGI(){
     return true;
     
 }
-
-

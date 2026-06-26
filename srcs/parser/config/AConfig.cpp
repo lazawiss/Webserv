@@ -5,12 +5,13 @@
 ** AConfig - Orthodox canonical form
 ** ============================================================================
 */
+
 // Sets max allowed size of the client request body 
 // _client_max_body_size is 1m if never set
 // this is why we hit 413 errors
 // 0 disables the check entirely
-
-AConfig::AConfig() : _root(""), _autoindex(false), _client_max_body_size(0) {}
+AConfig::AConfig() : _root(""), _autoindex(false),
+    _client_max_body_size(1 * 1024 * 1024) {}
 
 AConfig::AConfig(const AConfig &ref) : _root(ref._root), _index(ref._index),
     _error_pages(ref._error_pages), _autoindex(ref._autoindex),

@@ -27,16 +27,14 @@ _root("data/html"), _header(), _size(), _n_read_index(0){
     memset(_buffer, 0, BUF_SIZE);
 }
 
-RequestHandler::RequestHandler( RequestHandler const & src ) : _request(src._request),
-_root(src._root),_header(src._header), _size(src._size),_n_read_index(src._n_read_index){
-    
+RequestHandler::RequestHandler( RequestHandler const & src ) : 
+    _request(src._request), _root(src._root), _header(src._header),
+    _size(src._size),_n_read_index(src._n_read_index)
+{
      memcpy(_buffer, src._buffer, BUF_SIZE);
-
 }
 
-RequestHandler::~RequestHandler(){
-    
-}
+RequestHandler::~RequestHandler(){}
 
 RequestHandler & RequestHandler::operator=( RequestHandler const & other ){
     
@@ -332,8 +330,6 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         }
     }
     buildAnswerHeader(HTTPParser.getCode(), HTTPParser.getType());
-
-    
 
     return true;
 

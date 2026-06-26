@@ -43,8 +43,6 @@
 
 
 class Server;
-// class RequestHandler;
-
 
 class EpollLoop {
 
@@ -62,6 +60,5 @@ public:
     int         setnonblocking( int fd );
     bool        do_use_fd( int fd, ListenerManager const & listen );
     bool        readingSocket( ListenerManager const & listen );
-
 
 };
