@@ -66,7 +66,7 @@ public:
             
     bool                loopBindingSocket();
     bool                listeningSocket();
-    void                releaseSocketfd();
+    void                releaseSockfd();
 
 
 };

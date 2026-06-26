@@ -183,7 +183,7 @@ bool   ListenerManager::listeningSocket(){
     return true;
 }
 
-void ListenerManager::releaseSocketfd(){
+void ListenerManager::releaseSockfd(){
 
     _sockfd = 0;
 }

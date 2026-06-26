@@ -51,7 +51,6 @@ std::string logTimestamp();
 #define LOG_SEP()       std::cout << logTimestamp() << " ---------------------------------------------------" << std::endl
 
 #define BUF_SIZE 800000
-#define MY_SOCK_PATH "home/lzannis/Projets/Weberv/data/html/index.html"
 #define LISTEN_BACKLOG 50 //max connections accepted by socket
 #define MAX_EVENTS 10
 

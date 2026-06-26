@@ -136,9 +136,9 @@ bool    EpollLoop::do_use_fd(  int fd, std::vector<ListenerManager> const & list
             std::cerr << "Error sending response: " << strerror(errno) << std::endl;
             return (close(fd), false);
         } 
-        
-    close(fd);
-    return true;
+    
+    _clientToListener.erase(fd);  
+    return close(fd), true;
 }
 
 bool EpollLoop::readingSocket( std::vector<ListenerManager> const & listeners ){
@@ -241,7 +241,6 @@ bool EpollLoop::readingSocket( std::vector<ListenerManager> const & listeners ){
         }
     }
 
-    _clientToListener.erase(fd);
     close(epollfd);
 
     return true;
