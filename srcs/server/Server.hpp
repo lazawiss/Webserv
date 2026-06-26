@@ -62,17 +62,18 @@ class Server {
 
 private:
     
-    SignalManager   _signalManager;
-    ListenerManager _listenermanager;
-    EpollLoop       _epollloop;
+    GlobalConfig                    _config;
+    SignalManager                   _signalManager;
+    std::vector<ListenerManager>    _listenermanagers;
+    EpollLoop                       _epollloop;
 
-    
 protected:
 public:
     
     static volatile sig_atomic_t    _quit;
 
                 Server();
+                Server( const GlobalConfig &config );
                 Server( Server const & src );
                 ~Server();
     Server &    operator=( Server const & other );

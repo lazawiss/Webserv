@@ -21,7 +21,7 @@
 
 
 
-int parse_file(const std::string& path);
+GlobalConfig parse_file(const std::string& path);
 
 /*
 ** ============================================================================
