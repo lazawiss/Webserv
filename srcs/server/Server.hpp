@@ -15,6 +15,7 @@
 #include "SignalManager.hpp"
 #include "ListenerManager.hpp"
 #include "EpollLoop.hpp"
+#include "../parser/config/GlobalConfig.hpp"
 
 #include <iostream>
 #include <string>

@@ -84,6 +84,7 @@ void    Server::start()
                 throw std::logic_error("Error listeningSocket");
 
             _listenermanagers.push_back(listenermanagers);
+            listenermanagers.releaseSockfd();
         }
     }
 
