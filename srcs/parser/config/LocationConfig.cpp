@@ -2,14 +2,14 @@
 
 /*
 ** ============================================================================
-** LocationConfig - Orthodox canonical form
+** Orthodox canonical form
 ** ============================================================================
 */
 
 LocationConfig::LocationConfig() : AConfig() {}
 
 LocationConfig::LocationConfig(const LocationConfig &ref) : AConfig(ref),
-    _path(ref._path), _methods(ref._methods) {}
+    _path(ref._path), _methods(ref._methods), _upload(_upload) {}
 
 LocationConfig& LocationConfig::operator=(const LocationConfig &ref)
 {
@@ -18,6 +18,7 @@ LocationConfig& LocationConfig::operator=(const LocationConfig &ref)
         AConfig::operator=(ref);
         _path         = ref._path;
         _methods      = ref._methods;
+        _upload       = ref._upload;
     }
     return *this;
 }
@@ -27,7 +28,7 @@ LocationConfig::~LocationConfig() {}
 
 /*
 ** ============================================================================
-** LocationConfig - Getters & Setter
+** Getters & Setter
 ** ============================================================================
 */
 
@@ -40,6 +41,17 @@ const std::string& LocationConfig::getPath() const
 void LocationConfig::setPath(const std::string &path)
 {
     _path = path;
+}
+
+// ── upload ──────────────────────────────────────────────────────────────────
+const std::string& LocationConfig::getUpload() const
+{
+    return _upload;
+}
+
+void LocationConfig::setUpload(const std::string &upload)
+{
+    _upload = upload;
 }
 
 // ── methods ─────────────────────────────────────────────────────────────────

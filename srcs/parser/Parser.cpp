@@ -207,6 +207,8 @@ LocationConfig Parser::parseLocation()
     {
         if (current().type == Word && current().value == "methods")
             parseDirectiveMethods(location);
+        else if (current().type == Word && current().value == "upload")
+            parseDirectiveUpload(location);
         else if (current().type == Word)
             parseInheritableDirective(location);
         else
@@ -485,6 +487,23 @@ void Parser::parseDirectiveMethods(LocationConfig &ref)
 
         ref.addMethod(next().value);
     }
+
+    if (current().type != Semicolon)
+       throw std::runtime_error("Unexpected token '" +  current().value
+            + "', should be a 'semi colon' type");
+
+    next();
+}
+
+void	Parser::parseDirectiveUpload(LocationConfig &ref)
+{
+    next();
+
+    if (current().type != Word || current().value[0] != '/')
+        throw std::runtime_error("Unexpected token '" +  current().value
+            + "', should be a 'word' type");
+    
+    ref.setUpload(next().value);
 
     if (current().type != Semicolon)
        throw std::runtime_error("Unexpected token '" +  current().value

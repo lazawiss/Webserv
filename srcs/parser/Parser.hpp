@@ -64,6 +64,7 @@ public:
     void	parseDirectiveListen(ServerConfig &ref);
     void	parseDirectiveServerName(ServerConfig &ref);
     void	parseDirectiveMethods(LocationConfig &ref);
+    void	parseDirectiveUpload(LocationConfig &ref);
 	size_t	parseSize(const std::string &word)				const;
 	size_t	parseCode(const std::string &word)				const;
 
