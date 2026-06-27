@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HTTPParser.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: andikim <andikim@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/23 13:54:40 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/26 20:50:09 by andikim          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -192,9 +192,22 @@ bool    HTTPParser::checkRequestLine(){
             if (slash){
           
                 _requesttarget = found->value;
+                /**CGI AJOUT */
+                size_t qmark = _requsettarget.find('?');
+                if (qmark != std::string::npos)
+                {
+                    _path = _requesttarget.substr(0,qmark);
+                    _query_string = _requesttarget.substr(qmark + 1);
+                }
+                else 
+                {
+                    _path = _requesttarget;
+                    _query_string = "";
+                }
+                /*///////////////*/
                 std::cout << "RequestTarget: " << _requesttarget<< std::endl;
                 found++;
-                
+
                 if (found->value == "HTTP/1.1"){
                 
                     _httpversion = found->value;
