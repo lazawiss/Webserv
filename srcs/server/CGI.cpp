@@ -5,7 +5,7 @@ public:
     ~CGI();
 
 // METHODS
-    void launch(int epoll_fd, const std::string &script_path); // kaunching the fork/pipe/exec - registers pipe with epoll (code)
+    void launch(int epoll_fd, const std::string &script_path); // Launching the fork/pipe/exec - registers pipe with epoll (code)
     void readOutput(); // called on second epoll wake; reads from pipe and append to _output
     bool isDone(); // checks to see if python cgi is good and done
     // check if child has finished 
