@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/27 11:37:04 by ankim            ###   ########.fr       */
+/*   Updated: 2026/06/27 13:47:04 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -190,19 +190,6 @@ bool    HTTPParser::checkRequestLine(){
             
             char const *slash = strrchr(found->value.c_str(), '/');
             if (slash){
-                /**CGI AJOUT */
-                size_t qmark = _requesttarget.find('?'); // If we find "?", information
-                if (qmark != std::string::npos)
-                {
-                    _path = _requesttarget.substr(0,qmark);
-                    _query_string = _requesttarget.substr(qmark + 1);
-                }
-                else // If we don't, regular - _path = _request and no query string
-                {
-                    _path = _requesttarget;
-                    _query_string = "";
-                }
-                /*///////////////*/
                 _requesttarget = found->value;
                 std::cout << "RequestTarget: " << _requesttarget<< std::endl;
                 found++;
@@ -301,6 +288,23 @@ bool    HTTPParser::findMethods(){
             _type = "text/html";
             
             return true;
+        }
+
+        else if (_requesttarget.find("/cgi-bin") != std::string::npos){
+            /**CGI AJOUT */
+            size_t qmark = _requesttarget.find('?'); // If we find "?", information
+            if (qmark != std::string::npos)
+            {
+                _path = _requesttarget.substr(0,qmark);
+                _query_string = _requesttarget.substr(qmark + 1);
+            }
+            else // If we don't, regular - _path = _request and no query string
+            {
+                _path = _requesttarget;
+                _query_string = "";
+            }
+            /*///////////////*/
+            // class instant --> take all this shit 
         }
         else if (_requesttarget.find("/images") != std::string::npos){
             

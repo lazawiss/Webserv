@@ -199,6 +199,8 @@ LocationConfig Parser::parseLocation()
     {
         if (current().type == Word && current().value == "methods")
             parseDirectiveMethods(location);
+        else if (current().type == Word && current().value == "cgi_extension")
+            parseDirectiveCGI(location);
         else if (current().type == Word)
             parseInheritableDirective(location);
         else
@@ -418,6 +420,27 @@ void Parser::parseDirectiveMethods(LocationConfig &ref)
     next();
 }
 
+void Parser::parseDirectiveCGI(LocationConfig &ref)
+{
+    next();
+    if (current().type != Word)
+        throw ExpectedWord();
+    if (current().type == Word)
+    {
+        if (current().value != ".py" && current().value != ".php")
+            throw ExpectedCGIFile();
+        std::string key = current().value;
+        next();
+        std::string value = current().value;
+        ref.addMap(key, value);
+        std::cout << "Key, value : " << key << value << std::endl;
+    }
+    next();
+    if (current().type != Semicolon)
+        throw ExpectedSemicolon();
+    next();
+}
+
 /*
 ** ============================================================================
 ** Parser – handle error with try/catch
@@ -487,4 +510,9 @@ const char* Parser::ExpectedLowerValue::what() const throw()
 {
     return "Invalid size value: expected at least one digit (e.g. '10M', "
         "'512K', '1G', or '1024')";
+}
+
+const char* Parser::ExpectedCGIFile::what() const throw()
+{
+    return "Invalid CGI file format: expected .py or .php";
 }

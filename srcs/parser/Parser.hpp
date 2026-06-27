@@ -64,6 +64,7 @@ public:
     void	parseDirectiveListen(ServerConfig &ref);
     void	parseDirectiveServerName(ServerConfig &ref);
     void	parseDirectiveMethods(LocationConfig &ref);
+	void	parseDirectiveCGI(LocationConfig &ref);
 	size_t	parseSize(const std::string &word)				const;
 	size_t	parseCode(const std::string &word)				const;
 
@@ -135,6 +136,12 @@ public:
 	};
 
 	class ExpectedLowerValue : public std::exception
+	{
+		public:
+			const char* what() const throw();
+	};
+
+	class ExpectedCGIFile : public std::exception
 	{
 		public:
 			const char* what() const throw();
