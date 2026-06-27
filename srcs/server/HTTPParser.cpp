@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/27 13:47:04 by ankim            ###   ########.fr       */
+/*   Updated: 2026/06/27 16:44:37 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,6 +60,10 @@ std::string HTTPParser::getType() const{
 std::string HTTPParser::getMethod() const{
     
     return _method;
+}
+
+std::string HTTPParser::getRequestTarget() const{
+    return _requesttarget;
 }
 
 std::string HTTPParser::setCode( std::string const & code ){
@@ -282,6 +286,7 @@ bool    HTTPParser::findMethods(){
     
     if (_method == "GET"){
         
+
         if (_requesttarget == "/"){
             
             _code = "index";
@@ -290,22 +295,6 @@ bool    HTTPParser::findMethods(){
             return true;
         }
 
-        else if (_requesttarget.find("/cgi-bin") != std::string::npos){
-            /**CGI AJOUT */
-            size_t qmark = _requesttarget.find('?'); // If we find "?", information
-            if (qmark != std::string::npos)
-            {
-                _path = _requesttarget.substr(0,qmark);
-                _query_string = _requesttarget.substr(qmark + 1);
-            }
-            else // If we don't, regular - _path = _request and no query string
-            {
-                _path = _requesttarget;
-                _query_string = "";
-            }
-            /*///////////////*/
-            // class instant --> take all this shit 
-        }
         else if (_requesttarget.find("/images") != std::string::npos){
             
             std::cout <<  "found /images " << std::endl;
@@ -345,12 +334,12 @@ bool    HTTPParser::findMethods(){
         }
     }
     else if (_method == "POST"){
-        
+        //check for CGI
         _code = "200"; //? fichier specifique 
         return true;
     }
     else if (_method == "DELETE"){
-        
+        // check for CGI
         _code = "200"; //? fichier specifique 
         return true;
         

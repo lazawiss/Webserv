@@ -1,6 +1,3 @@
-# include "ListenerManager.hpp"
-# include "EpollLoop.hpp"
-
 //to parser block need to add:
 // std::string _root, std::map<std::string, std::string> _cgiExtensions 
 // --> we know because we get from execve(interpreter -> _cgiExtetnsion)
@@ -90,7 +87,4 @@ if (pid == 0) {
 
 }
 
-
-// findCGI dans HTTPParser, si found, intitaite CGI object 
-// will it poser pb for Server si on n'a pas CGI object
-
+CGI::CGI(){};

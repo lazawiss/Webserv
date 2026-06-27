@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   EpollLoop.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:27:21 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/09 21:39:32 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/27 16:13:16 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@
 #include "../parser/Parser.hpp"
 #include "../lexer/Lexer.hpp"
 #include "RequestHandler.hpp"
+#include "CGI.hpp"
 
 #include <fstream>
 #include <iostream>
