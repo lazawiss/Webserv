@@ -19,6 +19,7 @@ private:
     std::string                         _path;
     std::vector<std::string>            _methods;
     std::string                         _upload;
+    std::map<int, std::string>          _return;
 
 public:
     // ── Orthodox canonical form ─────────────────────────────────────────────
@@ -31,11 +32,13 @@ public:
     const std::string&                        getPath()        const;
     const std::vector<std::string>&           getMethods()     const;
     const std::string&                        getUpload()      const;
+    const std::map<int, std::string>&         getReturn()      const;
 
     // ── Setters ─────────────────────────────────────────────────────────────
     void setPath(const std::string &path);
     void addMethod(const std::string &method);
     void setUpload(const std::string &upload);
+    void addReturn(int code, const std::string &uri);
 };
 
 #endif

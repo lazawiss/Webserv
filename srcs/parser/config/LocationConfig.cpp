@@ -64,3 +64,14 @@ void LocationConfig::addMethod(const std::string &method)
 {
     _methods.push_back(method);
 }
+
+// ── return ──────────────────────────────────────────────────────────────────
+const std::map<int, std::string>& LocationConfig::getReturn() const
+{
+    return _return;
+}
+
+void LocationConfig::addReturn(int code, const std::string &uri)
+{
+    _return[code] = uri;
+}

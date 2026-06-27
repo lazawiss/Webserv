@@ -209,6 +209,8 @@ LocationConfig Parser::parseLocation()
             parseDirectiveMethods(location);
         else if (current().type == Word && current().value == "upload")
             parseDirectiveUpload(location);
+        else if (current().type == Word && current().value == "return")
+            parseDirectiveReturn(location);
         else if (current().type == Word)
             parseInheritableDirective(location);
         else
@@ -495,7 +497,7 @@ void Parser::parseDirectiveMethods(LocationConfig &ref)
     next();
 }
 
-void	Parser::parseDirectiveUpload(LocationConfig &ref)
+void Parser::parseDirectiveUpload(LocationConfig &ref)
 {
     next();
 
@@ -507,6 +509,34 @@ void	Parser::parseDirectiveUpload(LocationConfig &ref)
 
     if (current().type != Semicolon)
        throw std::runtime_error("Unexpected token '" +  current().value
+            + "', should be a 'semi colon' type");
+
+    next();
+}
+
+void Parser::parseDirectiveReturn(LocationConfig &ref)
+{
+    next();
+
+    if (current().type != Word)
+        throw std::runtime_error("Unexpected token '" +  current().value
+            + "', should be a 'word' type");
+
+    int code = parseCode(next().value);
+
+    if (code < 400 || code > 599)
+        throw std::runtime_error("Invalid HTTP error code: expected a "
+            "value between 400 and 599 (e.g. '404', '500')");
+
+    if (current().type != Word)
+        throw std::runtime_error("Unexpected token '" +  current().value
+            + "', should be a 'word' type");
+
+    std::string uri = next().value;
+    ref.addErrorPage(code, uri);
+
+    if (current().type != Semicolon)
+        throw std::runtime_error("Unexpected token '" +  current().value
             + "', should be a 'semi colon' type");
 
     next();
