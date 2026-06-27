@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HTTPParser.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: andikim <andikim@student.42.fr>            +#+  +:+       +#+        */
+/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/26 20:50:09 by andikim          ###   ########.fr       */
+/*   Updated: 2026/06/27 11:37:04 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -190,21 +190,20 @@ bool    HTTPParser::checkRequestLine(){
             
             char const *slash = strrchr(found->value.c_str(), '/');
             if (slash){
-          
-                _requesttarget = found->value;
                 /**CGI AJOUT */
-                size_t qmark = _requsettarget.find('?');
+                size_t qmark = _requesttarget.find('?'); // If we find "?", information
                 if (qmark != std::string::npos)
                 {
                     _path = _requesttarget.substr(0,qmark);
                     _query_string = _requesttarget.substr(qmark + 1);
                 }
-                else 
+                else // If we don't, regular - _path = _request and no query string
                 {
                     _path = _requesttarget;
                     _query_string = "";
                 }
                 /*///////////////*/
+                _requesttarget = found->value;
                 std::cout << "RequestTarget: " << _requesttarget<< std::endl;
                 found++;
 
