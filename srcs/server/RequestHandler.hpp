@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:00:06 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/28 15:35:04 by ankim            ###   ########.fr       */
+/*   Updated: 2026/06/28 19:48:54 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,7 @@
 #include "../lexer/Lexer.hpp"
 #include "ListenerManager.hpp"
 #include "HTTPParser.hpp"
-
+#include "CGIHandler.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -41,6 +41,7 @@
 #include <ctime>
 #include <cstdio>
 #include <limits>
+
 
 
 #define BUF_SIZE 800000

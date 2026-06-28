@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/28 15:34:35 by ankim            ###   ########.fr       */
+/*   Updated: 2026/06/28 20:09:35 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -115,10 +115,11 @@ std::string RequestHandler::getFileUpload( std::string const & code){
 std::string RequestHandler::buildAnswerHeader( std::string const & code, std::string const & type ){
     
     //cherche dans tableau >> code + reason
-    std::string codeName[9] = {
+    std::string codeName[10] = {
         "index",
         "image",
         "test",
+        "file",
         "400",
         "404",
         "405",
@@ -128,7 +129,7 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
     };
     
     int index = 0;
-    for (int i = 0 ;i < 9; i++){
+    for (int i = 0 ;i < 10; i++){
         
         if (codeName[i] == code){
             index = i;
@@ -152,27 +153,31 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
         break;
 
         case(3):
+        str = "200 OK";
+        break;
+
+        case(4):
         str = "400 BAD REQUEST";
         // str = "302 FOUND\r\nLocation: /html/400.html";
         break;
 
-        case(4):
+        case(5):
         str = "404 Not Found";
         break;
 
-        case(5):
+        case(6):
         str = "405 METHOD NOT ALLOWED\r\nAllow: GET, POST, DELETE";
         break;
         
-        case(6):
+        case(7):
         str = "413 CONTENT TOO LARGE";
         break;
         
-        case(7):
+        case(8):
         str = "414 URI TOO LONG";
         break;
         
-        case(8):
+        case(9):
         str = "421 MISDIRECTED REQUEST";
         break;
 
@@ -312,12 +317,7 @@ bool    RequestHandler::answerFileIcon(){
     return true;
 }
 
-// main function : 
-// instanciate HTTPParser 
-// checks if request valid
-// parse request
-// find proper file to send to client
-// build answer depending of content to sent
+
 bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
     
     HTTPParser HTTPParser(_request);
@@ -331,20 +331,24 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         std::cout << "Request Invalid." << std::endl;
         requestValid = false;
     }
-    
-    /**CGI AJOUT */
-    if (requestValid && (HTTPParser.getRequestTarget().find("/cgi-bin/")) != std::string::npos){
-        // create CGI object here        
-        // parse request 
-        // return (CGI object)
-        // http parser sets stuff so add a cgi object inside?
-        // or just set cgi 
-        // 
-        HTTPParser.findCGI();
+
+    if (requestValid && HTTPParser.isCGI() == true)
+    {
+        CGI cgi(HTTPParser, listen ); // for FD -- need to update classes
+        // check isValid;
+        // check method --
+            // if (_method == GET)
+                // cgi.getCGI(listen.);
+            // if (_method == POST)
+                // cgi.postCGI();
+            // if (_method == DELETE)
+                // cgi.deleteCGI();
+            // if (_method == PUT)
+                // cgi.putCGI();
+        
     }
 
-    // find method 
-    else if (requestValid == true && HTTPParser.findMethods() == false){
+    if (requestValid == true && HTTPParser.findMethods() == false){
         std::cerr << "Error Method not implemented: " << strerror(errno) << std::endl;
     }
 

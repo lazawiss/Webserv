@@ -1,90 +1,53 @@
-//to parser block need to add:
-// std::string _root, std::map<std::string, std::string> _cgiExtensions 
-// --> we know because we get from execve(interpreter -> _cgiExtetnsion)
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   CGIHandler.cpp                                     :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/06/28 19:39:04 by ankim             #+#    #+#             */
+/*   Updated: 2026/06/28 19:59:15 by ankim            ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
-    // location /cgi-bin/python {
-    //     root            /var/www/cgi-bin;
-    //     methods         GET POST;
-    //     cgi_extension   .py  /usr/bin/python3;
-    //     index           index.py;
-    // }
+# include "HTTPParser.hpp"
+# include "Server.hpp"
+# include "EpollLoop.hpp"
 
-// parsing check that index = to file that exists
+/*ORTHODOX CANONICAL FORM*/
 
-// Request looks like :
-// GET /cgi-bin/hello.py?name=andi HTTP/1.1
+CGI::CGI(const HTTPParser& ref) : _info(ref), _output(NULL) {};
 
-// env is created :
+CGI::CGI(const CGI& ref)
+{
+    _info = ref._info;
+    _pid = ref._pid;
+    _client_fd = ref._client_fd;
+    _pipe_fd[2] = ref._pipe_fd[2];    
+    _output = ref._output;
 
-// char *env[] = {
-//     method.c_str(),
-//     query.c_str(),
-//     script.c_str(),
-//     NULL
-// };
+};
+CGI &CGI::operator=(const CGI& ref)
+{
+    if (this != &ref)
+    {
+        this->_info = ref._info;
+        this->_pid = ref._pid;
+        this->_client_fd = ref._client_fd;
+        this->_pipe_fd[2] = ref._pipe_fd[2];
+        this->_output = ref._output;
+        *this = ref;
+    }
+    return *this;
+}
+CGI::~CGI() {};
 
-// char *argv[] = interpreter ( cgi extension) + path 
-//char *argv[] = { "/usr/bin/python3", script_path.c_str(), NULL };
-
-// CGI FILE COMPONENTEs: 
-
-
-// std::string method = "REQUEST_METHOD=" + request.method;        // "REQUEST_METHOD=GET"
-// std::string script = "SCRIPT_FILENAME=" + root + request.path;  // "SCRIPT_FILENAME=/var/www/cgi-bin/hello.py"
-//                                                                      config root + URI path
-// std::string query  = "QUERY_STRING=" + request.query_string;    // "QUERY_STRING=name=andi"
-//                                                                       everything after ? in URI
-// std::string content = "CONTENT_TYPE=" // request header
-// std::string content_len = "CONTENT_LENGTH=" // from request header
-// std::string server_name = "SERVER_NAME=" // from config
-// std::string server_port = "SERVER_PORT="// from config
-
-// OVERALL PROCESS
-
-// epoll maintains watch list of FD; add fds to it with epoll_ctl
-// call epoll_wait and blocks until any of those fds are ready
-// epoll wait wakes you up and tells you that an FD is ready, just number
-// but if i call it after fd is ready, how does my server know what fd is?
-// epoll_ctl to add fd, attach a piece of data to it 
-// so need context: event.data.ptr is a void pointer 
-// epoll wakes up: just fd and pointer ()  event.data.ptr = &my_cgi
-// like this, we get back our entire CGI object, which has client, pid, output
-
-
-// first epoll wakeup : request arrives
-// fork () - need to rememeber who child is (_pid)
-// create pipe() - need to keep both ends _pipe_fd[2]
-// need to know who to send response to _client _fd
-
-// second wakeup - pipe is ready
-// so read from _pipe_fd[0] - need to accumlate it somewhere
-// because python cgi may write in chunks so need to keep appended
-
-int pipe_fd[2];
-pipe(pipe_fd); // pipe_fd[0] = read end, pipe_fd[1] = write end
-
-pid_t pid = fork();
-
-if (pid == 0) {
-    // CHILD PROCESS -- BECOMES PYTHON
-    close(pipe_fd[0]); // child doesn't read from the pipe
-    dup2(pipe_fd[1], STDOUT_FILENO);    // child's stdout → pipe write end; when the script
-    // writes to STDOUT (when executing) write to pipe instead
-    close(pipe_fd[1]);
-
-    char *argv[] = { "/usr/bin/python3", "/var/www/cgi-bin/hello.py", NULL };
-    char *env[]  = { "REQUEST_METHOD=GET", "QUERY_STRING=name=andi", NULL };
-    execve("/usr/bin/python3", argv, env);
-    // REMEMEBER!!! if execve returns, something went wrong
-    // that piping from dup2 allows for all the exec to not get lost, for it
-    // to be piped somewhere 
-    exit(1);
-} else {
-    // PARENT PROCESS -- SERVER
-    close(pipe_fd[1]); // parent doesn't write to the pipe
-    // pipe_fd[0] is now where python cgi's output will appear
-    // register pipe_fd[0] with epoll - gets HTML output and return
-
+/* HELPERS */
+bool    isValidCGI()
+{
+    
 }
 
-CGI::CGI(){};
+/* METHODS */
+
+

@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/28 15:18:52 by ankim            ###   ########.fr       */
+/*   Updated: 2026/06/28 19:35:50 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,8 +55,10 @@ private:
     std::string         _requesttarget; // CGI 
     std::string         _httpversion;
 /* ADD INS FOR CGI------*/
-    std::string         _path;
+    bool                _isCGI;
+    std::string         _fullPath; // location.root + _scriptFilename
     std::string         _query_string;
+    std::string         _scriptFilename;
     std::string         _body;
     std::string         _content_type;
     std::string         _content_length;
@@ -75,13 +77,13 @@ public:
     std::string     getMethod() const;
 
     /* ADD INS FOR CGI-------------*/
-    std::string     getPath() const;
-    std::string     getQueryString() const;
-    std::string     getBody() const;
-    std::string     getContentType() const;
-    std::string     getContentLength() const;
+    // std::string     getPath() const;
+    // std::string     getQueryString() const;
+    // std::string     getBody() const;
+    // std::string     getContentType() const;
+    // std::string     getContentLength() const;
     std::string     getRequestTarget() const;
-    bool            isCGI() const;
+    bool            getCGI() const;
     /*------------------------- */
 
     std::string     setCode( std::string const & code );
@@ -101,6 +103,6 @@ public:
     bool            findMethods();
     bool            findPath();
     bool            findHeaders();
-    bool            findCGI();
+    bool            isCGI();
 
 };

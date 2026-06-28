@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/28 15:32:34 by ankim            ###   ########.fr       */
+/*   Updated: 2026/06/28 19:36:04 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@
 ** ============================================================================
 */
 
-HTTPParser:: HTTPParser(  std::string const & request ) : _allTokens(), _request(request), _code(), _type(){
+HTTPParser:: HTTPParser(  std::string const & request ) : _allTokens(), _request(request), _code(), _type(), _isCGI(false) {
     
 }
 
@@ -78,6 +78,9 @@ std::string HTTPParser::setType( std::string const & type ){
     return _type;
 }
 
+bool HTTPParser::getCGI() const {
+    return _isCGI;
+}
 
 /*
 ** ============================================================================
@@ -282,6 +285,26 @@ bool    HTTPParser::isRequestValid( ListenerManager const & listen ){
     return true;
 }
 
+bool    HTTPParser::isCGI(){
+        // GET /cgi-bin/hello.py?name=andi HTTP/1.1
+    if (_requesttarget.find("/cgi-bin/") != std::string::npos)
+    {
+        _isCGI = true;
+        size_t pos = _requesttarget.find('?');
+        if (pos != std::string::npos)
+        {
+            _scriptFilename = _requesttarget.substr(0, pos);
+            _query_string = _requesttarget.substr(pos + 1);
+        }
+        else
+        {
+            _scriptFilename = _requesttarget;
+            _query_string = "";
+        }
+        return true;
+    }
+}
+
 bool    HTTPParser::findMethods(){
     
     if (_method == "GET"){
@@ -297,6 +320,7 @@ bool    HTTPParser::findMethods(){
             
             _code = "image";
             _type = "text/html";
+            return true;
         }
         else if (_requesttarget.find("/images") != std::string::npos){
             
@@ -356,6 +380,7 @@ bool    HTTPParser::findMethods(){
                 return true;
             }
         }
+
     }
     else if (_method == "POST"){
         
@@ -385,8 +410,7 @@ bool    HTTPParser::findHeaders(){
     
 }
 
-bool    HTTPParser::findCGI(){
-    
-    return true;
-    
-}
+/**CGI Parser */
+
+
+
