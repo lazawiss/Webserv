@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/27 16:41:58 by ankim            ###   ########.fr       */
+/*   Updated: 2026/06/28 15:16:12 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -304,6 +304,10 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         // create CGI object here        
         // parse request 
         // return (CGI object)
+        // http parser sets stuff so add a cgi object inside?
+        // or just set cgi 
+        // 
+        HTTPParser.findCGI()
     }
 
     // find method 

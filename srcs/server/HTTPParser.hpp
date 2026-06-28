@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/27 16:31:52 by ankim            ###   ########.fr       */
+/*   Updated: 2026/06/28 15:18:52 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,7 +52,7 @@ private:
     std::string         _code;
     std::string         _type;
     std::string         _method;
-    std::string         _requesttarget;
+    std::string         _requesttarget; // CGI 
     std::string         _httpversion;
 /* ADD INS FOR CGI------*/
     std::string         _path;

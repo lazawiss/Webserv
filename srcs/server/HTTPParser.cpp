@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/27 16:44:37 by ankim            ###   ########.fr       */
+/*   Updated: 2026/06/28 15:09:49 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -286,7 +286,6 @@ bool    HTTPParser::findMethods(){
     
     if (_method == "GET"){
         
-
         if (_requesttarget == "/"){
             
             _code = "index";
