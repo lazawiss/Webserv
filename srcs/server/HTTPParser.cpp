@@ -151,8 +151,8 @@ void HTTPParser::HTTPparse_file(const std::string &str)
 
 bool    HTTPParser::checkSize(){
     
-    if (_allTokens.size() > BUF_SIZE){
     // if (_request.size() > _serverConfig.getClientMaxBodySize())
+    if (_allTokens.size() > BUF_SIZE)
     {
         
         _code = "413";
