@@ -6,7 +6,11 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
+<<<<<<< HEAD
 /*   Updated: 2026/06/28 15:24:15 by ankim            ###   ########.fr       */
+=======
+/*   Updated: 2026/06/27 18:53:45 by lzannis          ###   ########.fr       */
+>>>>>>> origin/html
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -96,14 +100,16 @@ std::string RequestHandler::getFileImage( std::string const & code){
     std::string file = "data/images";
     file += "/";
     file += code;
-    // file += ".";
-    // if (type == "image/jpeg")
-    //     file += "jpeg";
-    // if (type == "image/png")
-    //     file += "png";
-    // if (type == "image/gif")
-    //     file += "gif";
- 
+    std::cout << "FileImage:" << file << std::endl;
+    return file;
+}
+
+// build path toward file
+std::string RequestHandler::getFileUpload( std::string const & code){
+    
+    std::string file = "data/upload";
+    file += "/";
+    file += code;
     std::cout << "FileImage:" << file << std::endl;
     return file;
 }
@@ -113,9 +119,10 @@ std::string RequestHandler::getFileImage( std::string const & code){
 std::string RequestHandler::buildAnswerHeader( std::string const & code, std::string const & type ){
     
     //cherche dans tableau >> code + reason
-    std::string codeName[8] = {
+    std::string codeName[9] = {
         "index",
         "image",
+        "test",
         "400",
         "404",
         "405",
@@ -125,7 +132,7 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
     };
     
     int index = 0;
-    for (int i = 0 ;i < 8; i++){
+    for (int i = 0 ;i < 9; i++){
         
         if (codeName[i] == code){
             index = i;
@@ -145,28 +152,31 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
         break;
 
         case(2):
-        str = "400 BAD REQUEST";
-        // str = "302 FOUND\r\nLocation: /html/400.html";
-
+        str = "200 OK";
         break;
 
         case(3):
-        str = "404 Not Found";
+        str = "400 BAD REQUEST";
+        // str = "302 FOUND\r\nLocation: /html/400.html";
         break;
 
         case(4):
+        str = "404 Not Found";
+        break;
+
+        case(5):
         str = "405 METHOD NOT ALLOWED\r\nAllow: GET, POST, DELETE";
         break;
         
-        case(5):
+        case(6):
         str = "413 CONTENT TOO LARGE";
         break;
         
-        case(6):
+        case(7):
         str = "414 URI TOO LONG";
         break;
         
-        case(7):
+        case(8):
         str = "421 MISDIRECTED REQUEST";
         break;
 
@@ -232,6 +242,10 @@ bool    RequestHandler::answerFile( std::string const & file ){
     std::cout << "n_read_index:" << _n_read_index << std::endl;
     if (_n_read_index == -1)
         return false;
+    if (_n_read_index > BUF_SIZE){
+        std::cerr << "File size is too big." << std::endl;
+        return false;
+    }
     
     return true;
     
@@ -348,10 +362,22 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         }
             
     }
+    if (HTTPParser.getType() == "text/plain"){
+        
+        std::string file = getFileUpload(HTTPParser.getCode()); 
+        if (answerFile(file) == false){
+            
+            HTTPParser.setCode("404");
+            HTTPParser.setCode("text/html");
+        }
+            
+    }
     if (HTTPParser.getType() == "image/jpeg" || HTTPParser.getType() == "image/png" || HTTPParser.getType() == "image/gif"){
         
         std::string file = getFileImage(HTTPParser.getCode()); 
-        if (answerFileImage(file) == false){
+        // if (answerFileImage(file) == false){
+        if (answerFile(file) == false){
+
          
             HTTPParser.setCode("404");
             HTTPParser.setCode("text/html");

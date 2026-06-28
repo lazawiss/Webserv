@@ -6,7 +6,11 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:00:06 by lzannis           #+#    #+#             */
+<<<<<<< HEAD
 /*   Updated: 2026/06/28 15:23:51 by ankim            ###   ########.fr       */
+=======
+/*   Updated: 2026/06/27 18:52:37 by lzannis          ###   ########.fr       */
+>>>>>>> origin/html
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,8 +78,11 @@ public:
 
     
     std::string         buildAnswerHeader( std::string const & code, std::string const & type );
+    
     std::string         getFile( std::string const & code );
     std::string         getFileImage( std::string const & code);
+    std::string         getFileUpload( std::string const & code);
+
     bool                answerFile( std::string const & file );
     bool                answerFileImage( std::string const & file );
     bool                answerFileIcon();

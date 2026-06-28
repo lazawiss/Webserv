@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/28 15:21:41 by ankim            ###   ########.fr       */
+/*   Updated: 2026/06/28 15:32:34 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -293,6 +293,11 @@ bool    HTTPParser::findMethods(){
             
             return true;
         }
+        else if (_requesttarget == "/image.html"){
+            
+            _code = "image";
+            _type = "text/html";
+        }
         else if (_requesttarget.find("/images") != std::string::npos){
             
             std::cout <<  "found /images " << std::endl;
@@ -306,26 +311,18 @@ bool    HTTPParser::findMethods(){
 
             std::cout <<  "name:" << name << std::endl;
             
-            std::string suffix = std::string(lastPoint);
+            _code = name;
+            std::string suffix = std::string(lastPoint, strlen(lastPoint));
             if (suffix  == ".jpg"){
-                
-                _code = name;
                 _type = "image/jpeg";
-                
                 return true;
             }
             if (suffix  == ".png"){
-                
-                _code = name;
                 _type = "image/png";
-                
                 return true;
             }
             if (suffix  == ".gif"){
-                
-                _code = name;
                 _type = "image/gif";
-                
                 return true;
             }
         }
@@ -336,9 +333,32 @@ bool    HTTPParser::findMethods(){
             
             return true;
         }
+        if (_requesttarget.find("/upload") != std::string::npos){
+            
+            char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
+            if (lastPoint)
+            std::cout <<  "lastPoint:" << lastPoint << std::endl;
+            
+            char const *lastSlash = strrchr(_requesttarget.c_str(), '/');
+            std::string name = std::string(lastSlash, strlen(lastSlash));
+            name.erase(name.begin());
+            
+            std::cout <<  "name:" << name << std::endl;
+            
+            _code = name; //? fichier specifique 
+            std::string suffix = std::string(lastPoint, strlen(lastPoint));
+            if (suffix == ".txt"){
+                _type = "text/plain";
+                return true;
+            }
+            if (suffix == ".html"){
+                _type = "text/html";
+                return true;
+            }
+        }
     }
     else if (_method == "POST"){
-        //check for CGI
+        
         _code = "200"; //? fichier specifique 
         return true;
     }
@@ -348,13 +368,10 @@ bool    HTTPParser::findMethods(){
         return true;
         
     }
-    else {
-        _code = "404";
-        _type = "text/html";
-
-        return false;
-    }
-    return true;
+    _code = "404";
+    _type = "text/html";
+    return false;
+ 
 }
 
 bool    HTTPParser::findPath(){
