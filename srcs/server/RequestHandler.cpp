@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/28 15:21:27 by ankim            ###   ########.fr       */
+/*   Updated: 2026/06/28 15:24:15 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,7 @@
 ** ============================================================================
 */
 
-RequestHandler:: RequestHandler( std::string const & request ) : _request(request),
+RequestHandler::RequestHandler( std::string const & request ) : _request(request),
 _root("data/html"), _header(), _size(), _n_read_index(0){
 
     memset(_buffer, 0, BUF_SIZE);
@@ -330,7 +330,7 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         // http parser sets stuff so add a cgi object inside?
         // or just set cgi 
         // 
-        HTTPParser.findCGI()
+        HTTPParser.findCGI();
     }
 
     // find method 

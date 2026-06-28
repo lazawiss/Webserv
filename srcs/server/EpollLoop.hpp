@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:27:21 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/27 16:13:16 by ankim            ###   ########.fr       */
+/*   Updated: 2026/06/28 15:24:47 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@
 #include "../parser/Parser.hpp"
 #include "../lexer/Lexer.hpp"
 #include "RequestHandler.hpp"
-#include "CGI.hpp"
+#include "CGIHandler.hpp"
 
 #include <fstream>
 #include <iostream>
