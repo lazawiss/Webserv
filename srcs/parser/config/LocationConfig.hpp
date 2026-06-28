@@ -18,10 +18,8 @@ class LocationConfig : public AConfig
 private:
     std::string                         _path;
     std::vector<std::string>            _methods;
-    // int                                 _returnCode;
-    // std::string                         _returnValue;
-    // for location, only requests matching this specific path 
-    // gets this response
+    std::string                         _upload;
+    std::map<int, std::string>          _return;
 
 public:
     // ── Orthodox canonical form ─────────────────────────────────────────────
@@ -33,10 +31,14 @@ public:
     // ── Getters ─────────────────────────────────────────────────────────────
     const std::string&                        getPath()        const;
     const std::vector<std::string>&           getMethods()     const;
+    const std::string&                        getUpload()      const;
+    const std::map<int, std::string>&         getReturn()      const;
 
     // ── Setters ─────────────────────────────────────────────────────────────
     void setPath(const std::string &path);
     void addMethod(const std::string &method);
+    void setUpload(const std::string &upload);
+    void addReturn(int code, const std::string &uri);
 };
 
 #endif

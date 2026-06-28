@@ -64,81 +64,10 @@ public:
     void	parseDirectiveListen(ServerConfig &ref);
     void	parseDirectiveServerName(ServerConfig &ref);
     void	parseDirectiveMethods(LocationConfig &ref);
+    void	parseDirectiveUpload(LocationConfig &ref);
+    void	parseDirectiveReturn(LocationConfig &ref);
 	size_t	parseSize(const std::string &word)				const;
 	size_t	parseCode(const std::string &word)				const;
-
-    // ── Throw errors ────────────────────────────────────────────────────────
-    class NoServerDefined : public std::exception
-	{
-		public:
-			const char* what() const throw();
-	};
-
-	class ExpectedWord : public std::exception
-	{
-		public:
-			const char* what() const throw();
-	};
-
-    class ExpectedSemicolon : public std::exception
-	{
-		public:
-			const char* what() const throw();
-	};
-
-    class ExpectedLBracket : public std::exception
-	{
-		public:
-			const char* what() const throw();
-	};
-
-    class ExpectedRBracket : public std::exception
-	{
-		public:
-			const char* what() const throw();
-	};
-
-    class UnknownDirective : public std::exception
-	{
-		public:
-			const char* what() const throw();
-	};
-
-    class ExpectedCorrectMethod : public std::exception
-	{
-		public:
-			const char* what() const throw();
-	};
-
-    class ExpectedCorrectAutoIndex : public std::exception
-	{
-		public:
-			const char* what() const throw();
-	};
-
-	class ExpectedCorrectSize : public std::exception
-	{
-		public:
-			const char* what() const throw();
-	};
-
-	class ExpectedCorrectUnit : public std::exception
-	{
-		public:
-			const char* what() const throw();
-	};
-
-	class ExpectedCorrectCode: public std::exception
-	{
-		public:
-			const char* what() const throw();
-	};
-
-	class ExpectedLowerValue : public std::exception
-	{
-		public:
-			const char* what() const throw();
-	};
 
 };
 

@@ -2,14 +2,14 @@
 
 /*
 ** ============================================================================
-** LocationConfig - Orthodox canonical form
+** Orthodox canonical form
 ** ============================================================================
 */
 
 LocationConfig::LocationConfig() : AConfig() {}
 
 LocationConfig::LocationConfig(const LocationConfig &ref) : AConfig(ref),
-    _path(ref._path), _methods(ref._methods) {}
+    _path(ref._path), _methods(ref._methods), _upload(_upload) {}
 
 LocationConfig& LocationConfig::operator=(const LocationConfig &ref)
 {
@@ -18,6 +18,7 @@ LocationConfig& LocationConfig::operator=(const LocationConfig &ref)
         AConfig::operator=(ref);
         _path         = ref._path;
         _methods      = ref._methods;
+        _upload       = ref._upload;
     }
     return *this;
 }
@@ -27,7 +28,7 @@ LocationConfig::~LocationConfig() {}
 
 /*
 ** ============================================================================
-** LocationConfig - Getters & Setter
+** Getters & Setter
 ** ============================================================================
 */
 
@@ -42,6 +43,17 @@ void LocationConfig::setPath(const std::string &path)
     _path = path;
 }
 
+// ── upload ──────────────────────────────────────────────────────────────────
+const std::string& LocationConfig::getUpload() const
+{
+    return _upload;
+}
+
+void LocationConfig::setUpload(const std::string &upload)
+{
+    _upload = upload;
+}
+
 // ── methods ─────────────────────────────────────────────────────────────────
 const std::vector<std::string>& LocationConfig::getMethods() const
 {
@@ -51,4 +63,15 @@ const std::vector<std::string>& LocationConfig::getMethods() const
 void LocationConfig::addMethod(const std::string &method) 
 {
     _methods.push_back(method);
+}
+
+// ── return ──────────────────────────────────────────────────────────────────
+const std::map<int, std::string>& LocationConfig::getReturn() const
+{
+    return _return;
+}
+
+void LocationConfig::addReturn(int code, const std::string &uri)
+{
+    _return[code] = uri;
 }
