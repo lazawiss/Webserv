@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/28 15:09:49 by ankim            ###   ########.fr       */
+/*   Updated: 2026/06/28 15:21:41 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -293,32 +293,37 @@ bool    HTTPParser::findMethods(){
             
             return true;
         }
-
         else if (_requesttarget.find("/images") != std::string::npos){
             
             std::cout <<  "found /images " << std::endl;
             
-            char const *lastSlash = strrchr(_requesttarget.c_str(), '.');
-            if (lastSlash)
-            std::cout <<  "lastSlash:" << lastSlash << std::endl;
-            std::string suffix = std::string(lastSlash);
+            char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
+            if (lastPoint)
+            std::cout <<  "lastPoint:" << lastPoint << std::endl;
+            char const *lastSlash = strrchr(_requesttarget.c_str(), '/');
+            std::string name = std::string(lastSlash, strlen(lastSlash));
+            name.erase(name.begin());
+
+            std::cout <<  "name:" << name << std::endl;
+            
+            std::string suffix = std::string(lastPoint);
             if (suffix  == ".jpg"){
                 
-                _code = "index";
+                _code = name;
                 _type = "image/jpeg";
                 
                 return true;
             }
             if (suffix  == ".png"){
                 
-                _code = "index";
+                _code = name;
                 _type = "image/png";
                 
                 return true;
             }
             if (suffix  == ".gif"){
                 
-                _code = "index";
+                _code = name;
                 _type = "image/gif";
                 
                 return true;

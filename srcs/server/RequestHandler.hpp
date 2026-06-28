@@ -6,7 +6,11 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:00:06 by lzannis           #+#    #+#             */
+<<<<<<< HEAD
 /*   Updated: 2026/06/27 16:31:30 by ankim            ###   ########.fr       */
+=======
+/*   Updated: 2026/06/26 20:51:44 by lzannis          ###   ########.fr       */
+>>>>>>> origin/html
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,10 +77,11 @@ public:
     ssize_t                getNReadIndex() const;
 
     
-    std::string         buildAnswerHeader( std::string code, std::string type );
-    std::string         getFile( std::string code );
-    bool                answerFile( std::string file );
-    bool                answerFileImage();
+    std::string         buildAnswerHeader( std::string const & code, std::string const & type );
+    std::string         getFile( std::string const & code );
+    std::string         getFileImage( std::string const & code);
+    bool                answerFile( std::string const & file );
+    bool                answerFileImage( std::string const & file );
     bool                answerFileIcon();
 
     bool                handleRequest(  ListenerManager const & listen );

@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/28 15:16:12 by ankim            ###   ########.fr       */
+/*   Updated: 2026/06/28 15:21:27 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -78,7 +78,7 @@ ssize_t RequestHandler::getNReadIndex() const{
 */
 
 // build path toward file
-std::string RequestHandler::getFile( std::string code ){
+std::string RequestHandler::getFile( std::string const & code ){
     
     std::string file = _root;
     file += "/";
@@ -89,26 +89,43 @@ std::string RequestHandler::getFile( std::string code ){
     std::cout << "File:" << file << std::endl;
     return file;
 }
+
+// build path toward file
+std::string RequestHandler::getFileImage( std::string const & code){
+    
+    std::string file = "data/images";
+    file += "/";
+    file += code;
+    // file += ".";
+    // if (type == "image/jpeg")
+    //     file += "jpeg";
+    // if (type == "image/png")
+    //     file += "png";
+    // if (type == "image/gif")
+    //     file += "gif";
+ 
+    std::cout << "FileImage:" << file << std::endl;
+    return file;
+}
  
 // construct message to send back to client 
 //  header : code + Content-Type
-std::string RequestHandler::buildAnswerHeader( std::string code, std::string type ){
+std::string RequestHandler::buildAnswerHeader( std::string const & code, std::string const & type ){
     
     //cherche dans tableau >> code + reason
-    std::string codeName[7] = {
+    std::string codeName[8] = {
         "index",
+        "image",
         "400",
         "404",
         "405",
         "413",
         "414",
         "421"
-
-
     };
     
     int index = 0;
-    for (int i = 0 ;i < 7; i++){
+    for (int i = 0 ;i < 8; i++){
         
         if (codeName[i] == code){
             index = i;
@@ -124,28 +141,32 @@ std::string RequestHandler::buildAnswerHeader( std::string code, std::string typ
         break;
 
         case(1):
+        str = "200 OK";
+        break;
+
+        case(2):
         str = "400 BAD REQUEST";
         // str = "302 FOUND\r\nLocation: /html/400.html";
 
         break;
 
-        case(2):
+        case(3):
         str = "404 Not Found";
         break;
 
-        case(3):
+        case(4):
         str = "405 METHOD NOT ALLOWED\r\nAllow: GET, POST, DELETE";
         break;
         
-        case(4):
+        case(5):
         str = "413 CONTENT TOO LARGE";
         break;
         
-        case(5):
+        case(6):
         str = "414 URI TOO LONG";
         break;
         
-        case(6):
+        case(7):
         str = "421 MISDIRECTED REQUEST";
         break;
 
@@ -190,7 +211,7 @@ std::string RequestHandler::buildAnswerHeader( std::string code, std::string typ
 
 // open file + stock it in buffer to send back to client
 // content = text
-bool    RequestHandler::answerFile( std::string file ){
+bool    RequestHandler::answerFile( std::string const & file ){
 
     struct stat sb;
     
@@ -218,17 +239,17 @@ bool    RequestHandler::answerFile( std::string file ){
 
 // open file + stock it in buffer to send back to client
 // content = image
-bool    RequestHandler::answerFileImage(){
+bool    RequestHandler::answerFileImage( std::string const & file ){
 
     struct stat sb;
     
-    if (stat("data/images/cat.png", &sb) == -1){
+    if (stat(file.c_str(), &sb) == -1){
         std::cerr << "Error stat: " << strerror(errno) << std::endl;
         return false;
     }
     std::cout << "File Size : " << sb.st_size <<std::endl;
 
-    int indexfd = open("data/images/cat.png", O_RDONLY);
+    int indexfd = open(file.c_str(), O_RDONLY);
     if (indexfd == -1){
         std::cerr << "Error file failed to open on indexfd:" << indexfd << std::endl;
         close(indexfd);
@@ -249,6 +270,8 @@ bool    RequestHandler::answerFileImage(){
     return true;
 }
 
+// open file + stock it in buffer to send back to client
+// content = x-icon
 bool    RequestHandler::answerFileIcon(){
 
     struct stat sb;
@@ -325,9 +348,10 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         }
             
     }
-    if (HTTPParser.getType() == "image/jpeg" || HTTPParser.getType() == "image/png"){
+    if (HTTPParser.getType() == "image/jpeg" || HTTPParser.getType() == "image/png" || HTTPParser.getType() == "image/gif"){
         
-        if (answerFileImage() == false){
+        std::string file = getFileImage(HTTPParser.getCode()); 
+        if (answerFileImage(file) == false){
          
             HTTPParser.setCode("404");
             HTTPParser.setCode("text/html");
