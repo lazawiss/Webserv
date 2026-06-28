@@ -35,7 +35,6 @@
 
 class ListenerManager {
 
-private:
 
 protected:
 
@@ -43,8 +42,10 @@ protected:
     int             _sockfd;
     std::string     _node;
     std::string     _service;
-    
-    
+
+private:
+                        ListenerManager( ListenerManager const & );
+    ListenerManager &   operator=( ListenerManager const & );
 
 public:
 
@@ -52,18 +53,12 @@ public:
                         ListenerManager( const std::string &host, const std::string &port );
                         ~ListenerManager();
 
-private:
-                        ListenerManager( ListenerManager const & );
-    ListenerManager &   operator=( ListenerManager const & );
-
     int                 getSockfd() const;
     std::string         getNode() const;
     std::string         getService() const;
 
-    
     struct addrinfo &   initHints();
     bool                initRes();
-            
     bool                loopBindingSocket();
     bool                listeningSocket();
     void                releaseSockfd();
