@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/27 19:59:41 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/28 19:42:25 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -226,6 +226,8 @@ bool    HTTPParser::checkHost( ListenerManager const & listener ){
     std::string hostname = listener.getNode();
     hostname += ":";
     hostname += listener.getService();
+
+    std::cout << "hostname:" << hostname << std::endl;
     
     std::vector<Token>::iterator it;
 
@@ -334,26 +336,9 @@ bool    HTTPParser::findMethods(){
         }
         if (_requesttarget.find("/upload") != std::string::npos){
             
-            char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
-            if (lastPoint)
-            std::cout <<  "lastPoint:" << lastPoint << std::endl;
-            
-            char const *lastSlash = strrchr(_requesttarget.c_str(), '/');
-            std::string name = std::string(lastSlash, strlen(lastSlash));
-            name.erase(name.begin());
-            
-            std::cout <<  "name:" << name << std::endl;
-            
-            _code = name; //? fichier specifique 
-            std::string suffix = std::string(lastPoint, strlen(lastPoint));
-            if (suffix == ".txt"){
-                _type = "text/plain";
-                return true;
-            }
-            if (suffix == ".html"){
-                _type = "text/html";
-                return true;
-            }
+            _code = "upload";
+            _type = "text/html";
+            return true;
         }
     }
     else if (_method == "POST"){
