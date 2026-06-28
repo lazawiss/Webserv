@@ -50,9 +50,11 @@ public:
 
                         ListenerManager();
                         ListenerManager( const std::string &host, const std::string &port );
-                        ListenerManager( ListenerManager const & src );
                         ~ListenerManager();
-    ListenerManager &   operator=( ListenerManager const & other );
+
+private:
+                        ListenerManager( ListenerManager const & );
+    ListenerManager &   operator=( ListenerManager const & );
 
     int                 getSockfd() const;
     std::string         getNode() const;
@@ -61,13 +63,10 @@ public:
     
     struct addrinfo &   initHints();
     bool                initRes();
-                
-    //void                findAddress();
             
     bool                loopBindingSocket();
     bool                listeningSocket();
     void                releaseSockfd();
-
 
 };
 

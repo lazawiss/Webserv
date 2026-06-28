@@ -38,7 +38,9 @@ EpollLoop::~EpollLoop() {}
 EpollLoop & EpollLoop::operator=( EpollLoop const & other ){
     
     if ( this != &other)
-        *this = other;
+    {
+        _clientToListener = other._clientToListener;
+    }
 
     return *this;
 }
@@ -83,8 +85,8 @@ int EpollLoop::setnonblocking( int fd ){
 // handle fds : no closing fds in other classes only in EpollLoop 
 // TO ENSURE NO HANGING FDS : if boolean == false > error caught fd closed in EPollLoop
 // then throw in Server >> quit program
-bool    EpollLoop::do_use_fd(  int fd, std::vector<ListenerManager> const & listeners ){
-    
+bool    EpollLoop::do_use_fd(  int fd, std::vector<ListenerManager*> const & listeners ){
+
     char    buf[BUF_SIZE];
 
     ssize_t n_read = read(fd, buf, BUF_SIZE);           // read HTTP requests
@@ -104,9 +106,9 @@ bool    EpollLoop::do_use_fd(  int fd, std::vector<ListenerManager> const & list
     const ListenerManager *listener = NULL;
     for (size_t i = 0; i < listeners.size(); i++)
     {
-        if (listeners[i].getSockfd() == listenerSockfd)
+        if (listeners[i]->getSockfd() == listenerSockfd)
         {
-            listener = &listeners[i];
+            listener = listeners[i];
             break;
         }
     }
@@ -141,7 +143,7 @@ bool    EpollLoop::do_use_fd(  int fd, std::vector<ListenerManager> const & list
     return close(fd), true;
 }
 
-bool EpollLoop::readingSocket( std::vector<ListenerManager> const & listeners ){
+bool EpollLoop::readingSocket( std::vector<ListenerManager*> const & listeners ){
 
     // ev     : reused form for each epoll_ctl() call to register a fd
     // events : filled by epoll_wait() with the currently active fds
@@ -160,8 +162,8 @@ bool EpollLoop::readingSocket( std::vector<ListenerManager> const & listeners ){
     ev.events = EPOLLIN;
     for (size_t i = 0; i < listeners.size(); i++)
     {
-        ev.data.fd = listeners[i].getSockfd();
-        if (epoll_ctl(epollfd, EPOLL_CTL_ADD, listeners[i].getSockfd(), &ev) == -1)
+        ev.data.fd = listeners[i]->getSockfd();
+        if (epoll_ctl(epollfd, EPOLL_CTL_ADD, listeners[i]->getSockfd(), &ev) == -1)
         {
             LOG_ERROR("epoll_ctl(1) failed - " + std::string(strerror(errno)));
             return close(epollfd), false;
@@ -183,7 +185,7 @@ bool EpollLoop::readingSocket( std::vector<ListenerManager> const & listeners ){
             close(epollfd);
             break;
         } 
-        
+
         // process each active fd returned by epoll_wait
         for (int n = 0; n < nfds; ++n){
             
@@ -194,9 +196,9 @@ bool EpollLoop::readingSocket( std::vector<ListenerManager> const & listeners ){
             int listenerSockfd = -1;
             for (size_t i = 0; i < listeners.size(); i++)
             {
-                if (events[n].data.fd == listeners[i].getSockfd())
+                if (events[n].data.fd == listeners[i]->getSockfd())
                 {
-                    listenerSockfd = listeners[i].getSockfd();
+                    listenerSockfd = listeners[i]->getSockfd();
                     break;
                 }
             }

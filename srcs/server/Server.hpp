@@ -65,7 +65,7 @@ private:
     
     GlobalConfig                    _config;
     SignalManager                   _signalManager;
-    std::vector<ListenerManager>    _listenermanagers;
+    std::vector<ListenerManager*>   _listenermanagers;
     EpollLoop                       _epollloop;
 
 protected:

@@ -25,10 +25,6 @@ ListenerManager::ListenerManager() : _res(NULL), _p(NULL), _sockfd(0),
 ListenerManager::ListenerManager( const std::string &host, const std::string &port ) :
     _res(NULL), _p(NULL), _sockfd(0), _node(host), _service(port) {}
 
-ListenerManager::ListenerManager( ListenerManager const & src ) :
-    _res(NULL), _p(NULL),_sockfd(src._sockfd),
-    _node(src._node), _service(src._service) {}
-
 ListenerManager::~ListenerManager()
 {
 
@@ -38,16 +34,6 @@ ListenerManager::~ListenerManager()
         close(_sockfd);
 }
 
-ListenerManager &   ListenerManager::operator=( ListenerManager const & other ){
-    
-    if (this != &other)
-    {
-        this->_sockfd = other._sockfd;
-        this->_node = other._node;
-        this->_service = other._service;
-    }
-    return *this;
-}
 
 /*
 ** ============================================================================
@@ -187,37 +173,3 @@ void ListenerManager::releaseSockfd(){
 
     _sockfd = 0;
 }
-
-/*
-** ============================================================================
-** Debug
-** ============================================================================
-*/
-
-//show IPv4/IPv6 in a human-readable numeric form
-// void    ListenerManager::findAddress(){
-
-//     char            ipstr[INET6_ADDRSTRLEN];
-
-//      // Iterate through the linked list of results
-//     std::cout << "IP addresses for localhost:\n" << std::endl;
-//     for (_p = _res; _p != NULL; _p = _p->ai_next) {
-//         void *addr;
-//         std::string ipver;
-
-//         // Get the pointer to the address based on family
-//         if (_p->ai_family == AF_INET) {  // IPv4
-//             struct sockaddr_in *ipv4 = (struct sockaddr_in *)_p->ai_addr;
-//             addr = &(ipv4->sin_addr);
-//             ipver = "IPv4";
-//         } else {  // IPv6
-//             struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *)_p->ai_addr;
-//             addr = &(ipv6->sin6_addr);
-//             ipver = "IPv6";
-//         }
-    
-//         // Convert binary IP to human-readable string
-//         inet_ntop(_p->ai_family, addr, ipstr, sizeof ipstr);
-//         std::cout << ipver <<": " << ipstr << std::endl;
-//     }
-// }

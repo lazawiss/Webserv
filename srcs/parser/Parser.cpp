@@ -438,13 +438,16 @@ void Parser::parseDirectiveListen(ServerConfig &ref)
     std::string str = listen.substr(nbr + 1);
     for (size_t i = 0; i < str.size(); i++)
         if (!std::isdigit(str[i]))
-            throw std::runtime_error("Invalid port in listen directive: " + listen);
+            throw std::runtime_error("Invalid port in listen directive");
     
     int port = std::atoi(str.c_str());
     if (port < 1 || port > 65535)
-        throw std::runtime_error("Port out of range in listen directive: " + listen);
+        throw std::runtime_error("Port out of range in listen directive");
 
-    ref.addListen(next().value);
+    if (!ref.getListen().empty())
+        throw std::runtime_error("Duplicate listen directive in server block");
+    ref.setListen(next().value);
+
     if (current().type != Semicolon)
         throw std::runtime_error("Unexpected token '" +  current().value
             + "', should be a 'semi colon' type");

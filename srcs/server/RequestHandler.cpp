@@ -201,9 +201,9 @@ bool    RequestHandler::answerFile( std::string file ){
     std::cout << "File Size : " << sb.st_size <<std::endl;
     
     int indexfd = open(file.c_str(), O_RDONLY);
-    if (indexfd == -1){
+    if (indexfd == -1)
+    {
         std::cerr << "Error file failed to open on indexfd:" << indexfd << std::endl;
-        close(indexfd);
         return false;
     }
     this->_n_read_index = read(indexfd, _buffer, BUF_SIZE);
@@ -231,7 +231,6 @@ bool    RequestHandler::answerFileImage(){
     int indexfd = open("data/images/cat.png", O_RDONLY);
     if (indexfd == -1){
         std::cerr << "Error file failed to open on indexfd:" << indexfd << std::endl;
-        close(indexfd);
         return false;
     }
     
@@ -262,7 +261,6 @@ bool    RequestHandler::answerFileIcon(){
     int indexfd = open("data/favicon.ico/favicon-16x16.png", O_RDONLY);
     if (indexfd == -1){
         std::cerr << "Error file failed to open on indexfd:" << indexfd << std::endl;
-        close(indexfd);
         return false;
     }
     _n_read_index = read(indexfd, _buffer, BUF_SIZE);
@@ -309,7 +307,7 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         if (answerFile(file) == false){
             
             HTTPParser.setCode("404");
-            HTTPParser.setCode("text/html");
+            HTTPParser.setType("text/html");
         }
             
     }
@@ -318,7 +316,7 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         if (answerFileImage() == false){
          
             HTTPParser.setCode("404");
-            HTTPParser.setCode("text/html");
+            HTTPParser.setType("text/html");
         }
     }
     if (HTTPParser.getType() == "image/x-icon"){
@@ -326,7 +324,7 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         if (answerFileIcon() == false){
          
             HTTPParser.setCode("404");
-            HTTPParser.setCode("text/html");
+            HTTPParser.setType("text/html");
         }
     }
     buildAnswerHeader(HTTPParser.getCode(), HTTPParser.getType());

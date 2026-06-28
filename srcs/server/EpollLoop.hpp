@@ -59,10 +59,8 @@ public:
     EpollLoop & operator=( EpollLoop const & other );
 
     int         setnonblocking( int fd );
-    bool        do_use_fd( int fd, ListenerManager const & listen );
-    bool        readingSocket( ListenerManager const & listen );
 
-    bool        do_use_fd( int fd, std::vector<ListenerManager> const & listeners );
-    bool        readingSocket( std::vector<ListenerManager> const & listeners );
+    bool        do_use_fd( int fd, std::vector<ListenerManager*> const & listeners );
+    bool        readingSocket( std::vector<ListenerManager*> const & listeners );
 
 };
