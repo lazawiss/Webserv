@@ -12,6 +12,7 @@
 
 #include "HTTPParser.hpp"
 #include "../lexer/Lexer.hpp"
+#include "../parser/config/ServerConfig.hpp"
 
 /*
 ** ============================================================================
@@ -19,13 +20,15 @@
 ** ============================================================================
 */
 
-HTTPParser:: HTTPParser(  std::string const & request ) : _allTokens(), _request(request), _code(), _type(){
-    
+HTTPParser::HTTPParser( std::string const & request, const ServerConfig &serverConfig ) :
+    _allTokens(), _request(request), _serverConfig(serverConfig), _code(), _type()
+{
 }
 
-HTTPParser::HTTPParser( HTTPParser const & src ) : _allTokens(src._allTokens), _request(src._request), 
-_code(src._code), _type(src._type){
-    
+HTTPParser::HTTPParser( HTTPParser const & src ) :
+    _allTokens(src._allTokens), _request(src._request), _serverConfig(src._serverConfig),
+    _code(src._code), _type(src._type)
+{
 }
 
 HTTPParser::~HTTPParser(){
@@ -70,7 +73,7 @@ std::string HTTPParser::setCode( std::string const & code ){
 
 std::string HTTPParser::setType( std::string const & type ){
 
-    _type =type;
+    _type = type;
     return _type;
 }
 
@@ -149,6 +152,8 @@ void HTTPParser::HTTPparse_file(const std::string &str)
 bool    HTTPParser::checkSize(){
     
     if (_allTokens.size() > BUF_SIZE){
+    // if (_request.size() > _serverConfig.getClientMaxBodySize())
+    {
         
         _code = "413";
         _type = "text/html";

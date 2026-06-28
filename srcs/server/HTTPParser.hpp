@@ -14,6 +14,7 @@
 
 #include "../lexer/Lexer.hpp"
 #include "ListenerManager.hpp"
+#include "../parser/config/ServerConfig.hpp"
 
 
 #include <iostream>
@@ -47,21 +48,22 @@ class HTTPParser {
 
 private:
 
-    std::vector<Token>  _allTokens;
-    std::string         _request;
-    std::string         _code;
-    std::string         _type;
-    std::string         _method;
-    std::string         _requesttarget;
-    std::string         _httpversion;
+    std::vector<Token>      _allTokens;
+    std::string             _request;
+    const ServerConfig      &_serverConfig;
+    std::string             _code;
+    std::string             _type;
+    std::string             _method;
+    std::string             _requesttarget;
+    std::string             _httpversion;
 
     
 protected:
 
 public:
 
-                    HTTPParser( std::string const & request );
-                    HTTPParser( HTTPParser const & src );    
+                    HTTPParser( std::string const & request, const ServerConfig &serverConfig );
+                    HTTPParser( HTTPParser const & src );
                     ~HTTPParser();    
     HTTPParser &    operator=( HTTPParser const & other );
 

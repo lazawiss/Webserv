@@ -14,6 +14,7 @@
 #include "ListenerManager.hpp"
 #include "HTTPParser.hpp"
 #include "RequestHandler.hpp"
+#include "../parser/config/ServerConfig.hpp"
 
 /*
 ** ============================================================================
@@ -21,17 +22,19 @@
 ** ============================================================================
 */
 
-RequestHandler:: RequestHandler( std::string const & request ) : _request(request),
-_root("data/html"), _header(), _size(), _n_read_index(0){
-
+RequestHandler::RequestHandler( std::string const & request, const ServerConfig &serverConfig ) :
+    _request(request), _serverConfig(serverConfig),
+    _root(serverConfig.getRoot()), _header(), _size(), _n_read_index(0)
+{
     memset(_buffer, 0, BUF_SIZE);
 }
 
-RequestHandler::RequestHandler( RequestHandler const & src ) : 
-    _request(src._request), _root(src._root), _header(src._header),
-    _size(src._size),_n_read_index(src._n_read_index)
+RequestHandler::RequestHandler( RequestHandler const & src ) :
+    _request(src._request), _serverConfig(src._serverConfig),
+    _root(src._root), _header(src._header),
+    _size(src._size), _n_read_index(src._n_read_index)
 {
-     memcpy(_buffer, src._buffer, BUF_SIZE);
+    memcpy(_buffer, src._buffer, BUF_SIZE);
 }
 
 RequestHandler::~RequestHandler(){}
@@ -285,7 +288,7 @@ bool    RequestHandler::answerFileIcon(){
 // build answer depending of content to sent
 bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
     
-    HTTPParser HTTPParser(_request);
+    HTTPParser HTTPParser(_request, _serverConfig);
 
     HTTPParser.HTTPparse_file(_request);
     

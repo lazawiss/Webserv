@@ -95,7 +95,7 @@ void    Server::run()
 {
     _signalManager.setupSignals();
 
-    if (_epollloop.readingSocket( _listenermanagers ) == false){
+    if (_epollloop.readingSocket( _listenermanagers, _config ) == false){
         
         throw std::logic_error("Error readingSocket");
     }

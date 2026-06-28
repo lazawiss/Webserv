@@ -85,7 +85,7 @@ int EpollLoop::setnonblocking( int fd ){
 // handle fds : no closing fds in other classes only in EpollLoop 
 // TO ENSURE NO HANGING FDS : if boolean == false > error caught fd closed in EPollLoop
 // then throw in Server >> quit program
-bool    EpollLoop::do_use_fd(  int fd, std::vector<ListenerManager*> const & listeners ){
+bool    EpollLoop::do_use_fd( int fd, std::vector<ListenerManager*> const & listeners, const GlobalConfig &config ){
 
     char    buf[BUF_SIZE];
 
@@ -97,9 +97,6 @@ bool    EpollLoop::do_use_fd(  int fd, std::vector<ListenerManager*> const & lis
     }
 
     std::string request = std::string(buf, n_read);
-
-    // Parse request
-    RequestHandler requestHandler(request);
 
     // find which listener accepted this client
     int listenerSockfd = _clientToListener[fd];
@@ -117,6 +114,28 @@ bool    EpollLoop::do_use_fd(  int fd, std::vector<ListenerManager*> const & lis
         LOG_ERROR("No listener found for fd " + std::string(strerror(errno)));
         return (close(fd), false);
     }
+
+    // match the ServerConfig whose port matches this listener
+    const ServerConfig *serverConfig = NULL;
+    const std::vector<ServerConfig> &servers = config.getServers();
+    for (size_t i = 0; i < servers.size(); i++)
+    {
+        const std::string &listenVal = servers[i].getListen();
+        size_t colon = listenVal.find(':');
+        std::string port = listenVal.substr(colon + 1);
+        if (port == listener->getService())
+        {
+            serverConfig = &servers[i];
+            break;
+        }
+    }
+    if (serverConfig == NULL)
+    {
+        LOG_ERROR("No ServerConfig found for port " + listener->getService());
+        return (close(fd), false);
+    }
+
+    RequestHandler requestHandler(request, *serverConfig);
 
     if (requestHandler.handleRequest(*listener) == false)
     {
@@ -143,7 +162,7 @@ bool    EpollLoop::do_use_fd(  int fd, std::vector<ListenerManager*> const & lis
     return close(fd), true;
 }
 
-bool EpollLoop::readingSocket( std::vector<ListenerManager*> const & listeners ){
+bool EpollLoop::readingSocket( std::vector<ListenerManager*> const & listeners, const GlobalConfig &config ){
 
     // ev     : reused form for each epoll_ctl() call to register a fd
     // events : filled by epoll_wait() with the currently active fds
@@ -237,7 +256,7 @@ bool EpollLoop::readingSocket( std::vector<ListenerManager*> const & listeners )
             // active fd == client fd → client is sending its HTTP request
             else
             {
-                if (do_use_fd(events[n].data.fd, listeners) == false)
+                if (do_use_fd(events[n].data.fd, listeners, config) == false)
                     break;
             }
         }
