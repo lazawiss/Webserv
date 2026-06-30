@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/28 19:42:25 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/30 14:47:58 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -171,6 +171,12 @@ static bool isMethod( Token const & t ){
     return t.value == "GET" || t.value == "POST" || t.value == "DELETE";
 }
 
+static bool isHost( Token const & t ){
+    
+    return t.value == "Host:";
+}
+
+
 
 // Check if it respect the standard form :
 // request-line   = method SP request-target SP HTTP-version
@@ -228,37 +234,34 @@ bool    HTTPParser::checkHost( ListenerManager const & listener ){
     hostname += listener.getService();
 
     std::cout << "hostname:" << hostname << std::endl;
+        std::vector<Token>::iterator found;
     
-    std::vector<Token>::iterator it;
+    found = find_if(_allTokens.begin(), _allTokens.end(), isTokenWord);
+    if (found != _allTokens.end()){ // same as EOF
+        
+        
+        found = find_if(_allTokens.begin(), _allTokens.end(), isHost);
+        if (found != _allTokens.end()){
+            
+            found++;
+            if (found->value != hostname){
+                
+                std::cout << "found->value:" << found->value << std::endl;
 
-    for (it = _allTokens.begin(); it != _allTokens.end(); ++it)
-    {
-        if (it->type == Word)
-        {
-            if (it->value == "Host:")
-            {
-                it++;
-                if (it->type == Word)
-                {
-                    if (it->value != hostname)
-                    {
-                        _code = "421";
-                        _type = "text/html";
-
-                        return false;
-                    }
-                }
+                _code = "421";
+                _type = "text/html";
+                
+                return false;
             }
-        }
-        else if (it->type != Semicolon && it->type != End)
-        {
-            _code = "400";
-            _type = "text/html";
-
-            return false;
+            
+            return true;
+            
         }
     }
-    return true;
+    _code = "400";
+    _type = "text/html";
+    
+    return false;
 }
 
 bool    HTTPParser::isRequestValid( ListenerManager const & listen ){
@@ -369,9 +372,32 @@ bool    HTTPParser::findMethods(){
     }
     else if (_method == "DELETE"){
         
-        _code = "200"; //? fichier specifique 
-        return true;
-        
+        if (_requesttarget.find("/upload") != std::string::npos){
+            
+            char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
+            if (lastPoint)
+            std::cout <<  "lastPoint:" << lastPoint << std::endl;
+            
+            char const *lastSlash = strrchr(_requesttarget.c_str(), '/');
+            std::string name = std::string(lastSlash, strlen(lastSlash));
+            name.erase(name.begin());
+            
+            std::cout <<  "name:" << name << std::endl;
+            
+            _code = name; //? fichier specifique 
+            std::string suffix = std::string(lastPoint, strlen(lastPoint));
+            if (suffix == ".txt"){
+                _type = "text/plain";
+                return true;
+            }
+            if (suffix == ".html"){
+                _type = "text/html";
+                return true;
+            }
+            
+            // _code = "200"; //? fichier specifique 
+            return true;
+        }
     }
     _code = "404";
     _type = "text/html";
