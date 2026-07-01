@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:00:06 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/27 18:52:37 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/30 19:10:32 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -70,7 +70,7 @@ public:
     std::string         getBuffer() const;
     std::string         getHeader() const;
     std::string         getSize() const;
-    ssize_t                getNReadIndex() const;
+    ssize_t             getNReadIndex() const;
 
     
     std::string         buildAnswerHeader( std::string const & code, std::string const & type );
@@ -82,6 +82,8 @@ public:
     bool                answerFile( std::string const & file );
     bool                answerFileImage( std::string const & file );
     bool                answerFileIcon();
+
+    bool                uploadFile();
 
     bool                handleRequest(  ListenerManager const & listen );
 

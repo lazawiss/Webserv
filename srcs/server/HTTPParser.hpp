@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/23 13:52:49 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/06/30 19:36:32 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,9 +54,13 @@ private:
     std::string         _method;
     std::string         _requesttarget;
     std::string         _httpversion;
+    std::string         _boundary;
+    std::string         _fileLength;
 
     
-protected:
+    
+    
+
 
 public:
 
@@ -68,6 +72,8 @@ public:
     std::string     getCode() const;
     std::string     getType() const;
     std::string     getMethod() const;
+    std::string     getBoundary() const;
+
     
     std::string     setCode( std::string const & code );
     std::string     setType( std::string const & type );
@@ -78,6 +84,9 @@ public:
     bool            checkRequestLine();
     bool            checkHost( ListenerManager const & listener );
     bool            isRequestValid( ListenerManager const & listen );
+    
+    bool            checkContentType();
+    bool            checkContentLength();
 
 
     void            HTTPparse_file(const std::string& path);
