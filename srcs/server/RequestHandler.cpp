@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/02 12:25:41 by ankim            ###   ########.fr       */
+/*   Updated: 2026/07/02 14:32:25 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -331,20 +331,10 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         requestValid = false;
     }
 
-    if (requestValid && HTTPParser.isCGI() == true)
+    if (requestValid == true && HTTPParser.isCGI())
     {
-        CGI cgi(HTTPParser, listen); // for FD -- need to update classes
-        // check isValid;
-        // check method --
-            // if (_method == GET)
-                // cgi.getCGI(listen.);
-            // if (_method == POST)
-                // cgi.postCGI();
-            // if (_method == DELETE)
-                // cgi.deleteCGI();
-            // if (_method == PUT)
-                // cgi.putCGI();
-        
+        if (HTTPParser.validateCGIRequest())
+            CGI cgi(HTTPParser, listen);
     }
 
     if (requestValid == true && HTTPParser.findMethods() == false){

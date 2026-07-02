@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/02 12:27:43 by ankim            ###   ########.fr       */
+/*   Updated: 2026/07/02 14:39:48 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,13 +19,14 @@
 ** ============================================================================
 */
 
-HTTPParser:: HTTPParser(  std::string const & request ) : _allTokens(), _request(request), _code(), _type(){
+HTTPParser:: HTTPParser(  std::string const & request ) : _allTokens(), _request(request),
+ _code(), _type(), _method(), _requesttarget(), _httpversion(), _boundary(){
     
 }
 
 HTTPParser::HTTPParser( HTTPParser const & src ) : _allTokens(src._allTokens), _request(src._request), 
 _code(src._code), _type(src._type), _method(src._method), _requesttarget(src._requesttarget),
- _httpversion(src._httpversion), _boundary(src._boundary){
+ _httpversion(src._httpversion), _boundary(src._boundary), _isCGI(src._isCGI){
     
 }
 
@@ -45,6 +46,7 @@ HTTPParser &    HTTPParser::operator=( HTTPParser const & other ){
         this->_requesttarget = other._requesttarget;
         this->_httpversion = other._httpversion;
         this->_boundary = other._boundary;
+        this->_isCGI = other._isCGI;
 
     }
     
@@ -81,10 +83,6 @@ std::string HTTPParser::setType( std::string const & type ){
 
     _type =type;
     return _type;
-}
-
-bool HTTPParser::getCGI() const {
-    return _isCGI;
 }
 
 /*
@@ -284,7 +282,7 @@ bool    HTTPParser::checkHost( ListenerManager const & listener ){
 
 bool    HTTPParser::checkContentType(){
 
-        std::vector<Token>::iterator found;
+    std::vector<Token>::iterator found;
     
     found = find_if(_allTokens.begin(), _allTokens.end(), isTokenWord);
     if (found != _allTokens.end()){ // same as EOF
@@ -365,6 +363,10 @@ bool    HTTPParser::isRequestValid( ListenerManager const & listen ){
         std::cerr << "Error Request Line wrong: " << strerror(errno) << std::endl;
         return false;
     }
+
+    // check for root because need full path
+
+    parseCGI();
     
     if (checkHost(listen) == false){
         std::cerr << "Error Host not found: " << strerror(errno) << std::endl;
@@ -374,11 +376,17 @@ bool    HTTPParser::isRequestValid( ListenerManager const & listen ){
     return true;
 }
 
-bool    HTTPParser::isCGI(){
+/* --------- CGI PARSING INCLUSION ------------*/
+
+void    HTTPParser::parseCGI(){
         // GET /cgi-bin/hello.py?name=andi HTTP/1.1
-    if (_requesttarget.find("/cgi-bin/") != std::string::npos)
+    if (_requesttarget.find("/cgi-bin/") == std::string::npos)
     {
-        _isCGI = true;
+        _isCGI = false;
+        return;
+    }
+    else
+    {
         size_t pos = _requesttarget.find('?');
         if (pos != std::string::npos)
         {
@@ -390,12 +398,55 @@ bool    HTTPParser::isCGI(){
             _scriptFilename = _requesttarget;
             _query_string = "";
         }
-        return true;
+        _isCGI = true;
     }
+    return;
 }
 
+bool    HTTPParser::isCGI() const{
+    return _isCGI;
+}
+
+bool HTTPParser::validateCGIRequest()
+{
+    if (_method != "GET" && _method != "POST" &&
+        _method != "DELETE" && _method != "PUT")
+    {
+        _code = "405";
+        return false;
+    }
+    if (_method == "POST" || _method == "PUT")
+    {
+        if (!checkContentType())  { std::cerr << "no Content-Type" << std::endl; return false; }
+        if (!checkContentLength()){ std::cerr << "no Content-Length" << std::endl; return false; }
+    }
+    _code = "cgi";
+    return true;
+}
+
+std::string     HTTPParser::getPath() const{
+    // need root to construct
+}
+std::string     HTTPParser::getQueryString() const {
+    return _query_string;
+}
+std::string     HTTPParser::getBody() const{
+    return _body;
+}
+std::string     HTTPParser::getContentType() const{
+    return _content_type;
+}
+std::string     HTTPParser::getContentLength() const{
+    return _content_length;
+}
+std::string     HTTPParser::getRequestTarget() const{
+    return _requesttarget;
+}
+
+/* --------- CGI PARSING INCLUSION ------------*/
+
 bool    HTTPParser::findMethods(){
-    
+
     if (_method == "GET"){
         
         if (_requesttarget == "/"){

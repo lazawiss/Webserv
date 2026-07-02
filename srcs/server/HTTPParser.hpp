@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/02 12:24:24 by ankim            ###   ########.fr       */
+/*   Updated: 2026/07/02 14:38:39 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -81,13 +81,13 @@ public:
     std::string     getMethod() const;
 
     /* ADD INS FOR CGI-------------*/
-    // std::string     getPath() const;
-    // std::string     getQueryString() const;
-    // std::string     getBody() const;
-    // std::string     getContentType() const;
-    // std::string     getContentLength() const;
+    std::string     getPath() const;
+    std::string     getQueryString() const;
+    std::string     getBody() const;
+    std::string     getContentType() const;
+    std::string     getContentLength() const;
     std::string     getRequestTarget() const;
-    bool            getCGI() const;
+    bool            isCGI() const;
     /*------------------------- */
 
     std::string     getBoundary() const;
@@ -100,19 +100,17 @@ public:
 
     bool            checkSize();
     bool            checkRequestLine();
-    bool            checkHost( ListenerManager const & listener );
-    bool            isRequestValid( ListenerManager const & listen );
+    bool            checkHost( ListenerManager const & listener ); 
+    bool            isRequestValid( ListenerManager const & listen ); // Function added */
     
     bool            checkContentType();
     bool            checkContentLength();
-
-
+    
+    
     void            HTTPparse_file(const std::string& path);
     
     
     bool            findMethods();
     bool            findPath();
     bool            findHeaders();
-    bool            isCGI();
-
 };
