@@ -6,9 +6,10 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/02 12:18:19 by ankim            ###   ########.fr       */
+/*   Updated: 2026/07/02 12:25:41 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 
 #include "../lexer/Lexer.hpp"
 #include "ListenerManager.hpp"
@@ -115,11 +116,8 @@ std::string RequestHandler::getFileUpload( std::string const & code){
 std::string RequestHandler::buildAnswerHeader( std::string const & code, std::string const & type ){
     
     //cherche dans tableau >> code + reason
-    std::string codeName[10] = {
-        "index",
-        "image",
-        "test",
-        "file",
+    std::string codeName[6] = {
+    
         "400",
         "404",
         "405",
@@ -128,8 +126,8 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
         "421"
     };
     
-    int index = 0;
-    for (int i = 0 ;i < 10; i++){
+    int index = -1;
+    for (int i = 0 ;i < 6; i++){
         
         if (codeName[i] == code){
             index = i;
@@ -141,47 +139,36 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
     switch (index){
         
         case(0):
-        str = "200 OK";
-        break;
-
-        case(1):
-        str = "200 OK";
-        break;
-
-        case(2):
-        str = "200 OK";
-        break;
-
-        case(3):
-        str = "200 OK";
-        break;
-
-        case(4):
         str = "400 BAD REQUEST";
         // str = "302 FOUND\r\nLocation: /html/400.html";
         break;
 
-        case(5):
+        case(1):
         str = "404 Not Found";
         break;
 
-        case(6):
+        case(2):
         str = "405 METHOD NOT ALLOWED\r\nAllow: GET, POST, DELETE";
         break;
         
-        case(7):
+        case(3):
         str = "413 CONTENT TOO LARGE";
         break;
         
-        case(8):
+        case(4):
         str = "414 URI TOO LONG";
         break;
         
-        case(9):
+        case(5):
         str = "421 MISDIRECTED REQUEST";
+        break;
+        
+        case(6):
+        str = "201 CREATED\r\nLocation:";
         break;
 
         default:
+        str = "200 OK";
         break;
         
     }
@@ -318,6 +305,18 @@ bool    RequestHandler::answerFileIcon(){
 }
 
 
+bool    RequestHandler::uploadFile(){
+    
+    return true;
+    
+}
+
+// main function : 
+// instanciate HTTPParser 
+// checks if request valid
+// parse request
+// find proper file to send to client
+// build answer depending of content to sent
 bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
     
     HTTPParser HTTPParser(_request);
@@ -391,6 +390,15 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
             HTTPParser.setCode("text/html");
         }
     }
+    if (HTTPParser.getType() == "multipart/form-data"){
+        
+        if (answerFileIcon() == false){
+         
+            HTTPParser.setCode("404");
+            HTTPParser.setCode("text/html");
+        }
+    }
+    
     buildAnswerHeader(HTTPParser.getCode(), HTTPParser.getType());
 
     return true;

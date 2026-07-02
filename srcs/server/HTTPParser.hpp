@@ -6,9 +6,10 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/28 19:35:50 by ankim            ###   ########.fr       */
+/*   Updated: 2026/07/02 12:24:24 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 
 # pragma once
 
@@ -64,6 +65,9 @@ private:
     std::string         _content_length;
 /* -------------------*/
 protected:
+    std::string         _boundary;
+    std::string         _fileLength;
+
 
 public:
 
@@ -86,6 +90,9 @@ public:
     bool            getCGI() const;
     /*------------------------- */
 
+    std::string     getBoundary() const;
+
+    
     std::string     setCode( std::string const & code );
     std::string     setType( std::string const & type );
 
@@ -95,6 +102,9 @@ public:
     bool            checkRequestLine();
     bool            checkHost( ListenerManager const & listener );
     bool            isRequestValid( ListenerManager const & listen );
+    
+    bool            checkContentType();
+    bool            checkContentLength();
 
 
     void            HTTPparse_file(const std::string& path);
