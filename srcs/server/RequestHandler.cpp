@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/02 14:32:25 by ankim            ###   ########.fr       */
+/*   Updated: 2026/07/02 19:17:13 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,14 +23,14 @@
 */
 
 RequestHandler::RequestHandler( std::string const & request ) : _request(request),
-_root("data/html"), _header(), _size(), _n_read_index(0){
+_root("data/html"), _header(), _size(), _n_read_index(0), _isCGI(false){
 
     memset(_buffer, 0, BUF_SIZE);
 }
 
 RequestHandler::RequestHandler( RequestHandler const & src ) : 
     _request(src._request), _root(src._root), _header(src._header),
-    _size(src._size),_n_read_index(src._n_read_index)
+    _size(src._size),_n_read_index(src._n_read_index), _isCGI(src._isCGI)
 {
      memcpy(_buffer, src._buffer, BUF_SIZE);
 }
@@ -46,6 +46,7 @@ RequestHandler & RequestHandler::operator=( RequestHandler const & other ){
         this->_size = other._size;
          memcpy(this->_buffer, other._buffer, BUF_SIZE);
         this->_n_read_index = other._n_read_index;
+        this->_isCGI = other._isCGI;
     }
 
     return *this;
@@ -70,6 +71,10 @@ std::string RequestHandler::getSize() const{
 ssize_t RequestHandler::getNReadIndex() const{
     
     return _n_read_index;
+}
+
+bool RequestHandler::getCGI() const {
+    return _isCGI;
 }
 
 /*
@@ -333,8 +338,22 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
 
     if (requestValid == true && HTTPParser.isCGI())
     {
-        if (HTTPParser.validateCGIRequest())
-            CGI cgi(HTTPParser, listen);
+        if (HTTPParser.validateCGIRequest() == false){
+            std::cout << "CGI Request not validated" << std::endl;
+            return false;
+        }
+        else
+        {
+            _scriptFilename = HTTPParser.getFilename();
+            _fullPath = _root + _scriptFilename; // location.root + _scriptFilename
+            _query_string = HTTPParser.getQueryString();
+            _body = HTTPParser.getBody(); // need to parse still
+            _content_type = HTTPParser.getContentType();
+            _content_length = HTTPParser.getContentLength();
+            _method = HTTPParser.getMethod();      
+            _isCGI = true;
+        }
+        return true;
     }
 
     if (requestValid == true && HTTPParser.findMethods() == false){

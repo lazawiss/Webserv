@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:00:06 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/02 13:27:33 by ankim            ###   ########.fr       */
+/*   Updated: 2026/07/02 19:00:13 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,6 +57,15 @@ private:
     std::string         _size;
     char                _buffer[BUF_SIZE];
     ssize_t             _n_read_index;
+    /*CGI */
+    bool                _isCGI;
+    std::string         _fullPath; // location.root + _scriptFilename
+    std::string         _query_string;
+    std::string         _scriptFilename;
+    std::string         _body;
+    std::string         _content_type;
+    std::string         _content_length;
+    std::string         _method;
    
 
     
@@ -87,5 +96,29 @@ public:
     bool                uploadFile();
 
     bool                handleRequest(  ListenerManager const & listen );
+    bool                getCGI() const;
+    std::string     RequestHandler::getPath() const{
+        // need root to construct
+    }
+
+    std::string     RequestHandler::getFilename() const {
+        return _scriptFilename;
+    }
+
+    std::string     RequestHandler::getQueryString() const {
+        return _query_string;
+    }
+    std::string     RequestHandler::getBody() const{
+        return _body;
+    }
+    std::string     RequestHandler::getContentType() const{
+        return _content_type;
+    }
+    std::string     RequestHandler::getContentLength() const{
+        return _content_length;
+    }
+    std::string     RequestHandler::getMethod() const {
+        return _method;
+    }
 
 };

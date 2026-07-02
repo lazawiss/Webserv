@@ -7,33 +7,39 @@
 class CGI
 {
 public:
-    CGI::CGI(const HTTPParser& ref, const ListenerManager& ref2);
+    CGI::CGI(RequestHandler const &req, ListenerManager const & listen);
     CGI(const CGI& ref);
     CGI& operator=(const CGI& ref);
     ~CGI();
 
 // METHODS
 
-    bool isValidCGI();
-    void launch(int epoll_fd, const std::string &script_path); // Launching the fork/pipe/exec - registers pipe with epoll (code)
+    bool start()// Launching the fork/pipe/exec - registers pipe with epoll (code)
     void readOutput(); // called on second epoll wake; reads from pipe and append to _output
     bool isDone(); // checks to see if python cgi is good and done
     // check if child has finished 
-
+    void    buildEnv();
     void getCGI();
     void postCGI();
-    void deleteCGI();
-    void putCGI();
 
-    void sendResponse();
     // write output to client fd
 
     // GETTERS
     
 private:
-    HTTPParser _info;
     pid_t _pid;
     int _client_fd;
     int _pipe_fd[2];
     std::string _output;
+    std::string _scriptFilename;
+    std::string _fullPath;
+    std::string _queryString;
+    std::string _method;
+    std::string _body;
+    std::string _contentType;
+    std::string _contentLength;
+    std::string _serverName;
+    std::string _serverPort;
+    std::vector<std::string> _env; // owns the actual string data
+    std::vector<char*>       _envp;  
 };

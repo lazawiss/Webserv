@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:27:21 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/02 15:09:41 by ankim            ###   ########.fr       */
+/*   Updated: 2026/07/02 18:43:04 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,9 +50,9 @@ class CGI;
 class EpollLoop {
 
 private:
-    std::map<int, int>  _clientToListener; // key value ookup 
-    // - key : client socketfd, - value listener socketfd
-
+    std::map<int, int>  _clientToListener; // key value lookup 
+    // - key : client socketfd, - value: listener socketfd
+    std::map<int, CGI*> _fdToCGI;  // pipe fd, CGI value
 protected:
 
 public:
@@ -63,10 +63,10 @@ public:
     EpollLoop & operator=( EpollLoop const & other );
 
     int         setnonblocking( int fd );
-    bool        do_use_fd( int fd, ListenerManager const & listen );
-    bool        readingSocket( ListenerManager const & listen );
+    // bool        do_use_fd( int fd, ListenerManager const & listen );
+    // bool        readingSocket( ListenerManager const & listen );
 
-    bool        do_use_fd( int fd, std::vector<ListenerManager> const & listeners );
+    bool        do_use_fd(  int fd, std::vector<ListenerManager> const & listeners, int epollfd );
     bool        readingSocket( std::vector<ListenerManager> const & listeners );
 
 };

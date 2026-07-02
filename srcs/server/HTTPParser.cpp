@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/02 14:39:48 by ankim            ###   ########.fr       */
+/*   Updated: 2026/07/02 18:35:59 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -427,6 +427,11 @@ bool HTTPParser::validateCGIRequest()
 std::string     HTTPParser::getPath() const{
     // need root to construct
 }
+
+std::string     HTTPParser::getFilename() const {
+    return _scriptFilename;
+}
+
 std::string     HTTPParser::getQueryString() const {
     return _query_string;
 }

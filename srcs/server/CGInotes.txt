@@ -14,30 +14,6 @@
 // Request looks like :
 // GET /cgi-bin/hello.py?name=andi HTTP/1.1
 
-// env is created :
-
-// char *env[] = {
-//     method.c_str(),
-//     query.c_str(),
-//     script.c_str(),
-//     NULL
-// };
-
-// char *argv[] = interpreter ( cgi extension) + path 
-//char *argv[] = { "/usr/bin/python3", script_path.c_str(), NULL };
-
-// CGI ENV COMPONeNTS:
-
-
-// std::string method = "REQUEST_METHOD=" + request.method;        // "REQUEST_METHOD=GET"
-// std::string script = "SCRIPT_FILENAME=" + root + request.path;  // "SCRIPT_FILENAME=/var/www/cgi-bin/hello.py"
-//                                                                      config root + URI path
-// std::string query  = "QUERY_STRING=" + request.query_string;    // "QUERY_STRING=name=andi"
-//                                                                       everything after ? in URI
-// std::string content = "CONTENT_TYPE=" // request header
-// std::string content_len = "CONTENT_LENGTH=" // from request header
-// std::string server_name = "SERVER_NAME=" // from config
-// std::string server_port = "SERVER_PORT="// from config
 
 
 //POST /cgi-bin/hello.py HTTP/1.1
