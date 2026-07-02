@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:27:21 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/28 15:24:47 by ankim            ###   ########.fr       */
+/*   Updated: 2026/07/02 15:09:41 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,10 +45,13 @@
 
 class Server;
 
+class CGI;
+
 class EpollLoop {
 
 private:
-    std::map<int, int>  _clientToListener;
+    std::map<int, int>  _clientToListener; // key value ookup 
+    // - key : client socketfd, - value listener socketfd
 
 protected:
 

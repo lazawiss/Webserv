@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/02 14:38:39 by ankim            ###   ########.fr       */
+/*   Updated: 2026/07/02 14:42:25 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -88,6 +88,8 @@ public:
     std::string     getContentLength() const;
     std::string     getRequestTarget() const;
     bool            isCGI() const;
+    void            parseCGI();
+    bool            validateCGIRequest();
     /*------------------------- */
 
     std::string     getBoundary() const;
