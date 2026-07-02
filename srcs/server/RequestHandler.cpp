@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/30 20:30:29 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/02 19:51:45 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -304,7 +304,7 @@ bool    RequestHandler::answerFileIcon(){
 }
 
 
-bool    RequestHandler::uploadFile(){
+bool    RequestHandler::uploadFile( std::string const & filename, std::string const & boundary ){
     
     return true;
     
@@ -375,7 +375,7 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
     }
     if (HTTPParser.getType() == "multipart/form-data"){
         
-        if (answerFileIcon() == false){
+        if (uploadFile(HTTPParser.getFileName(), HTTPParser.getBoundary()) == false){
          
             HTTPParser.setCode("404");
             HTTPParser.setCode("text/html");

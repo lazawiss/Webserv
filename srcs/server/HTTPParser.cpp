@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/30 21:03:13 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/02 20:25:28 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,13 +20,13 @@
 */
 
 HTTPParser:: HTTPParser(  std::string const & request ) : _allTokens(), _request(request),
- _code(), _type(), _method(), _requesttarget(), _httpversion(), _boundary(){
+ _code(), _type(), _method(), _requesttarget(), _httpversion(), _boundary(), _fileName(){
     
 }
 
 HTTPParser::HTTPParser( HTTPParser const & src ) : _allTokens(src._allTokens), _request(src._request), 
 _code(src._code), _type(src._type), _method(src._method), _requesttarget(src._requesttarget),
- _httpversion(src._httpversion), _boundary(src._boundary){
+ _httpversion(src._httpversion), _boundary(src._boundary), _fileName(src._fileName){
     
 }
 
@@ -46,6 +46,7 @@ HTTPParser &    HTTPParser::operator=( HTTPParser const & other ){
         this->_requesttarget = other._requesttarget;
         this->_httpversion = other._httpversion;
         this->_boundary = other._boundary;
+        this->_fileName = other._fileName;
 
     }
     
@@ -70,6 +71,11 @@ std::string HTTPParser::getMethod() const{
 std::string HTTPParser::getBoundary() const{
         
     return _boundary;
+}
+
+std::string HTTPParser::getFileName() const{
+        
+    return _fileName;
 }
 
 std::string HTTPParser::setCode( std::string const & code ){
@@ -147,7 +153,7 @@ void HTTPParser::HTTPparse_file(const std::string &str)
 
 /*
 ** ============================================================================
-** Parser HTTP
+** Parser HTTP - First Part: GET
 ** ============================================================================
 */
 
@@ -155,6 +161,7 @@ void HTTPParser::HTTPparse_file(const std::string &str)
 // -SIZE
 // -METHOD
 // -HOST
+// making sure the request have the minimum requirement to execute the static part with GET 
 
 bool    HTTPParser::checkSize(){
     
@@ -193,6 +200,11 @@ static bool isContentType( Token const & t ){
 static bool isContentLength( Token const & t ){
     
     return t.value == "Content-Length:";
+}
+
+static bool isContentDisposition( Token const & t ){
+    
+    return t.value == "Content-Disposition:";
 }
 
 
@@ -281,6 +293,40 @@ bool    HTTPParser::checkHost( ListenerManager const & listener ){
     return false;
 }
 
+bool    HTTPParser::isRequestValid( ListenerManager const & listen ){
+    
+    if (checkSize() == false){
+        std::cerr << "Error Size too big: " << strerror(errno) << std::endl;
+        return false;
+    }
+    
+    if (checkRequestLine() == false){
+        std::cerr << "Error Request Line wrong: " << strerror(errno) << std::endl;
+        return false;
+    }
+    
+    if (checkHost(listen) == false){
+        std::cerr << "Error Host not found: " << strerror(errno) << std::endl;
+        return false;
+    }
+    
+    return true;
+}
+
+/*
+** ============================================================================
+** Parser HTTP - Second Part: POST
+** ============================================================================
+*/
+
+//Parsing the minimum requirement to upload file with POST:
+// - CONTENT-TYPE
+// - CONTENT-LENGTH
+// - CONTENT-DISPOSITION :
+//      - TYPE : ex: form-data
+//      - NAME : part of the form that collects uploaded file
+//      - FILENAME : NAME OF THE UPLOADED FILE
+
 bool    HTTPParser::checkContentType(){
 
         std::vector<Token>::iterator found;
@@ -318,7 +364,6 @@ bool    HTTPParser::checkContentLength(){
     found = find_if(_allTokens.begin(), _allTokens.end(), isTokenWord);
     if (found != _allTokens.end()){ // same as EOF
         
-        
         found = find_if(_allTokens.begin(), _allTokens.end(), isContentLength);
         if (found != _allTokens.end()){
             
@@ -344,7 +389,6 @@ bool    HTTPParser::checkContentLength(){
             }
 
             return true;
-            
         }
     }
     _code = "400";
@@ -353,24 +397,56 @@ bool    HTTPParser::checkContentLength(){
     return false;
 }
 
-bool    HTTPParser::isRequestValid( ListenerManager const & listen ){
+
+bool    HTTPParser::checkContentDisposition(){
     
-    if (checkSize() == false){
-        std::cerr << "Error Size too big: " << strerror(errno) << std::endl;
-        return false;
+    std::vector<Token>::iterator found;
+    
+    found = find_if(_allTokens.begin(), _allTokens.end(), isTokenWord);
+    if (found != _allTokens.end()){ // same as EOF
+        
+        found = find_if(_allTokens.begin(), _allTokens.end(), isContentDisposition);
+        if (found != _allTokens.end()){
+            
+            found++;
+            std::string type = found->value;
+            char const *slash = strchr(_type.c_str(), '/');
+            std::string checktype = std::string(slash, strlen(slash));
+            checktype.erase(checktype.begin());
+            if (type != checktype)
+                return false;
+            found++;
+            found++;
+            char const *equal = strchr(found->value.c_str(), '"');
+            std::string name = std::string(equal, strlen(equal));
+            name.erase(name.end() - 1);
+            name.erase(name.begin());
+            found++;
+            found++;
+            char const *quote = strchr(found->value.c_str(), '"');
+            _fileName = std::string(quote, strlen(quote));
+            _fileName.erase(_fileName.end() - 1);
+            _fileName.erase(_fileName.begin());
+            std::cout << "_fileName:" << _fileName<< std::endl;
+            return true;
+        }
     }
+    _code = "400";
+    _type = "text/html";
     
-    if (checkRequestLine() == false){
-        std::cerr << "Error Request Line wrong: " << strerror(errno) << std::endl;
-        return false;
+    return false;
+}
+
+
+bool    HTTPParser::gatherFile(){
+    
+    std::vector<Token>::iterator found;
+    
+    found = find_if(_allTokens.begin(), _allTokens.end(), isTokenWord);
+    if (found != _allTokens.end()){ // same as EOF
+        
+        found = find_if(_allTokens.begin(), _allTokens.end(), isContentDisposition);
     }
-    
-    if (checkHost(listen) == false){
-        std::cerr << "Error Host not found: " << strerror(errno) << std::endl;
-        return false;
-    }
-    
-    return true;
 }
 
 bool    HTTPParser::findMethods(){
@@ -451,6 +527,10 @@ bool    HTTPParser::findMethods(){
                 }
                 if (checkContentLength() == false){
                     std::cerr << "Error Content-Length not found: " << strerror(errno) << std::endl;
+                    return false;
+                }
+                if (checkContentDisposition() == false){
+                    std::cerr << "Error Content-Disposition not found: " << strerror(errno) << std::endl;
                     return false;
                 }
                 return true;
