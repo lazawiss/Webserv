@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/28 19:39:04 by ankim             #+#    #+#             */
-/*   Updated: 2026/07/02 19:13:30 by ankim            ###   ########.fr       */
+/*   Updated: 2026/07/02 19:26:34 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -87,6 +87,7 @@ bool CGI::start()
 {
     buildEnv();
     // pipe, fork, dup2, exec,
+    // char *argv[] = interpreter ( cgi extension) + path 
     execve(_fullPath.c_str(), argv, _envp.data());
     return true;
 }
