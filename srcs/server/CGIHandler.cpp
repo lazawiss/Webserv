@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/28 19:39:04 by ankim             #+#    #+#             */
-/*   Updated: 2026/06/28 19:59:15 by ankim            ###   ########.fr       */
+/*   Updated: 2026/07/02 12:18:08 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,7 @@
 
 /*ORTHODOX CANONICAL FORM*/
 
-CGI::CGI(const HTTPParser& ref) : _info(ref), _output(NULL) {};
+CGI::CGI(const HTTPParser& ref, const ListenerManager& ref2) : _info(ref), _output(NULL) {};
 
 CGI::CGI(const CGI& ref)
 {
@@ -39,7 +39,7 @@ CGI &CGI::operator=(const CGI& ref)
         *this = ref;
     }
     return *this;
-}
+};
 CGI::~CGI() {};
 
 /* HELPERS */

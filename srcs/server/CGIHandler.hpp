@@ -7,7 +7,7 @@
 class CGI
 {
 public:
-    CGI::CGI(const HTTPParser& ref);
+    CGI::CGI(const HTTPParser& ref, const ListenerManager& ref2);
     CGI(const CGI& ref);
     CGI& operator=(const CGI& ref);
     ~CGI();
