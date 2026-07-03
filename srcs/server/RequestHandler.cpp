@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/02 19:51:45 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/03 21:32:39 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,14 +22,14 @@
 */
 
 RequestHandler:: RequestHandler( std::string const & request ) : _request(request),
-_root("data/html"), _header(), _size(), _n_read_index(0){
+_root("data/html"), _header(), _size(), _pathToFile(), _n_read_index(0){
 
     memset(_buffer, 0, BUF_SIZE);
 }
 
 RequestHandler::RequestHandler( RequestHandler const & src ) : 
     _request(src._request), _root(src._root), _header(src._header),
-    _size(src._size),_n_read_index(src._n_read_index)
+    _size(src._size), _pathToFile(src._pathToFile), _n_read_index(src._n_read_index)
 {
      memcpy(_buffer, src._buffer, BUF_SIZE);
 }
@@ -43,7 +43,8 @@ RequestHandler & RequestHandler::operator=( RequestHandler const & other ){
         this->_root = other._root;
         this->_header = other._header;
         this->_size = other._size;
-         memcpy(this->_buffer, other._buffer, BUF_SIZE);
+        this->_pathToFile = other._pathToFile;
+        memcpy(this->_buffer, other._buffer, BUF_SIZE);
         this->_n_read_index = other._n_read_index;
     }
 
@@ -64,7 +65,6 @@ std::string RequestHandler::getSize() const{
 
     return _size;
 }
-
 
 ssize_t RequestHandler::getNReadIndex() const{
     
@@ -114,19 +114,22 @@ std::string RequestHandler::getFileUpload( std::string const & code){
 //  header : code + Content-Type
 std::string RequestHandler::buildAnswerHeader( std::string const & code, std::string const & type ){
     
+    std::cout << "code:" << code << std::endl;
+    
     //cherche dans tableau >> code + reason
-    std::string codeName[6] = {
+    std::string codeName[7] = {
     
         "400",
         "404",
         "405",
         "413",
         "414",
-        "421"
+        "421",
+        "201"
     };
     
     int index = -1;
-    for (int i = 0 ;i < 6; i++){
+    for (int i = 0 ;i < 7; i++){
         
         if (codeName[i] == code){
             index = i;
@@ -163,7 +166,7 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
         break;
         
         case(6):
-        str = "201 CREATED\r\nLocation:";
+        str = "201 CREATED\r\nLocation: " + _pathToFile;
         break;
 
         default:
@@ -304,8 +307,19 @@ bool    RequestHandler::answerFileIcon(){
 }
 
 
-bool    RequestHandler::uploadFile( std::string const & filename, std::string const & boundary ){
+bool    RequestHandler::uploadFile( std::string const & filename, std::string const & buf ){
     
+    _pathToFile = "data/upload/" + filename;
+
+    std::ofstream outfile(_pathToFile.c_str(), std::ios::binary);
+    outfile << buf << std::endl; 
+    // outfile.write(buf.data(), buf.size());
+    _n_read_index = buf.size();
+    
+    outfile.close();
+    
+    
+
     return true;
     
 }
@@ -340,7 +354,7 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         if (answerFile(file) == false){
             
             HTTPParser.setCode("404");
-            HTTPParser.setCode("text/html");
+            HTTPParser.setType("text/html");
         }
             
     }
@@ -350,7 +364,7 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         if (answerFile(file) == false){
             
             HTTPParser.setCode("404");
-            HTTPParser.setCode("text/html");
+            HTTPParser.setType("text/html");
         }
             
     }
@@ -360,9 +374,8 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         // if (answerFileImage(file) == false){
         if (answerFile(file) == false){
 
-         
             HTTPParser.setCode("404");
-            HTTPParser.setCode("text/html");
+            HTTPParser.setType("text/html");
         }
     }
     if (HTTPParser.getType() == "image/x-icon"){
@@ -370,16 +383,19 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         if (answerFileIcon() == false){
          
             HTTPParser.setCode("404");
-            HTTPParser.setCode("text/html");
+            HTTPParser.setType("text/html");
         }
     }
     if (HTTPParser.getType() == "multipart/form-data"){
         
-        if (uploadFile(HTTPParser.getFileName(), HTTPParser.getBoundary()) == false){
+        if (uploadFile(HTTPParser.getFileName(), HTTPParser.getFileBuf()) == false){
          
             HTTPParser.setCode("404");
-            HTTPParser.setCode("text/html");
+            HTTPParser.setType("text/html");
         }
+        HTTPParser.setCode("201");
+        HTTPParser.setType("image/png");
+        
     }
     
     buildAnswerHeader(HTTPParser.getCode(), HTTPParser.getType());

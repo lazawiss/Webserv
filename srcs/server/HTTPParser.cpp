@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/02 20:25:28 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/03 21:35:05 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,13 +20,13 @@
 */
 
 HTTPParser:: HTTPParser(  std::string const & request ) : _allTokens(), _request(request),
- _code(), _type(), _method(), _requesttarget(), _httpversion(), _boundary(), _fileName(){
+ _code(), _type(), _method(), _requesttarget(), _httpversion(), _boundary(), _fileName(), _fileBuf(){
     
 }
 
 HTTPParser::HTTPParser( HTTPParser const & src ) : _allTokens(src._allTokens), _request(src._request), 
 _code(src._code), _type(src._type), _method(src._method), _requesttarget(src._requesttarget),
- _httpversion(src._httpversion), _boundary(src._boundary), _fileName(src._fileName){
+ _httpversion(src._httpversion), _boundary(src._boundary), _fileName(src._fileName), _fileBuf(src._fileBuf){
     
 }
 
@@ -47,6 +47,8 @@ HTTPParser &    HTTPParser::operator=( HTTPParser const & other ){
         this->_httpversion = other._httpversion;
         this->_boundary = other._boundary;
         this->_fileName = other._fileName;
+        this->_fileBuf =other._fileBuf;
+        
 
     }
     
@@ -76,6 +78,11 @@ std::string HTTPParser::getBoundary() const{
 std::string HTTPParser::getFileName() const{
         
     return _fileName;
+}
+
+std::string HTTPParser::getFileBuf() const{
+        
+    return _fileBuf;
 }
 
 std::string HTTPParser::setCode( std::string const & code ){
@@ -207,6 +214,10 @@ static bool isContentDisposition( Token const & t ){
     return t.value == "Content-Disposition:";
 }
 
+// static bool isBoundary( Token const & t, std::string const & boundary ){
+    
+//     return t.value == boundary;
+// }
 
 
 // Check if it respect the standard form :
@@ -345,7 +356,7 @@ bool    HTTPParser::checkContentType(){
             found++;
             found++;
             _boundary = found->value;
-            _boundary.erase(_boundary.begin(),_boundary.begin()+8);
+            _boundary.erase(_boundary.begin(),_boundary.begin()+9);
             std::cout << "boundary:" << _boundary << std::endl;
 
             return true;
@@ -368,7 +379,6 @@ bool    HTTPParser::checkContentLength(){
         if (found != _allTokens.end()){
             
             found++;
-            // std::cout << "found->value:" << found->value << std::endl;
             _fileLength = found->value;
             std::stringstream ss(_fileLength);
             size_t len; 
@@ -428,6 +438,8 @@ bool    HTTPParser::checkContentDisposition(){
             _fileName.erase(_fileName.end() - 1);
             _fileName.erase(_fileName.begin());
             std::cout << "_fileName:" << _fileName<< std::endl;
+            _found = found;
+
             return true;
         }
     }
@@ -440,14 +452,29 @@ bool    HTTPParser::checkContentDisposition(){
 
 bool    HTTPParser::gatherFile(){
     
-    std::vector<Token>::iterator found;
+    _found++;
+    _found++;
+    _found++;
+    std::string endOfFile = _boundary + "--";
+
+    size_t len =  endOfFile.size();
     
-    found = find_if(_allTokens.begin(), _allTokens.end(), isTokenWord);
-    if (found != _allTokens.end()){ // same as EOF
-        
-        found = find_if(_allTokens.begin(), _allTokens.end(), isContentDisposition);
+    while (_found->type != End){
+
+        if (_found->value != endOfFile)
+            _fileBuf += _found->value;
+        _found++;
     }
+
+    _fileBuf.erase(_fileBuf.end() - (len + 2), _fileBuf.end());
+    return true;
+    
+    // _code = "400";
+    // _type = "text/html";
+    
+    // return false;
 }
+    
 
 bool    HTTPParser::findMethods(){
     
@@ -467,7 +494,7 @@ bool    HTTPParser::findMethods(){
             return true;
 
         }
-        else if (_requesttarget == "/gallery.html"){
+        else if (_requesttarget == "/html/gallery.html"){
             
             _code = "gallery";
             _type = "text/html";
@@ -531,6 +558,10 @@ bool    HTTPParser::findMethods(){
                 }
                 if (checkContentDisposition() == false){
                     std::cerr << "Error Content-Disposition not found: " << strerror(errno) << std::endl;
+                    return false;
+                }
+                if (gatherFile() == false){
+                    std::cerr << "Error Content not found: " << strerror(errno) << std::endl;
                     return false;
                 }
                 return true;

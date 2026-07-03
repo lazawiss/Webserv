@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:00:06 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/02 19:51:11 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/03 21:14:30 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,6 +54,7 @@ private:
     std::string         _root;
     std::string         _header;
     std::string         _size;
+    std::string         _pathToFile;
     char                _buffer[BUF_SIZE];
     ssize_t             _n_read_index;
    
@@ -83,7 +84,7 @@ public:
     bool                answerFileImage( std::string const & file );
     bool                answerFileIcon();
 
-    bool                uploadFile( std::string const & filename, std::string const & boundary );
+    bool                uploadFile( std::string const & filename, std::string const & buf );
 
     bool                handleRequest(  ListenerManager const & listen );
 

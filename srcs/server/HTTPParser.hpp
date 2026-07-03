@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/02 20:25:10 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/03 18:45:51 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,16 +47,19 @@ class HTTPParser {
 
 private:
 
-    std::vector<Token>  _allTokens;
-    std::string         _request;
-    std::string         _code;
-    std::string         _type;
-    std::string         _method;
-    std::string         _requesttarget;
-    std::string         _httpversion;
-    std::string         _boundary;
-    std::string         _fileLength;
-    std::string         _fileName;
+    std::vector<Token>              _allTokens;
+    std::string                     _request;
+    std::string                     _code;
+    std::string                     _type;
+    std::string                     _method;
+    std::string                     _requesttarget;
+    std::string                     _httpversion;
+    std::string                     _boundary;
+    std::string                     _fileLength;
+    std::string                     _fileName;
+    std::string                     _fileBuf;
+    std::vector<Token>::iterator    _found;
+    
     
 
 public:
@@ -71,9 +74,8 @@ public:
     std::string     getMethod() const;
     std::string     getBoundary() const;
     std::string     getFileName() const;
+    std::string     getFileBuf() const;
 
-
-    
     std::string     setCode( std::string const & code );
     std::string     setType( std::string const & type );
 
