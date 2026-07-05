@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   EpollLoop.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
+/*   By: andikim <andikim@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/02 19:15:10 by ankim            ###   ########.fr       */
+/*   Updated: 2026/07/05 16:26:02 by andikim          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -125,24 +125,36 @@ bool    EpollLoop::do_use_fd(  int fd, std::vector<ListenerManager> const & list
     
     if (requestHandler.getCGI())
     {
-        CGI *cgi = new CGI(requestHandler, listener);
-        if (!cgi->start()){
-            delete cgi;
-            // write 500 response to client fd return
-        }
-        else
+        CGI *cgi = new CGI(requestHandler, *listener, fd);
+        if (!cgi->start())
         {
-            ev.events = EPOLLOUT; // or EPOLLIN, depending which pipe end first
-            ev.data.fd = cgi->getStdinFd();   // or whichever pipe fd needs watching first
-            epoll_ctl(epollfd, EPOLL_CTL_ADD, cgi->getStdinFd(), &ev);
-            _fdToCGI[cgi->getStdinFd()] = cgi;
-
-            ev.data.fd = cgi->getStdoutFd();
-            epoll_ctl(epollfd, EPOLL_CTL_ADD, cgi->getStdoutFd(), &ev);
-            _fdToCGI[cgi->getStdoutFd()] = cgi;
+            delete cgi;
+            std::string err = "HTTP/1.1 500 Internal Server Error\r\n"
+                              "Content-Length: 0\r\n\r\n";
+            send(fd, err.c_str(), err.size(), 0);
+            _clientToListener.erase(fd);
+            return (close(fd), false);
         }
+
+        struct epoll_event ev;
+
+        // stdin pipe: WE write the body into it -> watch for EPOLLOUT
+        ev.events = EPOLLOUT;
+        ev.data.fd = cgi->getStdinFd();
+        epoll_ctl(epollfd, EPOLL_CTL_ADD, cgi->getStdinFd(), &ev);
+        _fdToCGI[cgi->getStdinFd()] = cgi;
+
+        // stdout pipe: WE read the script output -> watch for EPOLLIN
+        ev.events = EPOLLIN;
+        ev.data.fd = cgi->getStdoutFd();
+        epoll_ctl(epollfd, EPOLL_CTL_ADD, cgi->getStdoutFd(), &ev);
+        _fdToCGI[cgi->getStdoutFd()] = cgi;
+
+        // client fd stays OPEN and untouched: the response is sent later,
+        // when the stdout pipe hits EOF (see readingSocket)
+        return true;
     }
-    
+
     std::cout << "header:" << requestHandler.getHeader() << std::endl;
     std::string header = std::string(requestHandler.getHeader());
     std::string content = std::string(requestHandler.getBuffer().c_str(), requestHandler.getNReadIndex());
@@ -255,19 +267,40 @@ bool EpollLoop::readingSocket( std::vector<ListenerManager> const & listeners ){
                 std::map<int, CGI*>::iterator it = _fdToCGI.find(events[n].data.fd);
                 if (it != _fdToCGI.end())
                 {
-                    CGI* cgi = it->second;
-                    if (events[n].events & EPOLLIN)
-                        cgi.onReadable();
-                    if (events[n].events & EPOLLOUT)
-                        cgi.onWritable();
-                    if (cgi.isDone())
+                    CGI *cgi = it->second;
+                    int activeFd = events[n].data.fd;
+
+                    if (activeFd == cgi->getStdinFd())
                     {
-                        // build the HTTP response from cgi->buildResponse(),
-                        // hand it back to the client socket for writing
-                        epoll_ctl(epollfd, EPOLL_CTL_DEL, events[n].data.fd, NULL);
-                        close(events[n].data.fd);
-                        _fdToCGI.erase(it);
-                        delete cgi;
+                        // feeding the request body to the script
+                        if (cgi->onWritable())
+                        {
+                            // body fully sent: deregister, then close.
+                            // Closing = EOF on the script's stdin, which is
+                            // how it knows the POST body is complete.
+                            epoll_ctl(epollfd, EPOLL_CTL_DEL, activeFd, NULL);
+                            _fdToCGI.erase(it);
+                            cgi->closeStdin(); // closing write end, sends EOF to CGI process 
+                        }
+                    }
+                    else
+                    {
+                        // collecting the script's output
+                        if (cgi->onReadable())
+                        {
+                            // EOF: script finished -> reap child, respond
+                            epoll_ctl(epollfd, EPOLL_CTL_DEL, activeFd, NULL);
+                            _fdToCGI.erase(it);
+                            cgi->closeStdout();
+
+                            std::string response = cgi->buildResponse();
+                            send(cgi->getClientFd(), response.c_str(),
+                                 response.size(), 0);
+
+                            _clientToListener.erase(cgi->getClientFd());
+                            close(cgi->getClientFd());
+                            delete cgi;
+                        }
                     }
                 }
                 else if (do_use_fd(events[n].data.fd, listeners, epollfd) == false)

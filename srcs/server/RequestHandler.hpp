@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestHandler.hpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
+/*   By: andikim <andikim@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:00:06 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/02 19:00:13 by ankim            ###   ########.fr       */
+/*   Updated: 2026/07/05 17:17:11 by andikim          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,10 +66,7 @@ private:
     std::string         _content_type;
     std::string         _content_length;
     std::string         _method;
-   
 
-    
-protected:
 public:
 
                         RequestHandler( std::string const & request );
@@ -88,7 +85,14 @@ public:
     std::string         getFile( std::string const & code );
     std::string         getFileImage( std::string const & code);
     std::string         getFileUpload( std::string const & code);
-
+    std::string         getPath() const;
+    std::string         getFilename() const;
+    std::string         getQueryString() const;
+    std::string         getBody() const;
+    std::string         getContentType() const;
+    std::string         getContentLength() const;
+    std::string         getMethod() const;
+    
     bool                answerFile( std::string const & file );
     bool                answerFileImage( std::string const & file );
     bool                answerFileIcon();
@@ -97,28 +101,4 @@ public:
 
     bool                handleRequest(  ListenerManager const & listen );
     bool                getCGI() const;
-    std::string     RequestHandler::getPath() const{
-        // need root to construct
-    }
-
-    std::string     RequestHandler::getFilename() const {
-        return _scriptFilename;
-    }
-
-    std::string     RequestHandler::getQueryString() const {
-        return _query_string;
-    }
-    std::string     RequestHandler::getBody() const{
-        return _body;
-    }
-    std::string     RequestHandler::getContentType() const{
-        return _content_type;
-    }
-    std::string     RequestHandler::getContentLength() const{
-        return _content_length;
-    }
-    std::string     RequestHandler::getMethod() const {
-        return _method;
-    }
-
 };

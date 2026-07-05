@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestHandler.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
+/*   By: andikim <andikim@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/02 19:17:13 by ankim            ###   ########.fr       */
+/*   Updated: 2026/07/05 17:18:01 by andikim          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -115,6 +115,30 @@ std::string RequestHandler::getFileUpload( std::string const & code){
     std::cout << "FileImage:" << file << std::endl;
     return file;
 }
+
+std::string RequestHandler::getPath() const{
+        return _fullPath; // location root + script name, set in handleRequest
+    }
+
+std::string     RequestHandler::getFilename() const {
+        return _scriptFilename;
+    }
+
+std::string     RequestHandler::getQueryString() const {
+        return _query_string;
+    }
+std::string     RequestHandler::getBody() const{
+        return _body;
+    }
+std::string     RequestHandler::getContentType() const{
+        return _content_type;
+    }
+std::string     RequestHandler::getContentLength() const{
+        return _content_length;
+    }
+std::string     RequestHandler::getMethod() const {
+        return _method;
+    }
  
 // construct message to send back to client 
 //  header : code + Content-Type
