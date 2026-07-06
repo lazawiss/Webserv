@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/03 21:35:05 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/06 18:32:37 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,12 +19,12 @@
 ** ============================================================================
 */
 
-HTTPParser:: HTTPParser(  std::string const & request ) : _allTokens(), _request(request),
+HTTPParser:: HTTPParser(  std::string const & request ) : _request(), _request(request),
  _code(), _type(), _method(), _requesttarget(), _httpversion(), _boundary(), _fileName(), _fileBuf(){
     
 }
 
-HTTPParser::HTTPParser( HTTPParser const & src ) : _allTokens(src._allTokens), _request(src._request), 
+HTTPParser::HTTPParser( HTTPParser const & src ) : _request(src._request), _request(src._request), 
 _code(src._code), _type(src._type), _method(src._method), _requesttarget(src._requesttarget),
  _httpversion(src._httpversion), _boundary(src._boundary), _fileName(src._fileName), _fileBuf(src._fileBuf){
     
@@ -38,7 +38,7 @@ HTTPParser &    HTTPParser::operator=( HTTPParser const & other ){
 
     if (this != &other ){
 
-        this->_allTokens = other._allTokens;
+        this->_request = other._request;
         this->_request = other._request;
         this->_code = other._code;
         this->_type = other._type;
@@ -104,59 +104,59 @@ std::string HTTPParser::setType( std::string const & type ){
 ** ============================================================================
 */
 
-static std::string tokenTypeToString(TokenType type)
-{
-    switch(type)
-    {
-        case Word:      return "Word";
-        case LBracket:  return "LBracket";
-        case RBracket:  return "RBracket";
-        case Semicolon: return "Semicolon";
-        case Hashtag:   return "Hashtag";
-        case End:       return "End";
+// static std::string tokenTypeToString(TokenType type)
+// {
+//     switch(type)
+//     {
+//         case Word:      return "Word";
+//         case LBracket:  return "LBracket";
+//         case RBracket:  return "RBracket";
+//         case Semicolon: return "Semicolon";
+//         case Hashtag:   return "Hashtag";
+//         case End:       return "End";
 
-        default:        return "Unknown";
-    }
-}
+//         default:        return "Unknown";
+//     }
+// }
 
 
-void print_token_chain(std::vector <Token> tokens)
-{
-    for (size_t i = 0; i < tokens.size(); i++)
-    {
-        std::cout
-            << tokenTypeToString(tokens[i].type)
-            << " => "
-            << tokens[i].value
-            << std::endl;
-    }
-    return ;
-}
+// void print_token_chain(std::vector <Token> tokens)
+// {
+//     for (size_t i = 0; i < tokens.size(); i++)
+//     {
+//         std::cout
+//             << tokenTypeToString(tokens[i].type)
+//             << " => "
+//             << tokens[i].value
+//             << std::endl;
+//     }
+//     return ;
+// }
 
-void HTTPParser::HTTPparse_file(const std::string &str)
-{
-    std::istringstream iss(str);
-    std::string line;
-    // std::vector<Token> allTokens;
+// void HTTPParser::HTTPparse_file(const std::string &str)
+// {
+//     std::istringstream iss(str);
+//     std::string line;
+//     // std::vector<Token> allTokens;
 
-    std::cout << "\n";
-    while (std::getline(iss, line))
-    {
-        std::cout << line << "\n";
-        Lexer lexer(line);
-        std::vector<Token> lineTokens = lexer.tokenize();
+//     std::cout << "\n";
+//     while (std::getline(iss, line))
+//     {
+//         std::cout << line << "\n";
+//         Lexer lexer(line);
+//         std::vector<Token> lineTokens = lexer.tokenize();
 
-        for (size_t i = 0; i < lineTokens.size(); i++)
-        {
-            if (lineTokens[i].type != End)
-                _allTokens.push_back(lineTokens[i]);
-        }
-    }
+//         for (size_t i = 0; i < lineTokens.size(); i++)
+//         {
+//             if (lineTokens[i].type != End)
+//                 _request.push_back(lineTokens[i]);
+//         }
+//     }
 
-    _allTokens.push_back(Token(End, ""));
-    //print_token_chain(_allTokens);
+//     _request.push_back(Token(End, ""));
+//     //print_token_chain(_request);
     
-}
+// }
 
 /*
 ** ============================================================================
@@ -172,7 +172,7 @@ void HTTPParser::HTTPparse_file(const std::string &str)
 
 bool    HTTPParser::checkSize(){
     
-    if (_allTokens.size() > BUF_SIZE){
+    if (_request.size() > BUF_SIZE){
         
         _code = "413";
         _type = "text/html";
@@ -184,35 +184,33 @@ bool    HTTPParser::checkSize(){
 
 }
 
-static bool isTokenWord( Token const & t ){
+// static bool isTokenWord( Token const & t ){
     
-    return t.type == Word;
+//     return t.type == Word;
+// }
+
+static bool isMethod( std::string const & str ){
+    
+    return str == "GET" || str == "POST" || str == "DELETE";
 }
 
-static bool isMethod( Token const & t ){
+static bool isHost( std::string const & t ){
     
-    return t.value == "GET" || t.value == "POST" || t.value == "DELETE";
+    return t == "Host:";
 }
 
-static bool isHost( Token const & t ){
+static bool isContentType( std::string const & t ){
     
-    return t.value == "Host:";
+    return t == "Content-Type:";
 }
 
-static bool isContentType( Token const & t ){
+static bool isSimpleSpace( int found ){
     
-    return t.value == "Content-Type:";
+    return std::isspace(static_cast<unsigned char>(found));
 }
 
-static bool isContentLength( Token const & t ){
-    
-    return t.value == "Content-Length:";
-}
 
-static bool isContentDisposition( Token const & t ){
-    
-    return t.value == "Content-Disposition:";
-}
+
 
 // static bool isBoundary( Token const & t, std::string const & boundary ){
     
@@ -224,40 +222,84 @@ static bool isContentDisposition( Token const & t ){
 // request-line   = method SP request-target SP HTTP-version
 bool    HTTPParser::checkRequestLine(){
     
-    std::vector<Token>::iterator found;
+    std::vector<size_t> space_inter;
+    std::string::iterator space = _request.begin();
     
-    found = find_if(_allTokens.begin(), _allTokens.end(), isTokenWord);
-    if (found != _allTokens.end()){ // same as EOF
+    while(space != _request.end()){
         
-        found = find_if(_allTokens.begin(), _allTokens.end(), isMethod);
-        if (found != _allTokens.end()){
+        space = find_if(_request.begin(), _request.end(), isSimpleSpace);
+        if (space == _request.end())
+            break;
             
-            _method = found->value;
-            std::cout << "Method:" << _method << std::endl;
-            found++;
-            
-            char const *slash = strrchr(found->value.c_str(), '/');
-            if (slash){
-          
-                _requesttarget = found->value;
-                std::cout << "RequestTarget: " << _requesttarget<< std::endl;
-                found++;
-                
-                if (found->value == "HTTP/1.1"){
-                
-                    _httpversion = found->value;
-                    std::cout << "HTTP version: " << _httpversion << std::endl;
-                    return true;
-                } 
-            }
-        }
-        else{
-            
-            _code = "405";
-            _type = "text/html";
-            return false;
-        }
+        space_inter.push_back(distance(_request.begin(), space));
+        if (*space == '\n')
+            break;
+
+        space++;
     }
+    
+    std::vector<std::string> subss;
+    for(size_t i = 0; i < space_inter.size(); ++i){
+        
+        size_t start = (i == 0) ? 0 : space_inter[i - 1] + 1;
+        size_t end = space_inter[i];
+
+        subss[i - 1] = _request.substr(start, end - start);
+    }
+    
+    _method = subss[0];
+        
+    if (isMethod(_method))
+        std::cout << "Method:" << _method << std::endl;
+    else{
+        
+        _code = "405";
+        _type = "text/html";
+        
+        return false;
+    }
+            
+    _requesttarget = subss[1];
+            
+    char const *slash = strrchr( _requesttarget.c_str(), '/');
+    if (slash)
+        std::cout << "RequestTarget: " << _requesttarget << std::endl;
+
+    _httpversion = subss[2];
+    if ( _httpversion == "HTTP/1.1")
+        std::cout << "HTTP version: " << _httpversion << std::endl;
+    
+    // if (found != _request.end()){ // same as EOF
+        
+    //     found = find_if(_request.begin(), _request.end(), isMethod);
+    //     if (found != _request.end()){
+            
+    //         _method = found->value;
+    //         std::cout << "Method:" << _method << std::endl;
+    //         found++;
+            
+    //         char const *slash = strrchr(found->value.c_str(), '/');
+    //         if (slash){
+          
+    //             _requesttarget = found->value;
+    //             std::cout << "RequestTarget: " << _requesttarget<< std::endl;
+    //             found++;
+                
+    //             if (found->value == "HTTP/1.1"){
+                
+    //                 _httpversion = found->value;
+    //                 std::cout << "HTTP version: " << _httpversion << std::endl;
+    //                 return true;
+    //             } 
+    //         }
+    //     }
+    //     else{
+            
+    //         _code = "405";
+    //         _type = "text/html";
+    //         return false;
+    //     }
+    // }
 
     _code = "400";
     _type = "text/html";
@@ -274,14 +316,27 @@ bool    HTTPParser::checkHost( ListenerManager const & listener ){
     hostname += listener.getService();
 
     std::cout << "hostname:" << hostname << std::endl;
-        std::vector<Token>::iterator found;
+
+    _pos++;
+    std::string::iterator space = _pos;
+
+    while(*space != '\n'){
+        
+        
+        
+        space = find_if(_pos, _request.end(), isSimpleSpace);
+        
+    }
     
-    found = find_if(_allTokens.begin(), _allTokens.end(), isTokenWord);
-    if (found != _allTokens.end()){ // same as EOF
+    
+        // std::vector<Token>::iterator found;
+    
+    found = find_if(_request.begin(), _request.end(), isTokenWord);
+    if (found != _request.end()){ // same as EOF
         
         
-        found = find_if(_allTokens.begin(), _allTokens.end(), isHost);
-        if (found != _allTokens.end()){
+        found = find_if(_request.begin(), _request.end(), isHost);
+        if (found != _request.end()){
             
             found++;
             if (found->value != hostname){
@@ -342,12 +397,12 @@ bool    HTTPParser::checkContentType(){
 
         std::vector<Token>::iterator found;
     
-    found = find_if(_allTokens.begin(), _allTokens.end(), isTokenWord);
-    if (found != _allTokens.end()){ // same as EOF
+    found = find_if(_request.begin(), _request.end(), isTokenWord);
+    if (found != _request.end()){ // same as EOF
         
         
-        found = find_if(_allTokens.begin(), _allTokens.end(), isContentType);
-        if (found != _allTokens.end()){
+        found = find_if(_request.begin(), _request.end(), isContentType);
+        if (found != _request.end()){
             
             found++;
             _type = found->value;
@@ -372,11 +427,11 @@ bool    HTTPParser::checkContentLength(){
 
     std::vector<Token>::iterator found;
     
-    found = find_if(_allTokens.begin(), _allTokens.end(), isTokenWord);
-    if (found != _allTokens.end()){ // same as EOF
+    found = find_if(_request.begin(), _request.end(), isTokenWord);
+    if (found != _request.end()){ // same as EOF
         
-        found = find_if(_allTokens.begin(), _allTokens.end(), isContentLength);
-        if (found != _allTokens.end()){
+        found = find_if(_request.begin(), _request.end(), isContentLength);
+        if (found != _request.end()){
             
             found++;
             _fileLength = found->value;
@@ -412,11 +467,11 @@ bool    HTTPParser::checkContentDisposition(){
     
     std::vector<Token>::iterator found;
     
-    found = find_if(_allTokens.begin(), _allTokens.end(), isTokenWord);
-    if (found != _allTokens.end()){ // same as EOF
+    found = find_if(_request.begin(), _request.end(), isTokenWord);
+    if (found != _request.end()){ // same as EOF
         
-        found = find_if(_allTokens.begin(), _allTokens.end(), isContentDisposition);
-        if (found != _allTokens.end()){
+        found = find_if(_request.begin(), _request.end(), isContentDisposition);
+        if (found != _request.end()){
             
             found++;
             std::string type = found->value;

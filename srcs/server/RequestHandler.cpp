@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/03 21:32:39 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/06 14:47:16 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -334,7 +334,7 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
     
     HTTPParser HTTPParser(_request);
 
-    HTTPParser.HTTPparse_file(_request);
+    // HTTPParser.HTTPparse_file(_request);
     
     bool    requestValid = true;
 

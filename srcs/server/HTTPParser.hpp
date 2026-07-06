@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/03 18:45:51 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/06 16:33:08 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,6 +59,8 @@ private:
     std::string                     _fileName;
     std::string                     _fileBuf;
     std::vector<Token>::iterator    _found;
+    std::string::iterator           _pos;
+    
     
     
 
