@@ -103,8 +103,6 @@ int CGI::getStdoutFd() const { return _stdout_pipe[0]; }  // OUR end (read) from
 ** ============================================================================
 */
 
-// TODO: source this from the config (cgi_extension .php /usr/bin/php-cgi)
-// once the parser exposes location blocks. Hardcoded map for now.
 std::string CGI::findInterpreter() const
 {
     size_t dot = _scriptFilename.rfind('.');

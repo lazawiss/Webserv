@@ -20,13 +20,19 @@
 */
 
 HTTPParser:: HTTPParser(  std::string const & request ) : _allTokens(), _request(request),
- _code(), _type(), _method(), _requesttarget(), _httpversion(), _boundary(){
-    
+ _code(), _type(), _method(), _requesttarget(), _httpversion(), _isCGI(false),
+ _fullPath(), _query_string(), _scriptFilename(), _body(), _content_type(), _content_length(), 
+ _boundary(), _fileLength()
+ 
+{
 }
 
 HTTPParser::HTTPParser( HTTPParser const & src ) : _allTokens(src._allTokens), _request(src._request), 
 _code(src._code), _type(src._type), _method(src._method), _requesttarget(src._requesttarget),
- _httpversion(src._httpversion), _boundary(src._boundary), _isCGI(src._isCGI){
+ _httpversion(src._httpversion), _isCGI(src._isCGI), 
+ _fullPath(src._fullPath), _query_string(src._query_string), _scriptFilename(src._scriptFilename), 
+ _body(src._body), _content_type(src._content_type), _content_length(src._content_length), _boundary(src._boundary),
+ _fileLength(src._fileLength){
     
 }
 
@@ -45,9 +51,15 @@ HTTPParser &    HTTPParser::operator=( HTTPParser const & other ){
         this->_method = other._method;
         this->_requesttarget = other._requesttarget;
         this->_httpversion = other._httpversion;
-        this->_boundary = other._boundary;
         this->_isCGI = other._isCGI;
-
+        this->_fullPath = other._fullPath;
+        this->_query_string = other._query_string;
+        this->_scriptFilename = other._scriptFilename;
+        this->_body = other._body;
+        this->_content_type = other._content_type;
+        this->_content_length = other._content_length;
+        this->_boundary = other._boundary;
+        this->_fileLength = other._fileLength;
     }
     
     return *this;
@@ -422,10 +434,6 @@ bool HTTPParser::validateCGIRequest()
     }
     _code = "cgi";
     return true;
-}
-
-std::string     HTTPParser::getPath() const{
-    // need root to construct
 }
 
 std::string     HTTPParser::getFilename() const {

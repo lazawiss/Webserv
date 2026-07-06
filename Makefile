@@ -14,7 +14,8 @@ SRC = \
 	srcs/server/EpollLoop.cpp \
 	srcs/server/HTTPParser.cpp \
 	srcs/server/RequestHandler.cpp \
-	srcs/server/ResponseSender.cpp 
+	srcs/server/ResponseSender.cpp \
+	srcs/server/CGIHandler.cpp
 
 
 OBJ = $(SRC:.cpp=.o)
