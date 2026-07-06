@@ -394,24 +394,24 @@ void    HTTPParser::parseCGI(){
         // GET /cgi-bin/hello.py?name=andi HTTP/1.1
     if (_requesttarget.find("/cgi-bin/") == std::string::npos)
     {
+        std::cout << "print from parsecgi but cgi is false" << std::endl;
         _isCGI = false;
         return;
     }
+
+    size_t pos = _requesttarget.find('?');
+    if (pos != std::string::npos)
+    {
+        _scriptFilename = _requesttarget.substr(0, pos);
+        _query_string = _requesttarget.substr(pos + 1);
+    }
     else
     {
-        size_t pos = _requesttarget.find('?');
-        if (pos != std::string::npos)
-        {
-            _scriptFilename = _requesttarget.substr(0, pos);
-            _query_string = _requesttarget.substr(pos + 1);
-        }
-        else
-        {
-            _scriptFilename = _requesttarget;
-            _query_string = "";
-        }
-        _isCGI = true;
+        _scriptFilename = _requesttarget;
+        _query_string = "";
     }
+    _isCGI = true;
+    std::cout << "print from parseCGI in HTTP PARser" << std::endl;
     return;
 }
 
@@ -422,12 +422,12 @@ bool    HTTPParser::isCGI() const{
 bool HTTPParser::validateCGIRequest()
 {
     if (_method != "GET" && _method != "POST" &&
-        _method != "DELETE" && _method != "PUT")
+        _method != "DELETE")
     {
         _code = "405";
         return false;
     }
-    if (_method == "POST" || _method == "PUT")
+    if (_method == "POST")
     {
         if (!checkContentType())  { std::cerr << "no Content-Type" << std::endl; return false; }
         if (!checkContentLength()){ std::cerr << "no Content-Length" << std::endl; return false; }

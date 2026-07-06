@@ -122,10 +122,12 @@ bool    EpollLoop::do_use_fd(  int fd, std::vector<ListenerManager> const & list
         std::cerr << "Reading of html file failed: " << strerror(errno) << std::endl;
         return (close(fd), false);
     }
-    
+    std::cout << "tu arrives?" << std::endl;
     if (requestHandler.getCGI())
     {
+        std::cout << "tu arrives?1111" << std::endl;
         CGI *cgi = new CGI(requestHandler, *listener, fd);
+        std::cout << "yoyoyoyoy" << std::endl;
         if (!cgi->start())
         {
             delete cgi;

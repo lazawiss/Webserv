@@ -366,17 +366,14 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
             std::cout << "CGI Request not validated" << std::endl;
             return false;
         }
-        else
-        {
-            _scriptFilename = HTTPParser.getFilename();
-            _fullPath = _root + _scriptFilename; // location.root + _scriptFilename
-            _query_string = HTTPParser.getQueryString();
-            _body = HTTPParser.getBody(); // need to parse still
-            _content_type = HTTPParser.getContentType();
-            _content_length = HTTPParser.getContentLength();
-            _method = HTTPParser.getMethod();      
-            _isCGI = true;
-        }
+        _scriptFilename = HTTPParser.getFilename();
+        _fullPath = "data/" + _scriptFilename; // location.root + _scriptFilename
+        _query_string = HTTPParser.getQueryString();
+        _body = HTTPParser.getBody(); // need to parse still
+        _content_type = HTTPParser.getContentType();
+        _content_length = HTTPParser.getContentLength();
+        _method = HTTPParser.getMethod();      
+        _isCGI = true;
         return true;
     }
 
