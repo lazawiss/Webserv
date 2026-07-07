@@ -398,9 +398,12 @@ void Parser::parseDirectiveErrorPage(AConfig &ref)
 
     if (code != 400 && code != 404 && code != 405 && code != 413 && code != 414
         && code != 421 && code != 500)
-        throw std::runtime_error("Invalid HTTP error code '"
-            + std::to_string(code) + "', accepted values: 400, 404, 405, "
-            "413, 414, 421, 500");
+    {
+        std::ostringstream oss;
+        oss << code;
+        throw std::runtime_error("Invalid HTTP error code '" + oss.str()
+            + "', accepted values: 400, 404, 405, 413, 414, 421, 500");
+    }
 
     if (current().type != Word)
         throw std::runtime_error("Unexpected token '" +  current().value
@@ -539,9 +542,12 @@ void Parser::parseDirectiveReturn(LocationConfig &ref)
 
     if (code != 400 && code != 404 && code != 405 && code != 413 && code != 414
         && code != 421 && code != 500)
-        throw std::runtime_error("Invalid HTTP error code '"
-            + std::to_string(code) + "', accepted values: 400, 404, 405, "
-            "413, 414, 421, 500");
+    {
+        std::ostringstream oss;
+        oss << code;
+        throw std::runtime_error("Invalid HTTP error code '" + oss.str()
+            + "', accepted values: 400, 404, 405, 413, 414, 421, 500");
+    }
 
     if (current().type != Word)
         throw std::runtime_error("Unexpected token '" +  current().value
