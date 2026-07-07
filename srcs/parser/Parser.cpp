@@ -110,7 +110,12 @@ GlobalConfig Parser::parse()
     while (current().type != End)
     {
         if (current().type == Word && current().value == "server")
-            config.addServer(parseServer());
+        {
+            //config.addServer(parseServer());
+            ServerConfig server = parseServer();
+            applyInheritance(server, config);
+            config.addServer(server);
+        }
         else if (current().type == Word)
             parseInheritableDirective(config);
         else
@@ -155,7 +160,12 @@ ServerConfig Parser::parseServer()
         else if (current().type == Word && current().value == "server_name")
             parseDirectiveServerName(server);
         else if (current().type == Word && current().value == "location")
-            server.addLocation(parseLocation());
+        {
+            // server.addLocation(parseLocation());
+            LocationConfig location = parseLocation();
+            applyInheritance(location, server);
+            server.addLocation(location);
+        }
         else if (current().type == Word)
             parseInheritableDirective(server);
         else
@@ -225,6 +235,13 @@ LocationConfig Parser::parseLocation()
     next();
 
     return location;
+}
+
+void Parser::applyInheritance(AConfig &child, const AConfig &parent)
+{
+    // Root implementation only
+    if (child.getRoot().empty() && !parent.getRoot().empty())
+        child.setRoot(parent.getRoot());
 }
 
 /**

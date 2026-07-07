@@ -11,14 +11,14 @@ server {
     error_page 500 /errors/500.html;
 
     location / {
-        root        /data/www/html;
+        root        data/www/html;
         index       index.html;
         methods     GET;
         autoindex   off;
     }
 
     location /api {
-        root        /data/www/html;
+        root        data/www/html;
         methods     GET POST DELETE;
         autoindex   off;
     }
@@ -34,7 +34,7 @@ server {
     error_page 400 /errors/404.html;
 
     location / {
-        root        /data/www/html;
+        root        data/www/html;
         index       index.html;
         methods     GET;
         autoindex   off;

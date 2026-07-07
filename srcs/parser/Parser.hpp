@@ -54,6 +54,8 @@ public:
     const Token& next();
 
 	// ── Member methods ──────────────────────────────────────────────────────
+    void	applyInheritance(AConfig &child, const AConfig &parent);
+    
     void	parseInheritableDirective(AConfig &ref);
     void	parseDirectiveRoot(AConfig &ref);
     void	parseDirectiveIndex(AConfig &ref);
