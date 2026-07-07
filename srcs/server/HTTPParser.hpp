@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/06 16:33:08 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/07 18:24:48 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,39 +66,43 @@ private:
 
 public:
 
-                    HTTPParser( std::string const & request );
-                    HTTPParser( HTTPParser const & src );    
-                    ~HTTPParser();    
-    HTTPParser &    operator=( HTTPParser const & other );
+                                HTTPParser( std::string const & request );
+                                HTTPParser( HTTPParser const & src );    
+                                ~HTTPParser();    
+    HTTPParser &                operator=( HTTPParser const & other );
+            
+    std::string                 getCode() const;
+    std::string                 getType() const;
+    std::string                 getMethod() const;
+    std::string                 getBoundary() const;
+    std::string                 getFileName() const;
+    std::string                 getFileBuf() const;
+            
+    std::string                 setCode( std::string const & code );
+    std::string                 setType( std::string const & type );
 
-    std::string     getCode() const;
-    std::string     getType() const;
-    std::string     getMethod() const;
-    std::string     getBoundary() const;
-    std::string     getFileName() const;
-    std::string     getFileBuf() const;
-
-    std::string     setCode( std::string const & code );
-    std::string     setType( std::string const & type );
-
-
-    bool            checkSize();
-    bool            checkRequestLine();
-    bool            checkHost( ListenerManager const & listener );
-    bool            isRequestValid( ListenerManager const & listen );
-    
-    bool            checkContentType();
-    bool            checkContentLength();
-    bool            checkContentDisposition();
-    bool            gatherFile();
+    std::vector<size_t> &       collectSpace( std::string::iterator pos );
+    std::vector<std::string> &  collectString( std::vector<size_t> space_inter );
 
 
-    void            HTTPparse_file(const std::string& path);
-    
-    
-    bool            findMethods();
-    bool            findPath();
-    bool            findHeaders();
-    bool            findCGI();
+    bool                        checkSize();
+    bool                        checkRequestLine();
+    bool                        checkHost( ListenerManager const & listener );
+    bool                        isRequestValid( ListenerManager const & listen );
+                
+    bool                        checkContentType();
+    bool                        findBoundary();
+    bool                        checkContentLength();
+    bool                        checkContentDisposition();
+    bool                        gatherFile();
+            
+            
+    // v    oid                    HTTPparse_file(const std::string& path);
+                
+                
+    bool                        findMethods();
+    bool                        findPath();
+    bool                        findHeaders();
+    bool                        findCGI();
 
 };
