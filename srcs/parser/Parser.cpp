@@ -111,9 +111,11 @@ GlobalConfig Parser::parse()
     {
         if (current().type == Word && current().value == "server")
         {
-            //config.addServer(parseServer());
             ServerConfig server = parseServer();
             applyInheritance(server, config);
+            std::vector<LocationConfig>& locs = server.getLocations();
+            for (size_t i = 0; i < locs.size(); i++)
+                applyInheritance(locs[i], server);
             config.addServer(server);
         }
         else if (current().type == Word)
@@ -160,12 +162,7 @@ ServerConfig Parser::parseServer()
         else if (current().type == Word && current().value == "server_name")
             parseDirectiveServerName(server);
         else if (current().type == Word && current().value == "location")
-        {
-            // server.addLocation(parseLocation());
-            LocationConfig location = parseLocation();
-            applyInheritance(location, server);
-            server.addLocation(location);
-        }
+            server.addLocation(parseLocation());
         else if (current().type == Word)
             parseInheritableDirective(server);
         else

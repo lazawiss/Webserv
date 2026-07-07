@@ -60,6 +60,11 @@ const std::vector<LocationConfig>& ServerConfig::getLocations() const
     return _locations;
 }
 
+std::vector<LocationConfig>& ServerConfig::getLocations()
+{
+    return _locations;
+}
+
 void ServerConfig::addLocation(const LocationConfig& location)
 {
     _locations.push_back(location);

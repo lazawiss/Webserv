@@ -33,6 +33,7 @@ public:
     const std::string&                  getListen()         const;
     const std::vector<std::string>&     getServerNames()    const;
     const std::vector<LocationConfig>&  getLocations()      const;
+    std::vector<LocationConfig>&        getLocations();
 
     // ── Setters ─────────────────────────────────────────────────────────────
     void setListen(const std::string& listen);
