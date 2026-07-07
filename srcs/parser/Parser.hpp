@@ -6,26 +6,25 @@
 # include "../errors/Errors.hpp"
 # include "../lexer/Lexer.hpp"
 
+# include <algorithm>
+# include <climits>
+# include <cmath>
+# include <cstdlib>
 # include <exception>
 # include <fstream>
 # include <iostream>
 # include <sstream>
-# include <string>
-# include <vector>
-# include <algorithm>
 # include <stdexcept>
-# include <cstdlib>
-# include <cmath>
-# include <climits>
-
-
+# include <string>
+# include <sys/stat.h>
+# include <vector>
 
 
 GlobalConfig parse_file(const std::string& path);
 
 /*
 ** ============================================================================
-** Parser - Class
+** Class
 ** ============================================================================
 */
 class Parser
