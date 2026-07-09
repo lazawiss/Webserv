@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HTTPParser.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: andikim <andikim@student.42.fr>            +#+  +:+       +#+        */
+/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/05 15:04:19 by andikim          ###   ########.fr       */
+/*   Updated: 2026/07/09 15:33:34 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -307,18 +307,22 @@ bool    HTTPParser::checkContentType(){
             _type = found->value;
         
             std::cout << "Content-Type:" << _type << std::endl;
-            found++;
-            found++;
-            _boundary = found->value;
-            _boundary.erase(_boundary.begin(),_boundary.begin()+8);
-            std::cout << "boundary:" << _boundary << std::endl;
-
+            if (_type.find("multipart/form-data") != std::string::npos)
+            {
+                found++;
+                found++;
+                if (found != _allTokens.end() && found->value.size() > 8)
+                {
+                    _boundary = found->value;
+                    _boundary.erase(_boundary.begin(), _boundary.begin() + 8);
+                    std::cout << "boundary:" << _boundary << std::endl;
+                }
+            }
             return true;
         }
     }
     _code = "400";
     _type = "text/html";
-    
     return false;
 }
 
@@ -394,7 +398,6 @@ void    HTTPParser::parseCGI(){
         // GET /cgi-bin/hello.py?name=andi HTTP/1.1
     if (_requesttarget.find("/cgi-bin/") == std::string::npos)
     {
-        std::cout << "print from parsecgi but cgi is false" << std::endl;
         _isCGI = false;
         return;
     }
@@ -411,7 +414,6 @@ void    HTTPParser::parseCGI(){
         _query_string = "";
     }
     _isCGI = true;
-    std::cout << "print from parseCGI in HTTP PARser" << std::endl;
     return;
 }
 
@@ -482,6 +484,11 @@ bool    HTTPParser::findMethods(){
             _type = "text/html";
             return true;
 
+        }
+        else if (_requesttarget == "/form.html"){
+            _code = "form";
+            _type = "text/html";
+            return true;
         }
         else if (_requesttarget.find("/images") != std::string::npos){
             

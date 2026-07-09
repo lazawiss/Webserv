@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CGIHandler.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: andikim <andikim@student.42.fr>            +#+  +:+       +#+        */
+/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 18:29:42 by andikim           #+#    #+#             */
-/*   Updated: 2026/07/05 18:29:44 by andikim          ###   ########.fr       */
+/*   Updated: 2026/07/09 14:40:44 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,31 +48,6 @@ CGI::CGI(RequestHandler const &req, ListenerManager const &listen, int client_fd
     _stdout_pipe[1] = -1;
 }
 
-// CGI::CGI&operator=(CGI const &other)
-// {
-//     if (this != &other)
-//     {
-//         this->_pid = other._pid;
-//         this->_client_fd = other._client_fd;
-//         this->_bytesWritten = other._bytesWritten;
-//         this->_scriptFilename = other._scriptFilename;
-//         this->_fullPath = other._fullPath;
-//         this->_queryString = other._queryString;
-//         this->_method = other._method;
-//         this->_body = other._body;
-//         this->_contentType = other._contentType;
-//         this->_contentLength = other.contentLength;
-//         this->_serverName = other._serverName;
-//         this->_serverPort = other._serverPort;
-//         this->_stdin_pipe[0] = other._stdin_pipe[0];
-//         this->_stdin_pipe[1] = other._stdin_pipe[1];
-//         this->_stdout_pipe[0] = other._stdout_pipe[0];
-//         this->_stdout_pipe[1] = other._stdout_pipe[1];
-//     }
-//     return *this;
-// }
-
-// safety net only: in EpollLoop already closed everything
 CGI::~CGI()
 {
     if (_stdin_pipe[1] != -1)

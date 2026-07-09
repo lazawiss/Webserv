@@ -15,16 +15,16 @@ else:
 form = parse_qs(body)
 print(f"DEBUG method={method} body={repr(body)} form={form}", file=sys.stderr)
 
-username = form["username"][0]
-emailaddress = form["emailaddress"][0]
+username = form.get("username", [""])[0]
+emailaddress = form.get("emailaddress", [""])[0]
 
 print("Content-type:text/html\r\n\r\n")
 print("<html>")
 print("<head>")
-print("<title> MY FIRST CGI FILE </title>")
+print("<title> List </title>")
 print("</head>")
 print("<body>")
-print("<h3> This is HTML's Body Section </h3>")
+print("<h3> List of names & emails</h3>")
 print(username)
 print(emailaddress)
 print("</body>")
