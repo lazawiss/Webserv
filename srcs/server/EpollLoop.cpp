@@ -127,7 +127,7 @@ bool    EpollLoop::do_use_fd( int fd, std::vector<ListenerManager*> const & list
 
     // match the ServerConfig whose port matches this listener
     const ServerConfig *serverConfig = NULL;
-    const std::vector<ServerConfig> &servers = config.getServers();
+    // const std::vector<ServerConfig> &servers = config.getServers();
     for (size_t i = 0; i < servers.size(); i++)
     {
         const std::string &listenVal = servers[i].getListen();
