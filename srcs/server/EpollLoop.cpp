@@ -87,6 +87,16 @@ int EpollLoop::setnonblocking( int fd ){
 // then throw in Server >> quit program
 bool    EpollLoop::do_use_fd( int fd, std::vector<ListenerManager*> const & listeners, const GlobalConfig &config ){
 
+    std::cout << "[global] root: " << config.getRoot() << std::endl;
+    const std::vector<ServerConfig> &servers = config.getServers();
+    for (size_t i = 0; i < servers.size(); i++)
+    {
+        std::cout << "[server " << i << "] root: " << servers[i].getRoot() << std::endl;
+        const std::vector<LocationConfig> &locations = servers[i].getLocations();
+        for (size_t j = 0; j < locations.size(); j++)
+            std::cout << "[server " << i << "][location " << j << "] root: " << locations[j].getRoot() << std::endl;
+    }
+
     char    buf[BUF_SIZE];
 
     ssize_t n_read = read(fd, buf, BUF_SIZE);           // read HTTP requests
