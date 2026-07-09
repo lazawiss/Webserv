@@ -26,6 +26,7 @@ RequestHandler::RequestHandler( std::string const & request, const ServerConfig 
     _request(request), _serverConfig(serverConfig),
     _root(serverConfig.getRoot()), _header(), _size(), _n_read_index(0)
 {
+    std::cout << "[RequestHandler] _root: '" << _root << "'" << std::endl;
     memset(_buffer, 0, BUF_SIZE);
 }
 

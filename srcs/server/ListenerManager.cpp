@@ -156,7 +156,7 @@ bool   ListenerManager::listeningSocket(){
         LOG_ERROR("Could not bind — no address succeeded");
         return false;
     }
-    
+
     if (listen(_sockfd,LISTEN_BACKLOG) == -1)
     {
         LOG_ERROR("listen() failed - " + std::string(strerror(errno)));
@@ -165,7 +165,7 @@ bool   ListenerManager::listeningSocket(){
 
     LOG_INFO("Server is up and running at http://" + _node + ":" + _service);
     LOG_SYSTEM("Server is now listening for incoming connections");
-    
+
     return true;
 }
 

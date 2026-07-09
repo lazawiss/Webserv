@@ -112,10 +112,12 @@ GlobalConfig Parser::parse()
         if (current().type == Word && current().value == "server")
         {
             ServerConfig server = parseServer();
+
             applyInheritance(server, config);
             std::vector<LocationConfig>& locs = server.getLocations();
             for (size_t i = 0; i < locs.size(); i++)
                 applyInheritance(locs[i], server);
+
             config.addServer(server);
         }
         else if (current().type == Word)
@@ -236,9 +238,31 @@ LocationConfig Parser::parseLocation()
 
 void Parser::applyInheritance(AConfig &child, const AConfig &parent)
 {
-    // Root implementation only
+    // Root implementation
     if (child.getRoot().empty() && !parent.getRoot().empty())
         child.setRoot(parent.getRoot());
+    // Client Max Size Body implementation
+    if (child.getClientMaxBodySize().empty() &&
+        !parent.getClientMaxBodySize().empty())
+            child.setClientMaxBodySize(parent.getClientMaxBodySize());
+    // Index implementation
+    if (child .getIndex().empty() && !parent.getIndex().empty())
+    {
+        const std::vector<std::string> &index = parent.getIndex();
+        for (size_t i = 0; i < index.size(); i++)
+            child.addIndex(index[i]);
+    }
+    // AutoIndex implementation
+    if (child.getAutoindex().empty() && !parent.getAutoindex().empty())
+        child.setAutoindex(parent.getAutoindex());
+    // ErrorPages implementation
+    const std::map<int, std::string> &parentErrors = parent.getErrorPages();
+    for (std::map<int, std::string>::const_iterator it = parentErrors.begin();
+        it != parentErrors.end(); ++it)
+    {
+        if (child.getErrorPages().find(it->first) == child.getErrorPages().end())
+            child.addErrorPage(it->first, it->second);
+    }
 }
 
 /**
@@ -290,6 +314,9 @@ void Parser::parseDirectiveRoot(AConfig &ref)
     if (!S_ISDIR(info.st_mode))
         throw std::runtime_error("Root path isn't a directory: '" + path + "'");
 
+    if (!ref.getRoot().empty())
+        throw std::runtime_error("Duplicate 'root' directive");
+
     ref.setRoot(next().value);
 
     if (current().type != Semicolon)
@@ -307,9 +334,13 @@ void Parser::parseDirectiveIndex(AConfig &ref)
         throw std::runtime_error("Unexpected token '" +  current().value
             + "', should be a 'word' type");
 
+    if (!ref.getIndex().empty())
+        throw std::runtime_error("Duplicate 'index' directive");
+
     while (current().type == Word)
     {
-        ref.addIndex(next().value);
+        ref.addIndex(current().value);
+        next();
     }
 
     if (current().type != Semicolon)
@@ -331,7 +362,10 @@ void Parser::parseDirectiveAutoIndex(AConfig &ref)
         throw std::runtime_error("Unexpected token '" +  current().value
             + "', auto index can be 'on' or 'off'");
 
-    ref.setAutoindex(next().value == "on" ? true : false);
+    if (!ref.getAutoindex().empty())
+        throw std::runtime_error("Duplicate 'autoindex' directive");
+
+    ref.setAutoindex(next().value);
 
     if (current().type != Semicolon)
         throw std::runtime_error("Unexpected token '" +  current().value
@@ -348,7 +382,11 @@ void Parser::parseDirectiveClientMaxBodySize(AConfig &ref)
         throw std::runtime_error("Unexpected token '" +  current().value
             + "', should be a 'word' type");
 
-    ref.setClientMaxBodySize(parseSize(next().value));
+    if (!ref.getClientMaxBodySize().empty())
+        throw std::runtime_error("Duplicate 'client_max_body_size' directive");
+
+    parseSize(current().value);
+    ref.setClientMaxBodySize(next().value);
 
     if (current().type != Semicolon)
         throw std::runtime_error("Unexpected token '" +  current().value
@@ -357,11 +395,9 @@ void Parser::parseDirectiveClientMaxBodySize(AConfig &ref)
     next();
 }
 
-size_t Parser::parseSize(const std::string &word) const
+void Parser::parseSize(const std::string &word) const
 {
     size_t i = 0;
-    char *end;
-    errno = 0;
 
     while (i < word.size() && std::isdigit(word[i]))
         i++;
@@ -369,35 +405,18 @@ size_t Parser::parseSize(const std::string &word) const
         throw std::runtime_error("Invalid size value (e.g. '10M', "
             "'512K', '1G', or '1024')");
 
-    unsigned long value = std::strtoul(word.c_str(), &end, 10);
-    if (errno == ERANGE)
-        throw std::runtime_error("Invalid size value: expected at least "
-            "one digit (e.g. '10M', '512K', '1G', or '1024')");
-
     if (i == word.size())
-        return static_cast<size_t>(value);
+        return;
     
     if (i != word.size() - 1)
         throw std::runtime_error("Invalid size value: expected at least "
             "one digit (e.g. '10M', '512K', '1G', or '1024')");
 
     char unit = word[i];
-    size_t multiply;
-    if (unit == 'K' || unit == 'k')
-        multiply = 1024;
-    else if (unit == 'M' || unit == 'm')
-        multiply = 1024 * 1024;
-    else if (unit == 'G' || unit == 'g')
-        multiply = 1024 * 1024 * 1024;
-    else
-        throw std::runtime_error("Invalid size unit: expected 'K', 'M' or "
+    if (unit != 'K' && unit != 'k' && unit != 'M' && unit != 'm' 
+        && unit != 'G' && unit != 'g')
+            throw std::runtime_error("Invalid size unit: expected 'K', 'M' or "
             "'G' after the number (e.g. '10M', '512K', '1G')");
-
-    if (value > ULLONG_MAX / multiply)
-        throw std::runtime_error("Invalid size value: expected at least "
-            "one digit (e.g. '10M', '512K', '1G', or '1024')");
-
-    return (static_cast<size_t>(value) * multiply);
 }
 
 void Parser::parseDirectiveErrorPage(AConfig &ref)
@@ -492,7 +511,8 @@ void Parser::parseDirectiveServerName(ServerConfig &ref)
     
     while (current().type == Word)
     {
-        ref.addServerName(next().value);
+        ref.addServerName(current().value);
+        next();
     }
 
     if (current().type != Semicolon)
@@ -509,6 +529,9 @@ void Parser::parseDirectiveMethods(LocationConfig &ref)
     if (current().type != Word)
         throw std::runtime_error("Unexpected token '" +  current().value
             + "', should be a 'word' type");
+
+    if (!ref.getMethods().empty())
+        throw std::runtime_error("Duplicate 'methods' directive");
 
     while (current().type == Word)
     {
@@ -535,6 +558,9 @@ void Parser::parseDirectiveUpload(LocationConfig &ref)
         throw std::runtime_error("Unexpected token '" +  current().value
             + "', should be a 'word' type");
     
+    if (!ref.getUpload().empty())
+        throw std::runtime_error("Duplicate 'upload' directive");
+
     ref.setUpload(next().value);
 
     if (current().type != Semicolon)
@@ -551,6 +577,9 @@ void Parser::parseDirectiveReturn(LocationConfig &ref)
     if (current().type != Word)
         throw std::runtime_error("Unexpected token '" +  current().value
             + "', should be a 'word' type");
+        
+    if (!ref.getReturn().empty())
+        throw std::runtime_error("Duplicate 'return' directive");
 
     int code = parseCode(next().value);
 
