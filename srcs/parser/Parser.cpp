@@ -288,7 +288,7 @@ void Parser::parseInheritableDirective(AConfig &ref)
     else if (current().value == "client_max_body_size")
         parseDirectiveClientMaxBodySize(ref);
     else
-        throw std::runtime_error("Unexpected token'" +  current().value
+        throw std::runtime_error("Unexpected token '" +  current().value
             + "', unknown directive in global, server or location context");
 }
 
@@ -491,7 +491,8 @@ void Parser::parseDirectiveListen(ServerConfig &ref)
         throw std::runtime_error("Port out of range in listen directive");
 
     if (!ref.getListen().empty())
-        throw std::runtime_error("Duplicate listen directive in server block");
+        throw std::runtime_error("Duplicate 'listen' directive");
+
     ref.setListen(next().value);
 
     if (current().type != Semicolon)
