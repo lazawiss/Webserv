@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/07 18:24:48 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/10 19:22:52 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,6 +60,7 @@ private:
     std::string                     _fileBuf;
     std::vector<Token>::iterator    _found;
     std::string::iterator           _pos;
+    bool                            _errors;
     
     
     
@@ -77,12 +78,16 @@ public:
     std::string                 getBoundary() const;
     std::string                 getFileName() const;
     std::string                 getFileBuf() const;
+    bool                        getError() const;
+
             
     std::string                 setCode( std::string const & code );
     std::string                 setType( std::string const & type );
+    bool                        setError( bool error );
 
-    std::vector<size_t> &       collectSpace( std::string::iterator pos );
-    std::vector<std::string> &  collectString( std::vector<size_t> space_inter );
+
+    std::vector<size_t>         collectSpace( std::string::iterator pos );
+    std::vector<std::string>    collectString( std::vector<size_t> space_inter );
 
 
     bool                        checkSize();

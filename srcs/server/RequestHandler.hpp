@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:00:06 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/03 21:14:30 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/10 18:44:58 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -76,7 +76,7 @@ public:
     
     std::string         buildAnswerHeader( std::string const & code, std::string const & type );
     
-    std::string         getFile( std::string const & code );
+    std::string         getFile( std::string const & code, bool const & error );
     std::string         getFileImage( std::string const & code);
     std::string         getFileUpload( std::string const & code);
 

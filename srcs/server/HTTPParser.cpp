@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/07 21:19:48 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/10 19:23:37 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,13 +20,13 @@
 */
 
 HTTPParser:: HTTPParser(  std::string const & request ) : _request(request),_code(),
- _type(), _method(), _requesttarget(), _httpversion(), _boundary(), _fileName(), _fileBuf(){
+ _type(), _method(), _requesttarget(), _httpversion(), _boundary(), _fileName(), _fileBuf(), _errors(false){
     
 }
 
 HTTPParser::HTTPParser( HTTPParser const & src ) : _request(src._request), _code(src._code),
  _type(src._type), _method(src._method), _requesttarget(src._requesttarget), _httpversion(src._httpversion),
-  _boundary(src._boundary), _fileName(src._fileName), _fileBuf(src._fileBuf){
+  _boundary(src._boundary), _fileName(src._fileName), _fileBuf(src._fileBuf), _errors(src._errors){
     
 }
 
@@ -47,9 +47,9 @@ HTTPParser &    HTTPParser::operator=( HTTPParser const & other ){
         this->_httpversion = other._httpversion;
         this->_boundary = other._boundary;
         this->_fileName = other._fileName;
-        this->_fileBuf =other._fileBuf;
+        this->_fileBuf = other._fileBuf;
+        this->_errors = other._errors;
         
-
     }
     
     return *this;
@@ -85,6 +85,12 @@ std::string HTTPParser::getFileBuf() const{
     return _fileBuf;
 }
 
+bool     HTTPParser::getError() const{
+    
+    return _errors;
+}
+
+
 std::string HTTPParser::setCode( std::string const & code ){
     
     _code = code;
@@ -97,6 +103,11 @@ std::string HTTPParser::setType( std::string const & type ){
     return _type;
 }
 
+bool HTTPParser::setError(bool error){
+    
+    _errors = error;
+    return _errors;
+}
 
 /*
 ** ============================================================================
@@ -178,6 +189,7 @@ bool    HTTPParser::checkSize(){
     
     if (_request.size() > BUF_SIZE){
         
+        _errors = true;
         _code = "413";
         _type = "text/html";
 
@@ -197,10 +209,10 @@ static bool isMethod( std::string const & str ){
     return str == "GET" || str == "POST" || str == "DELETE";
 }
 
-static bool isHost( std::string const & t ){
+// static bool isHost( std::string const & t ){
     
-    return t == "Host:";
-}
+//     return t == "Host:";
+// }
 
 static bool isContentType( std::string const & t ){
     
@@ -212,15 +224,15 @@ static bool isContentLength( std::string const & t ){
     return t == "Content-Length:";
 }
 
-static bool isContentDisposition( std::string const & t ){
+// static bool isContentDisposition( std::string const & t ){
     
-    return t == "Content-Disposition:";
-}
+//     return t == "Content-Disposition:";
+// }
 
-static bool isDelimiter( std::string const & t ){
+// static bool isDelimiter( std::string const & t ){
     
-    return t == "\r\n\r\n";
-}
+//     return t == "\r\n\r\n";
+// }
 
 static bool isSimpleSpace( int found ){
     
@@ -233,7 +245,7 @@ static bool isSimpleSpace( int found ){
 // }
 
 
-std::vector<size_t> & HTTPParser::collectSpace( std::string::iterator pos ){
+std::vector<size_t>  HTTPParser::collectSpace( std::string::iterator pos ){
     
     std::vector<size_t> space_inter;
     
@@ -255,7 +267,7 @@ std::vector<size_t> & HTTPParser::collectSpace( std::string::iterator pos ){
     return space_inter;
 }
 
-std::vector<std::string> & HTTPParser::collectString(  std::vector<size_t> space_inter ){
+std::vector<std::string>  HTTPParser::collectString(  std::vector<size_t> space_inter ){
 
     std::vector<std::string> subss;
     
@@ -289,6 +301,7 @@ bool    HTTPParser::checkRequestLine(){
         std::cout << "Method:" << _method << std::endl;
         else{
             
+            _errors = true;
             _code = "405";
             _type = "text/html";
             
@@ -339,6 +352,7 @@ bool    HTTPParser::checkRequestLine(){
     //     }
     // }
 
+    _errors = true;
     _code = "400";
     _type = "text/html";
             
@@ -356,28 +370,25 @@ bool    HTTPParser::checkHost( ListenerManager const & listener ){
     std::cout << "hostname:" << hostname << std::endl;
 
     _pos++;
-    
-    std::string::iterator space = _pos;
-
-    std::vector<size_t> space_inter = collectSpace(space);
+   
+    std::vector<size_t> space_inter = collectSpace(_pos);
 
     std::vector<std::string> subss = collectString(space_inter);
 
     if (!subss.empty()){
-        
-        if (isHost(subss[0])){
             
-            if (subss[1] != hostname){
-                
-                std::cout << "found->value:" << subss[1] << std::endl;
-
-                _code = "421";
-                _type = "text/html";
-                
-                return false;
-            }
-            return true;
+        if (subss[1] != hostname){
+            
+            std::cout << "found->value:" << subss[1] << std::endl;
+            _errors = true;
+            _code = "421";
+            _type = "text/html";
+            
+            return false;
         }
+        std::cout << "subss[1]:" << subss[1] << std::endl;
+        
+        return true;
     }
     
     // found = find_if(_request.begin(), _request.end(), isTokenWord);
@@ -401,6 +412,7 @@ bool    HTTPParser::checkHost( ListenerManager const & listener ){
             
     //     }
     // }
+    _errors = true;
     _code = "400";
     _type = "text/html";
     
@@ -478,6 +490,7 @@ bool    HTTPParser::checkContentType(){
     //         return true;
     //     }
     // }
+    _errors = true;
     _code = "400";
     _type = "text/html";
     
@@ -486,7 +499,9 @@ bool    HTTPParser::checkContentType(){
 
 bool    HTTPParser::findBoundary(){
     
-   std::string::iterator newpos = find_if(_request.begin(), _request.end(), isDelimiter);
+//    std::string::iterator newpos = find_if(_request.begin(), _request.end(), isDelimiter);
+    size_t pos = _request.find("\r\n\r\n");
+   std::string::iterator newpos = _request.begin() + pos;
 
    newpos++;
 
@@ -559,6 +574,7 @@ bool    HTTPParser::checkContentLength(){
     //         return true;
     //     }
     // }
+    _errors = true;
     _code = "400";
     _type = "text/html";
     
@@ -573,6 +589,22 @@ bool    HTTPParser::checkContentDisposition(){
     std::string::iterator newpos = _pos + boundary;
 
     newpos++;
+    
+    size_t pos = _request.find("Content-Disposition:");
+    
+    newpos = _pos + pos;
+
+    newpos++;
+
+    size_t end = _request.find('\n');
+
+    std::string contentdisposition = _request.substr(pos, end - pos);
+    std::cout << "contentdisposition: " << contentdisposition << std::endl;
+    
+    return true;
+
+
+
     
     // std::vector<Token>::iterator found;
     
@@ -607,6 +639,8 @@ bool    HTTPParser::checkContentDisposition(){
     //         return true;
     //     }
     // }
+
+    _errors = true;
     _code = "400";
     _type = "text/html";
     
@@ -616,21 +650,21 @@ bool    HTTPParser::checkContentDisposition(){
 
 bool    HTTPParser::gatherFile(){
     
-    _found++;
-    _found++;
-    _found++;
-    std::string endOfFile = _boundary + "--";
+    // _found++;
+    // _found++;
+    // _found++;
+    // std::string endOfFile = _boundary + "--";
 
-    size_t len =  endOfFile.size();
+    // size_t len =  endOfFile.size();
     
-    while (_found->type != End){
+    // while (_found->type != End){
 
-        if (_found->value != endOfFile)
-            _fileBuf += _found->value;
-        _found++;
-    }
+    //     if (_found->value != endOfFile)
+    //         _fileBuf += _found->value;
+    //     _found++;
+    // }
 
-    _fileBuf.erase(_fileBuf.end() - (len + 2), _fileBuf.end());
+    // _fileBuf.erase(_fileBuf.end() - (len + 2), _fileBuf.end());
     return true;
     
     // _code = "400";
@@ -791,6 +825,7 @@ bool    HTTPParser::findMethods(){
             return true;
         }
     }
+    _errors = true;
     _code = "404";
     _type = "text/html";
     return false;

@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/06 14:47:16 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/10 19:22:10 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,7 +22,7 @@
 */
 
 RequestHandler:: RequestHandler( std::string const & request ) : _request(request),
-_root("data/html"), _header(), _size(), _pathToFile(), _n_read_index(0){
+_root("data/www/html"), _header(), _size(), _pathToFile(), _n_read_index(0){
 
     memset(_buffer, 0, BUF_SIZE);
 }
@@ -78,10 +78,12 @@ ssize_t RequestHandler::getNReadIndex() const{
 */
 
 // build path toward file
-std::string RequestHandler::getFile( std::string const & code ){
+std::string RequestHandler::getFile( std::string const & code, bool const & error ){
     
     std::string file = _root;
     file += "/";
+    if (error == true)
+        file += "errors/";
     file += code;
     file += ".";
     file += "html";
@@ -93,7 +95,7 @@ std::string RequestHandler::getFile( std::string const & code ){
 // build path toward file
 std::string RequestHandler::getFileImage( std::string const & code){
     
-    std::string file = "data/images";
+    std::string file = "data/www/images";
     file += "/";
     file += code;
     std::cout << "FileImage:" << file << std::endl;
@@ -280,13 +282,13 @@ bool    RequestHandler::answerFileIcon(){
 
     struct stat sb;
     
-    if (stat("data/favicon.ico/favicon-16x16.png", &sb) == -1){
+    if (stat("data/www/favicon.ico/favicon-16x16.png", &sb) == -1){
         std::cerr << "Error stat: " << strerror(errno) << std::endl;
         return false;
     }
     std::cout << "File Size : " << sb.st_size <<std::endl;
 
-    int indexfd = open("data/favicon.ico/favicon-16x16.png", O_RDONLY);
+    int indexfd = open("data/www/favicon.ico/favicon-16x16.png", O_RDONLY);
     if (indexfd == -1){
         std::cerr << "Error file failed to open on indexfd:" << indexfd << std::endl;
         close(indexfd);
@@ -350,30 +352,28 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
 
     if (HTTPParser.getType() == "text/html"){
         
-        std::string file = getFile(HTTPParser.getCode()); 
+        std::string file = getFile(HTTPParser.getCode(), HTTPParser.getError()); 
         if (answerFile(file) == false){
-            
+            HTTPParser.setError(true);
             HTTPParser.setCode("404");
             HTTPParser.setType("text/html");
         }
-            
     }
     if (HTTPParser.getType() == "text/plain"){
         
         std::string file = getFileUpload(HTTPParser.getCode()); 
         if (answerFile(file) == false){
-            
+            HTTPParser.setError(true);
             HTTPParser.setCode("404");
             HTTPParser.setType("text/html");
         }
-            
     }
     if (HTTPParser.getType() == "image/jpeg" || HTTPParser.getType() == "image/png" || HTTPParser.getType() == "image/gif"){
         
         std::string file = getFileImage(HTTPParser.getCode()); 
         // if (answerFileImage(file) == false){
         if (answerFile(file) == false){
-
+            HTTPParser.setError(true);
             HTTPParser.setCode("404");
             HTTPParser.setType("text/html");
         }
@@ -381,7 +381,7 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
     if (HTTPParser.getType() == "image/x-icon"){
         
         if (answerFileIcon() == false){
-         
+            HTTPParser.setError(true);
             HTTPParser.setCode("404");
             HTTPParser.setType("text/html");
         }
@@ -390,12 +390,12 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         
         if (uploadFile(HTTPParser.getFileName(), HTTPParser.getFileBuf()) == false){
          
+            HTTPParser.setError(true);
             HTTPParser.setCode("404");
             HTTPParser.setType("text/html");
         }
         HTTPParser.setCode("201");
         HTTPParser.setType("image/png");
-        
     }
     
     buildAnswerHeader(HTTPParser.getCode(), HTTPParser.getType());
