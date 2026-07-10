@@ -63,6 +63,8 @@ private:
     std::string         _body;
     std::string         _content_type;
     std::string         _content_length;
+    int                 _content_int;
+
 /* -------------------*/
 protected:
     std::string         _boundary;

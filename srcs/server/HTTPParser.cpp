@@ -21,7 +21,7 @@
 
 HTTPParser:: HTTPParser(  std::string const & request ) : _allTokens(), _request(request),
  _code(), _type(), _method(), _requesttarget(), _httpversion(), _isCGI(false),
- _fullPath(), _query_string(), _scriptFilename(), _body(), _content_type(), _content_length(), 
+ _fullPath(), _query_string(), _scriptFilename(), _body(), _content_type(), _content_length(),  _content_int(0),
  _boundary(), _fileLength()
  
 {
@@ -31,7 +31,7 @@ HTTPParser::HTTPParser( HTTPParser const & src ) : _allTokens(src._allTokens), _
 _code(src._code), _type(src._type), _method(src._method), _requesttarget(src._requesttarget),
  _httpversion(src._httpversion), _isCGI(src._isCGI), 
  _fullPath(src._fullPath), _query_string(src._query_string), _scriptFilename(src._scriptFilename), 
- _body(src._body), _content_type(src._content_type), _content_length(src._content_length), _boundary(src._boundary),
+ _body(src._body), _content_type(src._content_type), _content_length(src._content_length),  _content_int(src._content_int), _boundary(src._boundary),
  _fileLength(src._fileLength){
     
 }
@@ -58,6 +58,7 @@ HTTPParser &    HTTPParser::operator=( HTTPParser const & other ){
         this->_body = other._body;
         this->_content_type = other._content_type;
         this->_content_length = other._content_length;
+        this->_content_int = other._content_int;
         this->_boundary = other._boundary;
         this->_fileLength = other._fileLength;
     }
@@ -339,19 +340,34 @@ bool    HTTPParser::checkContentLength(){
             
             found++;
             // std::cout << "found->value:" << found->value << std::endl;
+            if (_isCGI){
+                _content_length = found->value;
+                std::stringstream ss(_fileLength);
+                int len; 
+                ss >> len;
+                std::cout << "Content-Length:" << _content_length << std::endl;
+                std::cout << "Content-Length:" << len << std::endl;
+                if (len > BUF_SIZE)
+                {
+                    std::cerr << "File size is too big." << std::endl;
+                    return false;
+                }
+                _content_int = len;
+                return true ; 
+            }
             _fileLength = found->value;
             std::stringstream ss(_fileLength);
             size_t len; 
             ss >> len;
             std::cout << "Content-Length:" << _fileLength << std::endl;
             std::cout << "Content-Length:" << len << std::endl;
-            while(found->type != LBracket){
-                if (found->value != _boundary){
+            // while(found->type != LBracket){
+            //     if (found->value != _boundary){
                     
-                    std::cout << "found->value:" << found->value << std::endl;
-                    found++;
-                }
-            }
+            //         std::cout << "found->value:" << found->value << std::endl;
+            //         found++;
+            //     }
+            // }
 
             if (len > BUF_SIZE){
                 std::cerr << "File size is too big." << std::endl;
