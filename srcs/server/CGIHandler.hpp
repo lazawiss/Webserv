@@ -61,7 +61,7 @@ private:
     int                         _client_fd;
     // Need both because we need to have two way communication so: 
     int                         _stdin_pipe[2];  // parent writes body ->[1]  [0]-> child stdin
-    int                         _stdout_pipe[2]; // child stdout ->[1]  [0]-> parent reads
+    int                         _stdout_pipe[2]; // child writes stdout ->[1]  [0]-> parent reads
 
     size_t                      _bytesWritten;   // how much of _body was sent so far
     std::string                 _output;         // raw script output, accumulated
