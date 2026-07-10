@@ -337,6 +337,9 @@ bool    HTTPParser::findMethods(){
             
             return true;
         }
+        _code = "index";
+        _type = "text/html";
+        return true;
     }
     else if (_method == "POST"){
         
