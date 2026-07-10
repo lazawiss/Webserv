@@ -77,6 +77,11 @@ std::string HTTPParser::setType( std::string const & type ){
     return _type;
 }
 
+std::string HTTPParser::getRequestTarget() const{
+
+    return _requesttarget;
+}
+
 
 /*
 ** ============================================================================

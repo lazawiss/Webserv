@@ -67,9 +67,10 @@ public:
                     ~HTTPParser();    
     HTTPParser &    operator=( HTTPParser const & other );
 
-    std::string     getCode() const;
-    std::string     getType() const;
-    std::string     getMethod() const;
+    std::string     getCode()           const;
+    std::string     getType()           const;
+    std::string     getMethod()         const;
+    std::string     getRequestTarget()  const;
     
     std::string     setCode( std::string const & code );
     std::string     setType( std::string const & type );

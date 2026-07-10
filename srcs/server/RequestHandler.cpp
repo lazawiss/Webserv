@@ -81,6 +81,23 @@ ssize_t RequestHandler::getNReadIndex() const{
 ** ============================================================================
 */
 
+static std::string resolveRoot(const ServerConfig &cfg, const std::string &uri)
+{
+    const std::vector<LocationConfig> &locs = cfg.getLocations();
+    size_t bestLen = 0;
+    std::string root;
+    for (size_t i = 0; i < locs.size(); ++i)
+    {
+        const std::string &path = locs[i].getPath();
+        if (uri.find(path) == 0 && path.size() > bestLen)
+        {
+            bestLen = path.size();
+            root = locs[i].getRoot();
+        }
+    }
+    return root;
+}
+
 // build path toward file
 std::string RequestHandler::getFile( std::string code ){
     
@@ -292,7 +309,7 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
     HTTPParser HTTPParser(_request, _serverConfig);
 
     HTTPParser.HTTPparse_file(_request);
-    
+
     bool    requestValid = true;
 
     //  check request
@@ -300,13 +317,16 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         std::cout << "Request Invalid." << std::endl;
         requestValid = false;
     }
-    // find method 
+    // find method
     else if (requestValid == true && HTTPParser.findMethods() == false){
         std::cerr << "Error Method not implemented: " << strerror(errno) << std::endl;
     }
 
+    if (_root.empty())
+        _root = resolveRoot(_serverConfig, HTTPParser.getRequestTarget());
+
     if (HTTPParser.getType() == "text/html"){
-        
+
         std::string file = getFile(HTTPParser.getCode()); 
         if (answerFile(file) == false){
             
