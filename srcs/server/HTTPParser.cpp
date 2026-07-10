@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/07 19:06:06 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/07 21:19:48 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -568,39 +568,45 @@ bool    HTTPParser::checkContentLength(){
 
 bool    HTTPParser::checkContentDisposition(){
     
-    std::vector<Token>::iterator found;
-    
-    found = find_if(_request.begin(), _request.end(), isTokenWord);
-    if (found != _request.end()){ // same as EOF
-        
-        found = find_if(_request.begin(), _request.end(), isContentDisposition);
-        if (found != _request.end()){
-            
-            found++;
-            std::string type = found->value;
-            char const *slash = strchr(_type.c_str(), '/');
-            std::string checktype = std::string(slash, strlen(slash));
-            checktype.erase(checktype.begin());
-            if (type != checktype)
-                return false;
-            found++;
-            found++;
-            char const *equal = strchr(found->value.c_str(), '"');
-            std::string name = std::string(equal, strlen(equal));
-            name.erase(name.end() - 1);
-            name.erase(name.begin());
-            found++;
-            found++;
-            char const *quote = strchr(found->value.c_str(), '"');
-            _fileName = std::string(quote, strlen(quote));
-            _fileName.erase(_fileName.end() - 1);
-            _fileName.erase(_fileName.begin());
-            std::cout << "_fileName:" << _fileName<< std::endl;
-            _found = found;
+    size_t boundary = _request.find(_boundary);
 
-            return true;
-        }
-    }
+    std::string::iterator newpos = _pos + boundary;
+
+    newpos++;
+    
+    // std::vector<Token>::iterator found;
+    
+    // found = find_if(_request.begin(), _request.end(), isTokenWord);
+    // if (found != _request.end()){ // same as EOF
+        
+    //     found = find_if(_request.begin(), _request.end(), isContentDisposition);
+    //     if (found != _request.end()){
+            
+    //         found++;
+    //         std::string type = found->value;
+    //         char const *slash = strchr(_type.c_str(), '/');
+    //         std::string checktype = std::string(slash, strlen(slash));
+    //         checktype.erase(checktype.begin());
+    //         if (type != checktype)
+    //             return false;
+    //         found++;
+    //         found++;
+    //         char const *equal = strchr(found->value.c_str(), '"');
+    //         std::string name = std::string(equal, strlen(equal));
+    //         name.erase(name.end() - 1);
+    //         name.erase(name.begin());
+    //         found++;
+    //         found++;
+    //         char const *quote = strchr(found->value.c_str(), '"');
+    //         _fileName = std::string(quote, strlen(quote));
+    //         _fileName.erase(_fileName.end() - 1);
+    //         _fileName.erase(_fileName.begin());
+    //         std::cout << "_fileName:" << _fileName<< std::endl;
+    //         _found = found;
+
+    //         return true;
+    //     }
+    // }
     _code = "400";
     _type = "text/html";
     
