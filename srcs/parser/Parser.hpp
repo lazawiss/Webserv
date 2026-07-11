@@ -6,26 +6,25 @@
 # include "../errors/Errors.hpp"
 # include "../lexer/Lexer.hpp"
 
+# include <algorithm>
+# include <climits>
+# include <cmath>
+# include <cstdlib>
 # include <exception>
 # include <fstream>
 # include <iostream>
 # include <sstream>
-# include <string>
-# include <vector>
-# include <algorithm>
 # include <stdexcept>
-# include <cstdlib>
-# include <cmath>
-# include <climits>
-
-
+# include <string>
+# include <sys/stat.h>
+# include <vector>
 
 
 GlobalConfig parse_file(const std::string& path);
 
 /*
 ** ============================================================================
-** Parser - Class
+** Class
 ** ============================================================================
 */
 class Parser
@@ -55,6 +54,8 @@ public:
     const Token& next();
 
 	// ── Member methods ──────────────────────────────────────────────────────
+    void	applyInheritance(AConfig &child, const AConfig &parent);
+    
     void	parseInheritableDirective(AConfig &ref);
     void	parseDirectiveRoot(AConfig &ref);
     void	parseDirectiveIndex(AConfig &ref);
@@ -66,7 +67,7 @@ public:
     void	parseDirectiveMethods(LocationConfig &ref);
     void	parseDirectiveUpload(LocationConfig &ref);
     void	parseDirectiveReturn(LocationConfig &ref);
-	size_t	parseSize(const std::string &word)				const;
+	void    parseSize(const std::string &word)              const;
 	size_t	parseCode(const std::string &word)				const;
 
 };

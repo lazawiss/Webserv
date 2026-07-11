@@ -15,6 +15,7 @@
 #include "../lexer/Lexer.hpp"
 #include "ListenerManager.hpp"
 #include "HTTPParser.hpp"
+#include "../parser/config/ServerConfig.hpp"
 
 
 #include <iostream>
@@ -51,6 +52,7 @@ class RequestHandler {
 private:
 
     std::string         _request;
+    const ServerConfig  &_serverConfig;
     std::string         _root;
     std::string         _header;
     std::string         _size;
@@ -62,7 +64,7 @@ private:
 protected:
 public:
 
-                        RequestHandler( std::string const & request );
+                        RequestHandler( std::string const & request, const ServerConfig &serverConfig );
                         RequestHandler( RequestHandler const & src );
                         ~RequestHandler();
     RequestHandler &    operator=( RequestHandler const & other );

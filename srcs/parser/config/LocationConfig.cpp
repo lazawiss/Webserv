@@ -9,7 +9,8 @@
 LocationConfig::LocationConfig() : AConfig() {}
 
 LocationConfig::LocationConfig(const LocationConfig &ref) : AConfig(ref),
-    _path(ref._path), _methods(ref._methods), _upload(_upload) {}
+    _path(ref._path), _methods(ref._methods), _upload(ref._upload),
+    _return(ref._return) {}
 
 LocationConfig& LocationConfig::operator=(const LocationConfig &ref)
 {
@@ -19,6 +20,7 @@ LocationConfig& LocationConfig::operator=(const LocationConfig &ref)
         _path         = ref._path;
         _methods      = ref._methods;
         _upload       = ref._upload;
+        _return       = ref._return;
     }
     return *this;
 }

@@ -14,6 +14,7 @@
 #include "ListenerManager.hpp"
 #include "HTTPParser.hpp"
 #include "RequestHandler.hpp"
+#include "../parser/config/ServerConfig.hpp"
 
 /*
 ** ============================================================================
@@ -21,17 +22,20 @@
 ** ============================================================================
 */
 
-RequestHandler:: RequestHandler( std::string const & request ) : _request(request),
-_root("data/html"), _header(), _size(), _n_read_index(0){
-
+RequestHandler::RequestHandler( std::string const & request, const ServerConfig &serverConfig ) :
+    _request(request), _serverConfig(serverConfig),
+    _root(serverConfig.getRoot()), _header(), _size(), _n_read_index(0)
+{
+    std::cout << "[RequestHandler] _root: '" << _root << "'" << std::endl;
     memset(_buffer, 0, BUF_SIZE);
 }
 
-RequestHandler::RequestHandler( RequestHandler const & src ) : 
-    _request(src._request), _root(src._root), _header(src._header),
-    _size(src._size),_n_read_index(src._n_read_index)
+RequestHandler::RequestHandler( RequestHandler const & src ) :
+    _request(src._request), _serverConfig(src._serverConfig),
+    _root(src._root), _header(src._header),
+    _size(src._size), _n_read_index(src._n_read_index)
 {
-     memcpy(_buffer, src._buffer, BUF_SIZE);
+    memcpy(_buffer, src._buffer, BUF_SIZE);
 }
 
 RequestHandler::~RequestHandler(){}
@@ -76,6 +80,23 @@ ssize_t RequestHandler::getNReadIndex() const{
 ** Request Handler
 ** ============================================================================
 */
+
+static std::string resolveRoot(const ServerConfig &cfg, const std::string &uri)
+{
+    const std::vector<LocationConfig> &locs = cfg.getLocations();
+    size_t bestLen = 0;
+    std::string root;
+    for (size_t i = 0; i < locs.size(); ++i)
+    {
+        const std::string &path = locs[i].getPath();
+        if (uri.find(path) == 0 && path.size() > bestLen)
+        {
+            bestLen = path.size();
+            root = locs[i].getRoot();
+        }
+    }
+    return root;
+}
 
 // build path toward file
 std::string RequestHandler::getFile( std::string code ){
@@ -201,9 +222,9 @@ bool    RequestHandler::answerFile( std::string file ){
     std::cout << "File Size : " << sb.st_size <<std::endl;
     
     int indexfd = open(file.c_str(), O_RDONLY);
-    if (indexfd == -1){
+    if (indexfd == -1)
+    {
         std::cerr << "Error file failed to open on indexfd:" << indexfd << std::endl;
-        close(indexfd);
         return false;
     }
     this->_n_read_index = read(indexfd, _buffer, BUF_SIZE);
@@ -231,7 +252,6 @@ bool    RequestHandler::answerFileImage(){
     int indexfd = open("data/images/cat.png", O_RDONLY);
     if (indexfd == -1){
         std::cerr << "Error file failed to open on indexfd:" << indexfd << std::endl;
-        close(indexfd);
         return false;
     }
     
@@ -262,7 +282,6 @@ bool    RequestHandler::answerFileIcon(){
     int indexfd = open("data/favicon.ico/favicon-16x16.png", O_RDONLY);
     if (indexfd == -1){
         std::cerr << "Error file failed to open on indexfd:" << indexfd << std::endl;
-        close(indexfd);
         return false;
     }
     _n_read_index = read(indexfd, _buffer, BUF_SIZE);
@@ -287,10 +306,10 @@ bool    RequestHandler::answerFileIcon(){
 // build answer depending of content to sent
 bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
     
-    HTTPParser HTTPParser(_request);
+    HTTPParser HTTPParser(_request, _serverConfig);
 
     HTTPParser.HTTPparse_file(_request);
-    
+
     bool    requestValid = true;
 
     //  check request
@@ -298,18 +317,21 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         std::cout << "Request Invalid." << std::endl;
         requestValid = false;
     }
-    // find method 
+    // find method
     else if (requestValid == true && HTTPParser.findMethods() == false){
         std::cerr << "Error Method not implemented: " << strerror(errno) << std::endl;
     }
 
+    if (_root.empty())
+        _root = resolveRoot(_serverConfig, HTTPParser.getRequestTarget());
+
     if (HTTPParser.getType() == "text/html"){
-        
+
         std::string file = getFile(HTTPParser.getCode()); 
         if (answerFile(file) == false){
             
             HTTPParser.setCode("404");
-            HTTPParser.setCode("text/html");
+            HTTPParser.setType("text/html");
         }
             
     }
@@ -318,7 +340,7 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         if (answerFileImage() == false){
          
             HTTPParser.setCode("404");
-            HTTPParser.setCode("text/html");
+            HTTPParser.setType("text/html");
         }
     }
     if (HTTPParser.getType() == "image/x-icon"){
@@ -326,7 +348,7 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         if (answerFileIcon() == false){
          
             HTTPParser.setCode("404");
-            HTTPParser.setCode("text/html");
+            HTTPParser.setType("text/html");
         }
     }
     buildAnswerHeader(HTTPParser.getCode(), HTTPParser.getType());

@@ -18,6 +18,7 @@
 #include "../parser/Parser.hpp"
 #include "../lexer/Lexer.hpp"
 #include "RequestHandler.hpp"
+#include "../parser/config/GlobalConfig.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -59,10 +60,8 @@ public:
     EpollLoop & operator=( EpollLoop const & other );
 
     int         setnonblocking( int fd );
-    bool        do_use_fd( int fd, ListenerManager const & listen );
-    bool        readingSocket( ListenerManager const & listen );
 
-    bool        do_use_fd( int fd, std::vector<ListenerManager> const & listeners );
-    bool        readingSocket( std::vector<ListenerManager> const & listeners );
+    bool        do_use_fd( int fd, std::vector<ListenerManager*> const & listeners, const GlobalConfig &config );
+    bool        readingSocket( std::vector<ListenerManager*> const & listeners, const GlobalConfig &config );
 
 };

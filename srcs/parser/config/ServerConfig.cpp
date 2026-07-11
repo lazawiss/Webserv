@@ -33,14 +33,14 @@ ServerConfig::~ServerConfig() {}
 */
 
 // ── listen ──────────────────────────────────────────────────────────────────
-const std::vector<std::string>& ServerConfig::getListen() const
+const std::string& ServerConfig::getListen() const
 {
     return _listen;
 }
 
-void ServerConfig::addListen(const std::string& listen)
+void ServerConfig::setListen(const std::string& listen)
 {
-    _listen.push_back(listen);
+    _listen = listen;
 }
 
 // ── server names ────────────────────────────────────────────────────────────
@@ -56,6 +56,11 @@ void ServerConfig::addServerName(const std::string& name)
 
 // ── locations ───────────────────────────────────────────────────────────────
 const std::vector<LocationConfig>& ServerConfig::getLocations() const
+{
+    return _locations;
+}
+
+std::vector<LocationConfig>& ServerConfig::getLocations()
 {
     return _locations;
 }
