@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/10 20:28:17 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/11 18:19:41 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -215,10 +215,10 @@ static bool isMethod( std::string const & str ){
 //     return t == "Host:";
 // }
 
-static bool isContentType( std::string const & t ){
+// static bool isContentType( std::string const & t ){
     
-    return t == "Content-Type:";
-}
+//     return t == "Content-Type:";
+// }
 
 static bool isContentLength( std::string const & t ){
     
@@ -412,6 +412,7 @@ bool    HTTPParser::checkHost( ListenerManager const & listener ){
             
     //     }
     // }
+    
     _errors = true;
     _code = "400";
     _type = "text/html";
@@ -455,20 +456,18 @@ bool    HTTPParser::isRequestValid( ListenerManager const & listen ){
 
 bool    HTTPParser::checkContentType(){
 
-    std::string::iterator space = _request.begin();
+    size_t start = _request.find("Content-Type:"); 
+    std::string::iterator space = _request.begin() + start;
     
     std::vector<size_t> space_inter = collectSpace(space);
 
     std::vector<std::string> subss = collectString(space_inter);
-         _type = subss[1];
-            std::cout << _type << std::endl;
+
     if (!subss.empty()){
         
-        if (isContentType(subss[0])){
-            _type = subss[1];
-            std::cout << _type << std::endl;
-            return true;
-        }
+        _type = subss[1];
+        std::cout << "Content-Type:" << _type << std::endl;
+        return true;
     }
     // std::vector<Token>::iterator found;
     
@@ -501,20 +500,25 @@ bool    HTTPParser::checkContentType(){
 
 bool    HTTPParser::findBoundary(){
     
-//    std::string::iterator newpos = find_if(_request.begin(), _request.end(), isDelimiter);
-    size_t pos = _request.find("\r\n\r\n");
-   std::string::iterator newpos = _request.begin() + pos;
+    size_t pos = _request.find("boundary=");
+    std::string::iterator newpos = _request.begin() + pos;
+    // newpos + 6;
+    std::cout << "newpos" << *newpos << std::endl;
 
-   newpos++;
+    // size_t end = _request.find('\n');
+    size_t end = _request.find(' ');
 
-    size_t end = _request.find('\n');
+    newpos = _request.begin() + pos;
+    newpos - 1;
+    std::cout << "newposend " << *newpos << std::endl;
 
-    size_t start = distance(_request.begin(), newpos);
-    _boundary = _request.substr(start, end - start );
+
+    // size_t start = distance(_request.begin(), newpos);
+    _boundary = _request.substr(pos, end - pos );
     _boundary.erase(_boundary.begin(),_boundary.begin()+9);
     std::cout << "boundary:" << _boundary << std::endl;
 
-    _pos = _request.begin() + end;
+    // _pos = _request.begin() + end;
     return true;
    
 }
@@ -753,7 +757,7 @@ bool    HTTPParser::findMethods(){
                     return false;
                 }
                 if (findBoundary() == false){
-                    std::cerr << "Error Content-Type not found: " << strerror(errno) << std::endl;
+                    std::cerr << "Error Boundary not found: " << strerror(errno) << std::endl;
                     return false;
                 }
                 if (checkContentLength() == false){

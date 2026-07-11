@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/10 19:22:10 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/11 16:00:31 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -226,7 +226,6 @@ bool    RequestHandler::answerFile( std::string const & file ){
     int indexfd = open(file.c_str(), O_RDONLY);
     if (indexfd == -1){
         std::cerr << "Error file failed to open on indexfd:" << indexfd << std::endl;
-        close(indexfd);
         return false;
     }
     this->_n_read_index = read(indexfd, _buffer, BUF_SIZE);
