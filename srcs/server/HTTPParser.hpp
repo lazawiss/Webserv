@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/11 19:02:21 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/11 20:00:51 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -97,7 +97,6 @@ public:
     bool                        isRequestValid( ListenerManager const & listen );
                 
     bool                        checkContentType();
-    bool                        findBoundary();
     bool                        checkContentLength();
     bool                        checkContentDisposition();
     bool                        gatherFile();

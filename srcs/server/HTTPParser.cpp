@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/11 19:03:07 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/11 21:01:31 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -228,10 +228,10 @@ static bool isMethod( std::string const & str ){
 //     return t == "Content-Type:";
 // }
 
-static bool isContentLength( std::string const & t ){
+// static bool isContentLength( std::string const & t ){
     
-    return t == "Content-Length:";
-}
+//     return t == "Content-Length:";
+// }
 
 // static bool isContentDisposition( std::string const & t ){
     
@@ -474,7 +474,13 @@ bool    HTTPParser::checkContentType(){
     if (!subss.empty()){
         
         _type = subss[1];
+        _type.erase(_type.end() - 1);
         std::cout << "Content-Type:" << _type << std::endl;
+        _boundary = subss[2];
+        _boundary.erase(_boundary.begin(),_boundary.begin()+9);
+        
+        std::cout << "boundary:" << _boundary << std::endl;
+        
         return true;
     }
     // std::vector<Token>::iterator found;
@@ -506,30 +512,6 @@ bool    HTTPParser::checkContentType(){
     return false;
 }
 
-bool    HTTPParser::findBoundary(){
-    
-    size_t pos = _request.find("boundary=");
-    std::string::iterator newpos = _request.begin() + pos;
-    // newpos + 6;
-    std::cout << "newpos" << *newpos << std::endl;
-
-    // size_t end = _request.find('\n');
-    size_t end = _request.find(' ');
-
-    newpos = _request.begin() + pos;
-    newpos - 1;
-    std::cout << "newposend " << *newpos << std::endl;
-
-
-    // size_t start = distance(_request.begin(), newpos);
-    _boundary = _request.substr(pos, end - pos );
-    _boundary.erase(_boundary.begin(),_boundary.begin()+9);
-    std::cout << "boundary:" << _boundary << std::endl;
-
-    // _pos = _request.begin() + end;
-    return true;
-   
-}
 
 bool    HTTPParser::checkContentLength(){
 
@@ -542,20 +524,17 @@ bool    HTTPParser::checkContentLength(){
  
      if (!subss.empty()){
         
-         if (isContentLength(subss[0])){
-            _fileLength = subss[1];
-            std::stringstream ss(_fileLength);
-            size_t len; 
-            ss >> len;
-            std::cout << "Content-Length:" << _fileLength << std::endl;
-            std::cout << "Content-Length:" << len << std::endl;
-
-            if (len > BUF_SIZE){
-                std::cerr << "File size is too big." << std::endl;
-                return false;
-            }
-            return true;
+        _fileLength = subss[1];
+        std::stringstream ss(_fileLength);
+        size_t len; 
+        ss >> len;
+        std::cout << "Content-Length:" << _fileLength << std::endl;
+        std::cout << "Content-Length:" << len << std::endl;
+        if (len > BUF_SIZE){
+            std::cerr << "File size is too big." << std::endl;
+            return false;
         }
+        return true;
      }
     // std::vector<Token>::iterator found;
     
@@ -587,7 +566,8 @@ bool    HTTPParser::checkContentLength(){
 
     //         return true;
     //     }
-    // }
+ 
+
     _errors = true;
     _code = "400";
     _type = "text/html";
@@ -598,24 +578,40 @@ bool    HTTPParser::checkContentLength(){
 
 bool    HTTPParser::checkContentDisposition(){
     
-    size_t boundary = _request.find(_boundary);
-
-    std::string::iterator newpos = _pos + boundary;
-
-    newpos++;
-    
     size_t pos = _request.find("Content-Disposition:");
     
-    newpos = _pos + pos;
+    std::string::iterator newpos = _request.begin() + pos;
 
-    newpos++;
+    std::vector<size_t> space_inter = collectSpace(newpos);
 
-    size_t end = _request.find('\n');
 
-    std::string contentdisposition = _request.substr(pos, end - pos);
-    std::cout << "contentdisposition: " << contentdisposition << std::endl;
-    
-    return true;
+    std::vector<std::string> subss = collectString(space_inter);
+    // size_t end = _request.find('\n');
+
+    // std::string contentdisposition = _request.substr(pos, end - pos);
+    // std::cout << "contentdisposition: " << contentdisposition << std::endl;
+     
+     if (!subss.empty()){
+        
+            std::string type = subss[1];
+            char const *slash = strchr(_type.c_str(), '/');
+            std::string checktype = std::string(slash, strlen(slash));
+            checktype.erase(checktype.begin());
+            checktype.erase(checktype.end() - 1);
+            if (type != checktype)
+                return false;
+            std::string name = subss[2];
+            name.erase(name.end() - 1);
+            name.erase(name.begin(), name.begin() + 6);
+            _fileName = subss[3];
+            _fileName.erase(_fileName.end() - 1);
+            _fileName.erase(_fileName.begin(), _fileName.begin() + 10 );
+            std::cout << "type: " << checktype << std::endl; //recuperer ??
+            std::cout << "name " << name << std::endl;
+            std::cout << "_fileName: " << _fileName << std::endl;
+
+            return true;
+     }
 
 
 
@@ -664,21 +660,21 @@ bool    HTTPParser::checkContentDisposition(){
 
 bool    HTTPParser::gatherFile(){
     
-    // _found++;
-    // _found++;
-    // _found++;
-    // std::string endOfFile = _boundary + "--";
+    _pos++;
+    _pos++;
+    _pos++;
+    std::string endOfFile = _boundary + "--";
 
-    // size_t len =  endOfFile.size();
+    size_t len =  endOfFile.size();
     
-    // while (_found->type != End){
+    while (_pos != _request.end()){
 
-    //     if (_found->value != endOfFile)
-    //         _fileBuf += _found->value;
-    //     _found++;
-    // }
+        // if (_pos != endOfFile)
+            _fileBuf += *_pos;
+        _pos++;
+    }
 
-    // _fileBuf.erase(_fileBuf.end() - (len + 2), _fileBuf.end());
+    _fileBuf.erase(_fileBuf.end() - (len + 2), _fileBuf.end());
     return true;
     
     // _code = "400";
@@ -706,7 +702,7 @@ bool    HTTPParser::findMethods(){
             return true;
 
         }
-        else if (_requesttarget == "/html/gallery.html"){
+        else if (_requesttarget == "/gallery.html" || _requesttarget == "/html/gallery.html"){
             
             _code = "gallery";
             _type = "text/html";
@@ -715,17 +711,11 @@ bool    HTTPParser::findMethods(){
         }
         else if (_requesttarget.find("/images") != std::string::npos){
             
-            std::cout <<  "found /images " << std::endl;
-            
             char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
-            if (lastPoint)
-            std::cout <<  "lastPoint:" << lastPoint << std::endl;
             char const *lastSlash = strrchr(_requesttarget.c_str(), '/');
             std::string name = std::string(lastSlash, strlen(lastSlash));
             name.erase(name.begin());
 
-            std::cout <<  "name:" << name << std::endl;
-            
             _code = name;
             std::string suffix = std::string(lastPoint, strlen(lastPoint));
             if (suffix  == ".jpg"){
@@ -765,10 +755,6 @@ bool    HTTPParser::findMethods(){
                 
                 if (checkContentType() == false){
                     std::cerr << "Error Content-Type not found: " << strerror(errno) << std::endl;
-                    return false;
-                }
-                if (findBoundary() == false){
-                    std::cerr << "Error Boundary not found: " << strerror(errno) << std::endl;
                     return false;
                 }
                 if (checkContentLength() == false){

@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/11 18:52:37 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/11 20:58:18 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -411,6 +411,7 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
     }
     if (HTTPParser.getType() == "multipart/form-data"){
         
+        std::cout << HTTPParser.getFileName() << std::endl;
         if (uploadFile(HTTPParser.getFileName(), HTTPParser.getFileBuf()) == false){
          
             HTTPParser.setError(true);
