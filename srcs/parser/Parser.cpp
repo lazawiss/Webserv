@@ -555,9 +555,17 @@ void Parser::parseDirectiveUpload(LocationConfig &ref)
 {
     next();
 
-    if (current().type != Word || current().value[0] != '/')
+    if (current().type != Word)
         throw std::runtime_error("Unexpected token '" +  current().value
             + "', should be a 'word' type");
+    
+    std::string path = current().value;
+
+    struct stat info;
+    if (stat(path.c_str(), &info) != 0)
+        throw std::runtime_error("Upload path does not exist: '" + path + "'");
+    if (!S_ISDIR(info.st_mode))
+        throw std::runtime_error("Upload path isn't a directory: '" + path + "'");
     
     if (!ref.getUpload().empty())
         throw std::runtime_error("Duplicate 'upload' directive");
