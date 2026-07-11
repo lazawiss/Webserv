@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   EpollLoop.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: andikim <andikim@student.42.fr>            +#+  +:+       +#+        */
+/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/05 16:26:02 by andikim          ###   ########.fr       */
+/*   Updated: 2026/07/11 19:04:50 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -94,6 +94,7 @@ bool    EpollLoop::do_use_fd(  int fd, std::vector<ListenerManager> const & list
         LOG_ERROR("Client closed connection: - " + std::string(strerror(errno)));
         return (close(fd), false);
     }
+    // n_Read = -1 means error, n_read == 0 means eof
 
     std::string request = std::string(buf, n_read);
 
@@ -122,12 +123,9 @@ bool    EpollLoop::do_use_fd(  int fd, std::vector<ListenerManager> const & list
         std::cerr << "Reading of html file failed: " << strerror(errno) << std::endl;
         return (close(fd), false);
     }
-    std::cout << "tu arrives?" << std::endl;
     if (requestHandler.getCGI())
     {
-        std::cout << "tu arrives?1111" << std::endl;
         CGI *cgi = new CGI(requestHandler, *listener, fd);
-        std::cout << "yoyoyoyoy" << std::endl;
         if (!cgi->start())
         {
             delete cgi;

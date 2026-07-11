@@ -1,31 +1,33 @@
-#!C:\Python311\python.exe
+#!/usr/bin/env python3
+import sys, os
+from urllib.parse import parse_qsl
 
-import os
-import sys
-from urllib.parse import parse_qs
+content_length = int(os.environ.get("CONTENT_LENGTH", 0))
 
-method = os.environ.get("REQUEST_METHOD", "GET")
+body = b""
+while len(body) < content_length:
+    chunk = sys.stdin.buffer.read(content_length - len(body))
+    if not chunk:
+        break
+    body += chunk
 
-if method == "POST":
-    length = int(os.environ.get("CONTENT_LENGTH", 0))
-    body = sys.stdin.read(length)
-else:
-    body = os.environ.get("QUERY_STRING", "")
+# parse_qsl gives you [('username', 'hello'), ('emailaddress', 'helo@fresh.fr')]
+# already percent-decoded — %40 becomes @ for you
+pairs = parse_qsl(body.decode("utf-8"))
 
-form = parse_qs(body)
-print(f"DEBUG method={method} body={repr(body)} form={form}", file=sys.stderr)
-
-username = form.get("username", [""])[0]
-emailaddress = form.get("emailaddress", [""])[0]
+upload_path = "/home/ankim/Desktop/42/webserv/data/uploaded_file"
+with open(upload_path, "w") as f:
+    for key, value in pairs:
+        f.write(value + ",")
 
 print("Content-type:text/html\r\n\r\n")
+print()
 print("<html>")
 print("<head>")
 print("<title> List </title>")
 print("</head>")
 print("<body>")
-print("<h3> List of names & emails</h3>")
-print(username)
-print(emailaddress)
+print(f"Saved {len(pairs)} fields to {upload_path}")
 print("</body>")
 print("</html>")
+

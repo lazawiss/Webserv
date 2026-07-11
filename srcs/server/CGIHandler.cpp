@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 18:29:42 by andikim           #+#    #+#             */
-/*   Updated: 2026/07/09 14:40:44 by ankim            ###   ########.fr       */
+/*   Updated: 2026/07/11 20:23:14 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -223,8 +223,7 @@ bool CGI::onWritable()
     return _bytesWritten >= _body.size();
 }
 
-// EPOLLIN on _stdout_pipe[0]: script produced output, append it.
-// Returns true on EOF (read == 0): script closed stdout = it is finished.
+
 bool CGI::onReadable()
 {
     char    buf[4096];

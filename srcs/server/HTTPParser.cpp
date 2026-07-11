@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/09 15:33:34 by ankim            ###   ########.fr       */
+/*   Updated: 2026/07/11 20:51:08 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -208,6 +208,18 @@ static bool isContentLength( Token const & t ){
     return t.value == "Content-Length:";
 }
 
+void HTTPParser::extractBody()
+{
+    size_t headerEnd = _request.find("\r\n\r\n");
+    size_t sepLen = 4;
+    if (headerEnd == std::string::npos)
+    {
+        headerEnd = _request.find("\n\n");
+        sepLen = 2;
+    }
+    if (headerEnd != std::string::npos)
+        _body = _request.substr(headerEnd + sepLen);
+}
 
 
 // Check if it respect the standard form :
@@ -397,7 +409,7 @@ bool    HTTPParser::isRequestValid( ListenerManager const & listen ){
     }
 
     // check for root because need full path
-
+    extractBody();
     parseCGI();
     
     if (checkHost(listen) == false){

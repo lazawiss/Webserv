@@ -67,3 +67,8 @@
 // }
 
 // CGI::CGI(){};
+
+
+// Hardware has CPU, memory, storage, and GPU; to communicate with me, there is KERNEL. 
+// Linux - packages that have been put together for KERNEL
+//
