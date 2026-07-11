@@ -6,28 +6,31 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/11 18:19:41 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/11 19:03:07 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "HTTPParser.hpp"
 #include "../lexer/Lexer.hpp"
+#include "../parser/config/ServerConfig.hpp"
 
 /*
 ** ============================================================================
 ** Constructors & Destructor
 ** ============================================================================
 */
-
-HTTPParser:: HTTPParser(  std::string const & request ) : _request(request),_code(),
- _type(), _method(), _requesttarget(), _httpversion(), _boundary(), _fileLength(), _fileName(), _fileBuf(), _errors(false){
-    
+  
+HTTPParser::HTTPParser( std::string const & request, const ServerConfig &serverConfig ) :
+_allTokens(), _request(request), _serverConfig(serverConfig), _code(), _type(), _method(),
+_requesttarget(), _httpversion(), _boundary(), _fileLength(), _fileName(), _fileBuf(), _errors(false)
+{
 }
 
-HTTPParser::HTTPParser( HTTPParser const & src ) : _request(src._request), _code(src._code),
- _type(src._type), _method(src._method), _requesttarget(src._requesttarget), _httpversion(src._httpversion),
-  _boundary(src._boundary), _fileLength(src._fileLength), _fileName(src._fileName), _fileBuf(src._fileBuf), _errors(src._errors){
-    
+HTTPParser::HTTPParser( HTTPParser const & src ) :
+_allTokens(src._allTokens), _request(src._request), _serverConfig(src._serverConfig),
+_code(src._code), _type(src._type), _method(src._method), _requesttarget(src._requesttarget), _httpversion(src._httpversion),
+  _boundary(src._boundary), _fileLength(src._fileLength), _fileName(src._fileName), _fileBuf(src._fileBuf), _errors(src._errors)
+{
 }
 
 HTTPParser::~HTTPParser(){
@@ -38,7 +41,6 @@ HTTPParser &    HTTPParser::operator=( HTTPParser const & other ){
 
     if (this != &other ){
 
-        this->_request = other._request;
         this->_request = other._request;
         this->_code = other._code;
         this->_type = other._type;
@@ -91,6 +93,10 @@ bool     HTTPParser::getError() const{
     return _errors;
 }
 
+std::string HTTPParser::getRequestTarget() const{
+
+    return _requesttarget;
+}
 
 std::string HTTPParser::setCode( std::string const & code ){
     
@@ -100,7 +106,7 @@ std::string HTTPParser::setCode( std::string const & code ){
 
 std::string HTTPParser::setType( std::string const & type ){
 
-    _type =type;
+    _type = type;
     return _type;
 }
 
@@ -109,6 +115,8 @@ bool HTTPParser::setError(bool error){
     _errors = error;
     return _errors;
 }
+
+
 
 /*
 ** ============================================================================
@@ -746,6 +754,9 @@ bool    HTTPParser::findMethods(){
             _type = "text/html";
             return true;
         }
+        _code = "index";
+        _type = "text/html";
+        return true;
     }
     else if (_method == "POST"){
         if (_requesttarget.find("/upload") != std::string::npos){

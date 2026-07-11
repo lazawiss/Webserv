@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/10 19:44:20 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/11 19:02:21 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 
 #include "../lexer/Lexer.hpp"
 #include "ListenerManager.hpp"
+#include "../parser/config/ServerConfig.hpp"
 
 
 #include <iostream>
@@ -49,6 +50,7 @@ private:
 
     std::vector<Token>              _allTokens;
     std::string                     _request;
+    const ServerConfig              &_serverConfig;
     std::string                     _code;
     std::string                     _type;
     std::string                     _method;
@@ -65,7 +67,7 @@ private:
 
 public:
 
-                                HTTPParser( std::string const & request );
+                                HTTPParser( std::string const & request, const ServerConfig &serverConfig  );
                                 HTTPParser( HTTPParser const & src );    
                                 ~HTTPParser();    
     HTTPParser &                operator=( HTTPParser const & other );
@@ -77,6 +79,7 @@ public:
     std::string                 getFileName() const;
     std::string                 getFileBuf() const;
     bool                        getError() const;
+    std::string                 getRequestTarget() const;
 
             
     std::string                 setCode( std::string const & code );

@@ -10,8 +10,8 @@
 // _client_max_body_size is 1m if never set
 // this is why we hit 413 errors
 // 0 disables the check entirely
-AConfig::AConfig() : _root(""), _autoindex(false),
-    _client_max_body_size(1 * 1024 * 1024) {}
+AConfig::AConfig() : _root(""), _autoindex(""),
+    _client_max_body_size("") {}
 
 AConfig::AConfig(const AConfig &ref) : _root(ref._root), _index(ref._index),
     _error_pages(ref._error_pages), _autoindex(ref._autoindex),
@@ -72,23 +72,23 @@ void AConfig::addErrorPage(int code, const std::string &uri)
 }
 
 // ── autoindex ──────────────────────────────────────────────────────────────
-bool AConfig::getAutoindex() const
+const std::string& AConfig::getAutoindex() const
 {
     return _autoindex;
 }
 
-void AConfig::setAutoindex(bool autoindex)
+void AConfig::setAutoindex(const std::string &autoindex)
 {
     _autoindex = autoindex;
 }
 
 // ── client_max_body_size ──────────────────────────────────────────────────
-size_t AConfig::getClientMaxBodySize() const
+const std::string& AConfig::getClientMaxBodySize() const
 {
     return _client_max_body_size;
 }
 
-void AConfig::setClientMaxBodySize(size_t size)
+void AConfig::setClientMaxBodySize(const std::string &size)
 {
     _client_max_body_size = size;
 }
