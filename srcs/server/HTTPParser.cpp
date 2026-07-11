@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/10 19:23:37 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/10 20:28:17 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,13 +20,13 @@
 */
 
 HTTPParser:: HTTPParser(  std::string const & request ) : _request(request),_code(),
- _type(), _method(), _requesttarget(), _httpversion(), _boundary(), _fileName(), _fileBuf(), _errors(false){
+ _type(), _method(), _requesttarget(), _httpversion(), _boundary(), _fileLength(), _fileName(), _fileBuf(), _errors(false){
     
 }
 
 HTTPParser::HTTPParser( HTTPParser const & src ) : _request(src._request), _code(src._code),
  _type(src._type), _method(src._method), _requesttarget(src._requesttarget), _httpversion(src._httpversion),
-  _boundary(src._boundary), _fileName(src._fileName), _fileBuf(src._fileBuf), _errors(src._errors){
+  _boundary(src._boundary), _fileLength(src._fileLength), _fileName(src._fileName), _fileBuf(src._fileBuf), _errors(src._errors){
     
 }
 
@@ -46,6 +46,7 @@ HTTPParser &    HTTPParser::operator=( HTTPParser const & other ){
         this->_requesttarget = other._requesttarget;
         this->_httpversion = other._httpversion;
         this->_boundary = other._boundary;
+        this->_fileLength = other._fileLength;
         this->_fileName = other._fileName;
         this->_fileBuf = other._fileBuf;
         this->_errors = other._errors;
@@ -386,7 +387,6 @@ bool    HTTPParser::checkHost( ListenerManager const & listener ){
             
             return false;
         }
-        std::cout << "subss[1]:" << subss[1] << std::endl;
         
         return true;
     }
@@ -460,11 +460,13 @@ bool    HTTPParser::checkContentType(){
     std::vector<size_t> space_inter = collectSpace(space);
 
     std::vector<std::string> subss = collectString(space_inter);
-    
+         _type = subss[1];
+            std::cout << _type << std::endl;
     if (!subss.empty()){
         
         if (isContentType(subss[0])){
             _type = subss[1];
+            std::cout << _type << std::endl;
             return true;
         }
     }

@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/10 19:22:52 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/10 19:44:20 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,8 +61,6 @@ private:
     std::vector<Token>::iterator    _found;
     std::string::iterator           _pos;
     bool                            _errors;
-    
-    
     
 
 public:
