@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/11 20:00:51 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/12 14:44:30 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -103,7 +103,7 @@ public:
             
             
     // v    oid                    HTTPparse_file(const std::string& path);
-                
+    std::string                 addSuffix(std::string suffix);
                 
     bool                        findMethods();
     bool                        findPath();

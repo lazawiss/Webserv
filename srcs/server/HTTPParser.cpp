@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/11 21:01:31 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/12 17:30:00 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -598,8 +598,8 @@ bool    HTTPParser::checkContentDisposition(){
             std::string checktype = std::string(slash, strlen(slash));
             checktype.erase(checktype.begin());
             checktype.erase(checktype.end() - 1);
-            if (type != checktype)
-                return false;
+            // if (type != checktype)
+            //     return false;
             std::string name = subss[2];
             name.erase(name.end() - 1);
             name.erase(name.begin(), name.begin() + 6);
@@ -682,7 +682,24 @@ bool    HTTPParser::gatherFile(){
     
     // return false;
 }
+
+std::string     HTTPParser::addSuffix(std::string suffix){
     
+    if (suffix  == ".jpg")
+        _type = "image/jpeg";
+    if (suffix  == ".png")
+        _type = "image/png";
+    if (suffix  == ".gif")
+        _type = "image/gif";
+    if (suffix  == ".webp")
+        _type = "image/webp";
+    if (suffix == ".txt")
+        _type = "text/plain";
+    if (suffix == ".html")
+        _type = "text/html";
+    return _type;
+}
+
 
 bool    HTTPParser::findMethods(){
     
@@ -702,7 +719,7 @@ bool    HTTPParser::findMethods(){
             return true;
 
         }
-        else if (_requesttarget == "/gallery.html" || _requesttarget == "/html/gallery.html"){
+        else if (_requesttarget == "/gallery.html" || _requesttarget == "/html/gallery.html" || _requesttarget == "/html/html/gallery.html"){
             
             _code = "gallery";
             _type = "text/html";
@@ -718,18 +735,9 @@ bool    HTTPParser::findMethods(){
 
             _code = name;
             std::string suffix = std::string(lastPoint, strlen(lastPoint));
-            if (suffix  == ".jpg"){
-                _type = "image/jpeg";
-                return true;
-            }
-            if (suffix  == ".png"){
-                _type = "image/png";
-                return true;
-            }
-            if (suffix  == ".gif"){
-                _type = "image/gif";
-                return true;
-            }
+            _type = addSuffix(suffix);
+            
+            return true;
         }
         if (_requesttarget == "/favicon.ico"){
             
@@ -785,14 +793,8 @@ bool    HTTPParser::findMethods(){
                 
                 _code = name; //? fichier specifique 
                 std::string suffix = std::string(lastPoint, strlen(lastPoint));
-                if (suffix == ".txt"){
-                    _type = "text/plain";
-                    return true;
-                }
-                if (suffix == ".html"){
-                    _type = "text/html";
-                    return true;
-                }
+                _type = addSuffix(suffix);
+                return true;
             }
             //on success send 201 CREATED + Location: path to ressource
             // return true;
@@ -814,17 +816,9 @@ bool    HTTPParser::findMethods(){
             
             _code = name; //? fichier specifique 
             std::string suffix = std::string(lastPoint, strlen(lastPoint));
-            if (suffix == ".txt"){
-                _type = "text/plain";
-                return true;
-            }
-            if (suffix == ".html"){
-                _type = "text/html";
-                return true;
-            }
-            
             // _code = "200"; //? fichier specifique 
             // 204 No Content
+            _type = addSuffix(suffix);
             return true;
         }
     }

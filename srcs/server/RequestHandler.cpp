@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/11 20:58:18 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/12 16:58:13 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -332,18 +332,55 @@ bool    RequestHandler::answerFileIcon(){
 bool    RequestHandler::uploadFile( std::string const & filename, std::string const & buf ){
     
     _pathToFile = "data/upload/" + filename;
+    
+    std::cout << "_pathToFile: " << _pathToFile <<std::endl;
+    
 
     std::ofstream outfile(_pathToFile.c_str(), std::ios::binary);
     outfile << buf << std::endl; 
     // outfile.write(buf.data(), buf.size());
     _n_read_index = buf.size();
     
-    outfile.close();
     
+    struct stat sb;
+    
+    if (stat(_pathToFile.c_str(), &sb) == -1){
+        std::cerr << "Error stat outfile: " << strerror(errno) << std::endl;
+        return false;
+    }
+    std::cout << "File Size OUtfile: " << sb.st_size <<std::endl;
     
 
-    return true;
+    if (_pathToFile.empty()){
+        std::cerr << "Error outfile is empty: " << strerror(errno) << std::endl;
+        return false;
+    }
     
+    outfile.close();
+    
+    return true;
+}
+
+bool    RequestHandler::removeFile( std::string const & filename ){
+    
+    _pathToFile = filename;
+    
+    std::cout << "_pathToFile: " << _pathToFile <<std::endl;
+    
+    struct stat sb;
+    
+    if (stat(_pathToFile.c_str(), &sb) == -1){
+        std::cerr << "Error stat outfile: " << strerror(errno) << std::endl;
+        return false;
+    }
+    std::cout << "File Size OUtfile: " << sb.st_size <<std::endl;
+
+    if (remove(_pathToFile.c_str()) < 0 ){
+        std::cerr << "Error file could not get deleted: " << strerror(errno) << std::endl;
+        return false;
+    }
+    
+    return true;
 }
 
 // main function : 
@@ -373,6 +410,16 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
     if (_root.empty())
         _root = resolveRoot(_serverConfig, HTTPParser.getRequestTarget());
 
+    if (HTTPParser.getMethod() == "DELETE"){
+        
+        std::string file = getFileUpload(HTTPParser.getCode()); 
+
+        if (answerFile(file) == false){
+            HTTPParser.setError(true);
+            HTTPParser.setCode("404");
+            HTTPParser.setType("text/html");
+        }
+    }
     if (HTTPParser.getType() == "text/html"){
         
         std::string file = getFile(HTTPParser.getCode(), HTTPParser.getError()); 
@@ -391,7 +438,7 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
             HTTPParser.setType("text/html");
         }
     }
-    if (HTTPParser.getType() == "image/jpeg" || HTTPParser.getType() == "image/png" || HTTPParser.getType() == "image/gif"){
+    if (HTTPParser.getType() == "image/jpeg" || HTTPParser.getType() == "image/png" || HTTPParser.getType() == "image/gif" || HTTPParser.getType() == "image/webp"){
         
         std::string file = getFileImage(HTTPParser.getCode()); 
         // if (answerFileImage(file) == false){
