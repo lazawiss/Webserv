@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:27:21 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/12 17:17:40 by ankim            ###   ########.fr       */
+/*   Updated: 2026/07/12 18:58:39 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,7 +65,7 @@ public:
 
     int         setnonblocking( int fd );
 
-    bool        do_use_fd( int fd, std::vector<ListenerManager*> const & listeners, const GlobalConfig &config, int epollfd );
+    bool        do_use_fd( int fd, std::vector<ListenerManager*> const & listeners, const GlobalConfig &config, int epollfd , epoll_event& ev);
     bool        readingSocket( std::vector<ListenerManager*> const & listeners, const GlobalConfig &config );
     // bool        do_use_fd( int fd, ListenerManager const & listen );
     // bool        readingSocket( ListenerManager const & listen );

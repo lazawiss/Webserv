@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/12 17:38:06 by ankim            ###   ########.fr       */
+/*   Updated: 2026/07/12 18:59:46 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,7 +86,7 @@ int EpollLoop::setnonblocking( int fd ){
 // handle fds : no closing fds in other classes only in EpollLoop 
 // TO ENSURE NO HANGING FDS : if boolean == false > error caught fd closed in EPollLoop
 // then throw in Server >> quit program
-bool    EpollLoop::do_use_fd( int fd, std::vector<ListenerManager*> const & listeners, const GlobalConfig &config, int epollfd){
+bool    EpollLoop::do_use_fd( int fd, std::vector<ListenerManager*> const & listeners, const GlobalConfig &config, int epollfd, epoll_event &ev){
 
     std::cout << "[global] root: " << config.getRoot() << std::endl;
     const std::vector<ServerConfig> &servers = config.getServers();
@@ -163,14 +163,12 @@ bool    EpollLoop::do_use_fd( int fd, std::vector<ListenerManager*> const & list
         if (!cgi->start())
         {
             delete cgi;
-            std::string err = "HTTP/1.1 500 Internal Server Error\r\n"
+            std::string err = "HTTP/1.1 500 Internal Server Error\r\n" // Pass par Lea pour voir
                               "Content-Length: 0\r\n\r\n";
             send(fd, err.c_str(), err.size(), 0);
             _clientToListener.erase(fd);
             return (close(fd), false);
         }
-
-        struct epoll_event ev;
 
         // stdin pipe: WE write the body into it -> watch for EPOLLOUT
         ev.events = EPOLLOUT;
@@ -337,7 +335,7 @@ bool EpollLoop::readingSocket( std::vector<ListenerManager*> const & listeners, 
                         }
                     }
                 }
-                else if (do_use_fd(events[n].data.fd, listeners, config, epollfd) == false)
+                else if (do_use_fd(events[n].data.fd, listeners, config, epollfd, ev) == false)
                     break;
             }
         }

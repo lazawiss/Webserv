@@ -9,7 +9,7 @@ server {
 
     location / {
         root        data/www/html;
-        index       index.html;
+        index       index.html index2.html;
         methods     GET;
         autoindex   off;
     }

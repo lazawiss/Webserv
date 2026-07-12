@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/12 18:23:28 by ankim            ###   ########.fr       */
+/*   Updated: 2026/07/12 19:13:54 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -609,6 +609,20 @@ bool    HTTPParser::checkContentLength(){
         
         _fileLength = subss[1];
         std::stringstream ss(_fileLength);
+        if (_isCGI)
+        {
+            int len;
+            ss >> len;
+            std::cout << "Content-Length:" << _fileLength << std::endl;
+            std::cout << "Content-Length:" << len << std::endl;
+            if (len > BUF_SIZE){
+                std::cerr << "File size is too big." << std::endl;
+                return false;
+            }
+            _content_int = len;
+            return true;
+        }
+
         size_t len; 
         ss >> len;
         std::cout << "Content-Length:" << _fileLength << std::endl;

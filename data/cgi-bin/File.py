@@ -2,11 +2,8 @@
 import sys, os
 from urllib.parse import parse_qsl
 
-print(repr(os.environ.get("CONTENT_LENGTH")))
-content_length = int(os.environ.get("CONTENT_LENGTH", 0))
-
-# content_length = int(os.environ.get("CONTENT_LENGTH", 0))
-
+print(repr(os.environ.get("CONTENT_INT")))
+content_length = int(os.environ.get("CONTENT_INT", 0))
 body = b""
 while len(body) < content_length:
     chunk = sys.stdin.buffer.read(content_length - len(body))
