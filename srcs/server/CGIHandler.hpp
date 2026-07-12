@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CGIHandler.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: andikim <andikim@student.42.fr>            +#+  +:+       +#+        */
+/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 18:29:28 by andikim           #+#    #+#             */
-/*   Updated: 2026/07/05 18:29:31 by andikim          ###   ########.fr       */
+/*   Updated: 2026/07/12 18:05:48 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,7 +31,7 @@ class ListenerManager;
 class CGI
 {
 public:
-    CGI(RequestHandler const &req, ListenerManager const &listen, int client_fd);
+    CGI( RequestHandler const &req, ListenerManager const &listen, int client_fd );
     ~CGI();
 
     bool        start();

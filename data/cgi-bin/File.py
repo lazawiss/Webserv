@@ -2,7 +2,10 @@
 import sys, os
 from urllib.parse import parse_qsl
 
+print(repr(os.environ.get("CONTENT_LENGTH")))
 content_length = int(os.environ.get("CONTENT_LENGTH", 0))
+
+# content_length = int(os.environ.get("CONTENT_LENGTH", 0))
 
 body = b""
 while len(body) < content_length:
@@ -15,7 +18,7 @@ while len(body) < content_length:
 # already percent-decoded — %40 becomes @ for you
 pairs = parse_qsl(body.decode("utf-8"))
 
-upload_path = "/home/ankim/Desktop/42/webserv/data/uploaded_file"
+upload_path = "/home/ankim/Desktop/42/webserv/data/upload/uploaded_file"
 with open(upload_path, "w") as f:
     for key, value in pairs:
         f.write(value + ",")

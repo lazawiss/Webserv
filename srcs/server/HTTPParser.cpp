@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/12 18:02:08 by ankim            ###   ########.fr       */
+/*   Updated: 2026/07/12 18:23:28 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -96,11 +96,6 @@ std::string HTTPParser::getFileBuf() const{
 bool     HTTPParser::getError() const{
     
     return _errors;
-}
-
-std::string HTTPParser::getRequestTarget() const{
-
-    return _requesttarget;
 }
 
 std::string HTTPParser::setCode( std::string const & code ){
@@ -563,9 +558,11 @@ bool    HTTPParser::checkContentType(){
         _type.erase(_type.end() - 1);
         std::cout << "Content-Type:" << _type << std::endl;
         _boundary = subss[2];
+        if (_isCGI)
+            return true;
         _boundary.erase(_boundary.begin(),_boundary.begin()+9);
-        
         std::cout << "boundary:" << _boundary << std::endl;
+        
         
         return true;
     }

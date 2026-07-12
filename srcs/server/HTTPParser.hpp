@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/12 17:50:04 by ankim            ###   ########.fr       */
+/*   Updated: 2026/07/12 18:03:24 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -95,7 +95,6 @@ public:
     std::string                 getFileName() const;
     std::string                 getFileBuf() const;
     bool                        getError() const;
-    std::string                 getRequestTarget() const;
 
     std::string                 setCode( std::string const & code );
     std::string                 setType( std::string const & type );
