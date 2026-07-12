@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 18:29:42 by andikim           #+#    #+#             */
-/*   Updated: 2026/07/11 20:23:14 by ankim            ###   ########.fr       */
+/*   Updated: 2026/07/12 13:57:07 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,7 +41,6 @@ CGI::CGI(RequestHandler const &req, ListenerManager const &listen, int client_fd
     _serverName(listen.getNode()),
     _serverPort(listen.getService())
 {
-    // -1 = "not open yet" so the destructor knows what to clean up
     _stdin_pipe[0] = -1;
     _stdin_pipe[1] = -1;
     _stdout_pipe[0] = -1;
@@ -130,7 +129,6 @@ bool CGI::start()
 {
     std::string interpreter = findInterpreter();
 
-    // pre-fork validation
     if (interpreter.empty() || access(_fullPath.c_str(), R_OK) != 0
         || access(interpreter.c_str(), X_OK) != 0)
     {
@@ -162,7 +160,7 @@ bool CGI::start()
     if (_pid == 0)
     {
         // CHILD: becomes script, never returns - just exec
-        dup2(_stdin_pipe[0], STDIN_FILENO);    // body -> script's stdin
+        dup2(_stdin_pipe[0], STDIN_FILENO);    // body being read-> script's stdin
         dup2(_stdout_pipe[1], STDOUT_FILENO);  // script's stdout -> pipe
         // close ALL pipe ends: the dup2 copies stay open. If we kept
         // _stdin_pipe[1] open here, the script would never see EOF on stdin.
@@ -218,7 +216,6 @@ bool CGI::onWritable()
     if (n > 0)
         _bytesWritten += static_cast<size_t>(n);
     // n == -1 means the pipe is full for the moment; epoll will fire again.
-    // Per subject we must not inspect errno after write, just retry later.
 
     return _bytesWritten >= _body.size();
 }

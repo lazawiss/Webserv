@@ -72,3 +72,8 @@
 // Hardware has CPU, memory, storage, and GPU; to communicate with me, there is KERNEL. 
 // Linux - packages that have been put together for KERNEL
 //
+chunked transfer encoding- body format : client chooses the body in explicit pieces 
+// content length we can't have so it says transfer-encoding: chunked 
+// requests sent by client to trigger action on server
+// response s: answer that server sends in response to Request
+start line , headers, empty line, and then body (optional that would contain data)

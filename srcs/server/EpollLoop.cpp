@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/11 19:04:50 by ankim            ###   ########.fr       */
+/*   Updated: 2026/07/12 17:10:49 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -100,7 +100,7 @@ bool    EpollLoop::do_use_fd( int fd, std::vector<ListenerManager*> const & list
 
     char    buf[BUF_SIZE];
 
-    ssize_t n_read = read(fd, buf, BUF_SIZE);           // read HTTP requests
+    ssize_t n_read = read(fd, buf, BUF_SIZE); // read HTTP requests, need to handle TCP accidents
     if (n_read == 0)
     {
         LOG_ERROR("Client closed connection: - " + std::string(strerror(errno)));
@@ -300,13 +300,13 @@ bool EpollLoop::readingSocket( std::vector<ListenerManager*> const & listeners, 
                 {
                     CGI *cgi = it->second;
                     int activeFd = events[n].data.fd;
-
+                    // event only carries raw fd, not why you registered
                     if (activeFd == cgi->getStdinFd())
                     {
                         // feeding the request body to the script
                         if (cgi->onWritable())
                         {
-                            // body fully sent: deregister, then close.
+                            // body fully sent
                             // Closing = EOF on the script's stdin, which is
                             // how it knows the POST body is complete.
                             epoll_ctl(epollfd, EPOLL_CTL_DEL, activeFd, NULL);
@@ -316,7 +316,7 @@ bool EpollLoop::readingSocket( std::vector<ListenerManager*> const & listeners, 
                     }
                     else
                     {
-                        // collecting the script's output
+                        // collecting the script's output stdout pipe until EOF
                         if (cgi->onReadable())
                         {
                             // EOF: script finished -> reap child, respond
