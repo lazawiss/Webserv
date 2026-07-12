@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/12 17:18:51 by ankim            ###   ########.fr       */
+/*   Updated: 2026/07/12 17:38:06 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -109,6 +109,9 @@ bool    EpollLoop::do_use_fd( int fd, std::vector<ListenerManager*> const & list
     // n_Read = -1 means error, n_read == 0 means eof
 
     std::string request = std::string(buf, n_read);
+    // std::cout << request << std::endl;
+    // Parse request
+    
 
     // find which listener accepted this client
     int listenerSockfd = _clientToListener[fd];

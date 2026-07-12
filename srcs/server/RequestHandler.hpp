@@ -6,7 +6,11 @@
 /*   By: andikim <andikim@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:00:06 by lzannis           #+#    #+#             */
+<<<<<<< HEAD
 /*   Updated: 2026/07/05 17:17:11 by andikim          ###   ########.fr       */
+=======
+/*   Updated: 2026/07/12 16:55:21 by lzannis          ###   ########.fr       */
+>>>>>>> html
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,6 +61,7 @@ private:
     std::string         _root;
     std::string         _header;
     std::string         _size;
+    std::string         _pathToFile;
     char                _buffer[BUF_SIZE];
     ssize_t             _n_read_index;
     /*CGI */
@@ -84,7 +89,7 @@ public:
     
     std::string         buildAnswerHeader( std::string const & code, std::string const & type );
     
-    std::string         getFile( std::string const & code );
+    std::string         getFile( std::string const & code, bool const & error );
     std::string         getFileImage( std::string const & code);
     std::string         getFileUpload( std::string const & code);
     std::string         getPath() const;
@@ -99,7 +104,9 @@ public:
     bool                answerFileImage( std::string const & file );
     bool                answerFileIcon();
 
-    bool                uploadFile();
+    bool                uploadFile( std::string const & filename, std::string const & buf );
+    bool                removeFile( std::string const & filename );
+
 
     bool                handleRequest(  ListenerManager const & listen );
     bool                getCGI() const;
