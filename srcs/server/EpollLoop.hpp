@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   EpollLoop.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:27:21 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/09 21:39:32 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/12 18:58:39 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,7 @@
 #include "../lexer/Lexer.hpp"
 #include "RequestHandler.hpp"
 #include "../parser/config/GlobalConfig.hpp"
+#include "CGIHandler.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -45,11 +46,14 @@
 
 class Server;
 
+class CGI;
+
 class EpollLoop {
 
 private:
-    std::map<int, int>  _clientToListener;
-
+    std::map<int, int>  _clientToListener; // key value lookup 
+    // - key : client socketfd, - value: listener socketfd
+    std::map<int, CGI*> _fdToCGI;  // pipe fd, CGI value
 protected:
 
 public:
@@ -61,7 +65,12 @@ public:
 
     int         setnonblocking( int fd );
 
-    bool        do_use_fd( int fd, std::vector<ListenerManager*> const & listeners, const GlobalConfig &config );
+    bool        do_use_fd( int fd, std::vector<ListenerManager*> const & listeners, const GlobalConfig &config, int epollfd , epoll_event& ev);
     bool        readingSocket( std::vector<ListenerManager*> const & listeners, const GlobalConfig &config );
+    // bool        do_use_fd( int fd, ListenerManager const & listen );
+    // bool        readingSocket( ListenerManager const & listen );
+
+    // bool        do_use_fd(  int fd, std::vector<ListenerManager> const & listeners, int epollfd );
+    // bool        readingSocket( std::vector<ListenerManager> const & listeners );
 
 };

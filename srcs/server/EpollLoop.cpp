@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   EpollLoop.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/25 21:09:51 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/12 18:59:46 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@
 #include "ResponseSender.hpp"
 #include "../parser/Parser.hpp"
 #include "RequestHandler.hpp"
+#include "CGIHandler.hpp"
 
 
 /*
@@ -85,7 +86,7 @@ int EpollLoop::setnonblocking( int fd ){
 // handle fds : no closing fds in other classes only in EpollLoop 
 // TO ENSURE NO HANGING FDS : if boolean == false > error caught fd closed in EPollLoop
 // then throw in Server >> quit program
-bool    EpollLoop::do_use_fd( int fd, std::vector<ListenerManager*> const & listeners, const GlobalConfig &config ){
+bool    EpollLoop::do_use_fd( int fd, std::vector<ListenerManager*> const & listeners, const GlobalConfig &config, int epollfd, epoll_event &ev){
 
     std::cout << "[global] root: " << config.getRoot() << std::endl;
     const std::vector<ServerConfig> &servers = config.getServers();
@@ -99,14 +100,18 @@ bool    EpollLoop::do_use_fd( int fd, std::vector<ListenerManager*> const & list
 
     char    buf[BUF_SIZE];
 
-    ssize_t n_read = read(fd, buf, BUF_SIZE);           // read HTTP requests
+    ssize_t n_read = read(fd, buf, BUF_SIZE); // read HTTP requests, need to handle TCP accidents
     if (n_read == 0)
     {
         LOG_ERROR("Client closed connection: - " + std::string(strerror(errno)));
         return (close(fd), false);
     }
+    // n_Read = -1 means error, n_read == 0 means eof
 
     std::string request = std::string(buf, n_read);
+    // std::cout << request << std::endl;
+    // Parse request
+    
 
     // find which listener accepted this client
     int listenerSockfd = _clientToListener[fd];
@@ -152,11 +157,36 @@ bool    EpollLoop::do_use_fd( int fd, std::vector<ListenerManager*> const & list
         std::cerr << "Reading of html file failed: " << strerror(errno) << std::endl;
         return (close(fd), false);
     }
+    if (requestHandler.getCGI())
+    {
+        CGI *cgi = new CGI(requestHandler, *listener, fd);
+        if (!cgi->start())
+        {
+            delete cgi;
+            std::string err = "HTTP/1.1 500 Internal Server Error\r\n" // Pass par Lea pour voir
+                              "Content-Length: 0\r\n\r\n";
+            send(fd, err.c_str(), err.size(), 0);
+            _clientToListener.erase(fd);
+            return (close(fd), false);
+        }
 
-    // // should fork() here : ONLY FORK() FOR CGI
-    
-    // // send response 
-    
+        // stdin pipe: WE write the body into it -> watch for EPOLLOUT
+        ev.events = EPOLLOUT;
+        ev.data.fd = cgi->getStdinFd();
+        epoll_ctl(epollfd, EPOLL_CTL_ADD, cgi->getStdinFd(), &ev);
+        _fdToCGI[cgi->getStdinFd()] = cgi;
+
+        // stdout pipe: WE read the script output -> watch for EPOLLIN
+        ev.events = EPOLLIN;
+        ev.data.fd = cgi->getStdoutFd();
+        epoll_ctl(epollfd, EPOLL_CTL_ADD, cgi->getStdoutFd(), &ev);
+        _fdToCGI[cgi->getStdoutFd()] = cgi;
+
+        // client fd stays OPEN and untouched: the response is sent later,
+        // when the stdout pipe hits EOF (see readingSocket)
+        return true;
+    }
+
     std::cout << "header:" << requestHandler.getHeader() << std::endl;
     std::string header = std::string(requestHandler.getHeader());
     std::string content = std::string(requestHandler.getBuffer().c_str(), requestHandler.getNReadIndex());
@@ -266,7 +296,46 @@ bool EpollLoop::readingSocket( std::vector<ListenerManager*> const & listeners, 
             // active fd == client fd → client is sending its HTTP request
             else
             {
-                if (do_use_fd(events[n].data.fd, listeners, config) == false)
+                std::map<int, CGI*>::iterator it = _fdToCGI.find(events[n].data.fd);
+                if (it != _fdToCGI.end())
+                {
+                    CGI *cgi = it->second;
+                    int activeFd = events[n].data.fd;
+                    // event only carries raw fd, not why you registered
+                    if (activeFd == cgi->getStdinFd())
+                    {
+                        // feeding the request body to the script
+                        if (cgi->onWritable())
+                        {
+                            // body fully sent
+                            // Closing = EOF on the script's stdin, which is
+                            // how it knows the POST body is complete.
+                            epoll_ctl(epollfd, EPOLL_CTL_DEL, activeFd, NULL);
+                            _fdToCGI.erase(it);
+                            cgi->closeStdin(); // closing write end, sends EOF to CGI process 
+                        }
+                    }
+                    else
+                    {
+                        // collecting the script's output stdout pipe until EOF
+                        if (cgi->onReadable())
+                        {
+                            // EOF: script finished -> reap child, respond
+                            epoll_ctl(epollfd, EPOLL_CTL_DEL, activeFd, NULL);
+                            _fdToCGI.erase(it);
+                            cgi->closeStdout();
+
+                            std::string response = cgi->buildResponse();
+                            send(cgi->getClientFd(), response.c_str(),
+                                 response.size(), 0);
+
+                            _clientToListener.erase(cgi->getClientFd());
+                            close(cgi->getClientFd());
+                            delete cgi;
+                        }
+                    }
+                }
+                else if (do_use_fd(events[n].data.fd, listeners, config, epollfd, ev) == false)
                     break;
             }
         }

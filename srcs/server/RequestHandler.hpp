@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestHandler.hpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:00:06 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/23 17:40:14 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/12 18:05:29 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,7 @@
 #include "ListenerManager.hpp"
 #include "HTTPParser.hpp"
 #include "../parser/config/ServerConfig.hpp"
-
+#include "CGIHandler.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -44,6 +44,7 @@
 #include <limits>
 
 
+
 #define BUF_SIZE 800000
 
 
@@ -56,12 +57,19 @@ private:
     std::string         _root;
     std::string         _header;
     std::string         _size;
+    std::string         _pathToFile;
     char                _buffer[BUF_SIZE];
     ssize_t             _n_read_index;
-   
+    /*CGI */
+    bool                _isCGI;
+    std::string         _fullPath; // location.root + _scriptFilename
+    std::string         _query_string;
+    std::string         _scriptFilename;
+    std::string         _body;
+    std::string         _content_type;
+    std::string         _content_length;
+    std::string         _method;
 
-    
-protected:
 public:
 
                         RequestHandler( std::string const & request, const ServerConfig &serverConfig );
@@ -72,15 +80,30 @@ public:
     std::string         getBuffer() const;
     std::string         getHeader() const;
     std::string         getSize() const;
-    ssize_t                getNReadIndex() const;
+    ssize_t             getNReadIndex() const;
 
     
-    std::string         buildAnswerHeader( std::string code, std::string type );
-    std::string         getFile( std::string code );
-    bool                answerFile( std::string file );
-    bool                answerFileImage();
+    std::string         buildAnswerHeader( std::string const & code, std::string const & type );
+    
+    std::string         getFile( std::string const & code, bool const & error );
+    std::string         getFileImage( std::string const & code);
+    std::string         getFileUpload( std::string const & code);
+    std::string         getPath() const;
+    std::string         getFilename() const;
+    std::string         getQueryString() const;
+    std::string         getBody() const;
+    std::string         getContentType() const;
+    std::string         getContentLength() const;
+    std::string         getMethod() const;
+    
+    bool                answerFile( std::string const & file );
+    bool                answerFileImage( std::string const & file );
     bool                answerFileIcon();
 
-    bool                handleRequest(  ListenerManager const & listen );
+    bool                uploadFile( std::string const & filename, std::string const & buf );
+    bool                removeFile( std::string const & filename );
 
+
+    bool                handleRequest(  ListenerManager const & listen );
+    bool                getCGI() const;
 };
