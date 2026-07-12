@@ -220,6 +220,8 @@ LocationConfig Parser::parseLocation()
             parseDirectiveUpload(location);
         else if (current().type == Word && current().value == "return")
             parseDirectiveReturn(location);
+        else if (current().type == Word && current().value == "cgi_extension")
+            parseDirectiveCGI(location);
         else if (current().type == Word)
             parseInheritableDirective(location);
         else
@@ -612,5 +614,32 @@ void Parser::parseDirectiveReturn(LocationConfig &ref)
         throw std::runtime_error("Unexpected token '" +  current().value
             + "', should be a 'semi colon' type");
 
+    next();
+}
+
+void Parser::parseDirectiveCGI(LocationConfig &ref)
+{
+    next();
+
+    if (current().type != Word)
+        throw std::runtime_error("Unexpected token '" +  current().value
+            + "', should be a 'word' type");
+
+
+    if (current().value != ".py" && current().value != ".php")
+        throw std::runtime_error("Invalid CGI file format: "
+            "expected .py or .php");
+
+    std::string key = current().value;
+    next();
+    std::string value = current().value;
+    ref.addMap(key, value);
+
+    next();
+
+    if (current().type != Semicolon)
+        throw std::runtime_error("Unexpected token '" +  current().value
+            + "', should be a 'semi colon' type");
+        
     next();
 }

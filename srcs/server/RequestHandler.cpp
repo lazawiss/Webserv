@@ -3,12 +3,13 @@
 /*                                                        :::      ::::::::   */
 /*   RequestHandler.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/25 21:06:57 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/11 20:13:05 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 
 #include "../lexer/Lexer.hpp"
 #include "ListenerManager.hpp"
@@ -22,6 +23,7 @@
 ** ============================================================================
 */
 
+<<<<<<< HEAD
 RequestHandler::RequestHandler( std::string const & request, const ServerConfig &serverConfig ) :
     _request(request), _serverConfig(serverConfig),
     _root(serverConfig.getRoot()), _header(), _size(), _n_read_index(0)
@@ -34,6 +36,17 @@ RequestHandler::RequestHandler( RequestHandler const & src ) :
     _request(src._request), _serverConfig(src._serverConfig),
     _root(src._root), _header(src._header),
     _size(src._size), _n_read_index(src._n_read_index)
+=======
+RequestHandler::RequestHandler( std::string const & request ) : _request(request),
+_root("data/html"), _header(), _size(), _n_read_index(0), _isCGI(false){
+
+    memset(_buffer, 0, BUF_SIZE);
+}
+
+RequestHandler::RequestHandler( RequestHandler const & src ) : 
+    _request(src._request), _root(src._root), _header(src._header),
+    _size(src._size),_n_read_index(src._n_read_index), _isCGI(src._isCGI)
+>>>>>>> d290547f4ea743f30a0f8a6e0ff3bff9a314d343
 {
     memcpy(_buffer, src._buffer, BUF_SIZE);
 }
@@ -49,6 +62,7 @@ RequestHandler & RequestHandler::operator=( RequestHandler const & other ){
         this->_size = other._size;
          memcpy(this->_buffer, other._buffer, BUF_SIZE);
         this->_n_read_index = other._n_read_index;
+        this->_isCGI = other._isCGI;
     }
 
     return *this;
@@ -75,6 +89,10 @@ ssize_t RequestHandler::getNReadIndex() const{
     return _n_read_index;
 }
 
+bool RequestHandler::getCGI() const {
+    return _isCGI;
+}
+
 /*
 ** ============================================================================
 ** Request Handler
@@ -99,7 +117,7 @@ static std::string resolveRoot(const ServerConfig &cfg, const std::string &uri)
 }
 
 // build path toward file
-std::string RequestHandler::getFile( std::string code ){
+std::string RequestHandler::getFile( std::string const & code ){
     
     std::string file = _root;
     file += "/";
@@ -110,26 +128,68 @@ std::string RequestHandler::getFile( std::string code ){
     std::cout << "File:" << file << std::endl;
     return file;
 }
+
+// build path toward file
+std::string RequestHandler::getFileImage( std::string const & code){
+    
+    std::string file = "data/images";
+    file += "/";
+    file += code;
+    std::cout << "FileImage:" << file << std::endl;
+    return file;
+}
+
+// build path toward file
+std::string RequestHandler::getFileUpload( std::string const & code){
+    
+    std::string file = "data/upload";
+    file += "/";
+    file += code;
+    std::cout << "FileImage:" << file << std::endl;
+    return file;
+}
+
+std::string RequestHandler::getPath() const{
+        return _fullPath; // location root + script name, set in handleRequest
+    }
+
+std::string     RequestHandler::getFilename() const {
+        return _scriptFilename;
+    }
+
+std::string     RequestHandler::getQueryString() const {
+        return _query_string;
+    }
+std::string     RequestHandler::getBody() const{
+        return _body;
+    }
+std::string     RequestHandler::getContentType() const{
+        return _content_type;
+    }
+std::string     RequestHandler::getContentLength() const{
+        return _content_length;
+    }
+std::string     RequestHandler::getMethod() const {
+        return _method;
+    }
  
 // construct message to send back to client 
 //  header : code + Content-Type
-std::string RequestHandler::buildAnswerHeader( std::string code, std::string type ){
+std::string RequestHandler::buildAnswerHeader( std::string const & code, std::string const & type ){
     
     //cherche dans tableau >> code + reason
-    std::string codeName[7] = {
-        "index",
+    std::string codeName[6] = {
+    
         "400",
         "404",
         "405",
         "413",
         "414",
         "421"
-
-
     };
     
-    int index = 0;
-    for (int i = 0 ;i < 7; i++){
+    int index = -1;
+    for (int i = 0 ;i < 6; i++){
         
         if (codeName[i] == code){
             index = i;
@@ -141,36 +201,36 @@ std::string RequestHandler::buildAnswerHeader( std::string code, std::string typ
     switch (index){
         
         case(0):
-        str = "200 OK";
+        str = "400 BAD REQUEST";
+        // str = "302 FOUND\r\nLocation: /html/400.html";
         break;
 
         case(1):
-        str = "400 BAD REQUEST";
-        // str = "302 FOUND\r\nLocation: /html/400.html";
-
-        break;
-
-        case(2):
         str = "404 Not Found";
         break;
 
-        case(3):
+        case(2):
         str = "405 METHOD NOT ALLOWED\r\nAllow: GET, POST, DELETE";
         break;
         
-        case(4):
+        case(3):
         str = "413 CONTENT TOO LARGE";
         break;
         
-        case(5):
+        case(4):
         str = "414 URI TOO LONG";
         break;
         
-        case(6):
+        case(5):
         str = "421 MISDIRECTED REQUEST";
+        break;
+        
+        case(6):
+        str = "201 CREATED\r\nLocation:";
         break;
 
         default:
+        str = "200 OK";
         break;
         
     }
@@ -211,7 +271,7 @@ std::string RequestHandler::buildAnswerHeader( std::string code, std::string typ
 
 // open file + stock it in buffer to send back to client
 // content = text
-bool    RequestHandler::answerFile( std::string file ){
+bool    RequestHandler::answerFile( std::string const & file ){
 
     struct stat sb;
     
@@ -232,6 +292,10 @@ bool    RequestHandler::answerFile( std::string file ){
     std::cout << "n_read_index:" << _n_read_index << std::endl;
     if (_n_read_index == -1)
         return false;
+    if (_n_read_index > BUF_SIZE){
+        std::cerr << "File size is too big." << std::endl;
+        return false;
+    }
     
     return true;
     
@@ -239,17 +303,17 @@ bool    RequestHandler::answerFile( std::string file ){
 
 // open file + stock it in buffer to send back to client
 // content = image
-bool    RequestHandler::answerFileImage(){
+bool    RequestHandler::answerFileImage( std::string const & file ){
 
     struct stat sb;
     
-    if (stat("data/images/cat.png", &sb) == -1){
+    if (stat(file.c_str(), &sb) == -1){
         std::cerr << "Error stat: " << strerror(errno) << std::endl;
         return false;
     }
     std::cout << "File Size : " << sb.st_size <<std::endl;
 
-    int indexfd = open("data/images/cat.png", O_RDONLY);
+    int indexfd = open(file.c_str(), O_RDONLY);
     if (indexfd == -1){
         std::cerr << "Error file failed to open on indexfd:" << indexfd << std::endl;
         return false;
@@ -269,6 +333,8 @@ bool    RequestHandler::answerFileImage(){
     return true;
 }
 
+// open file + stock it in buffer to send back to client
+// content = x-icon
 bool    RequestHandler::answerFileIcon(){
 
     struct stat sb;
@@ -298,6 +364,13 @@ bool    RequestHandler::answerFileIcon(){
     return true;
 }
 
+
+bool    RequestHandler::uploadFile(){
+    
+    return true;
+    
+}
+
 // main function : 
 // instanciate HTTPParser 
 // checks if request valid
@@ -317,8 +390,28 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         std::cout << "Request Invalid." << std::endl;
         requestValid = false;
     }
-    // find method
-    else if (requestValid == true && HTTPParser.findMethods() == false){
+
+    else if (requestValid == true && HTTPParser.findMethods() == false)
+    {
+        if (requestValid == true && HTTPParser.isCGI())
+        {
+            if (HTTPParser.validateCGIRequest() == false){
+                std::cout << "CGI Request not validated" << std::endl;
+                return false;
+            }
+            _scriptFilename = HTTPParser.getFilename();
+            _fullPath = "data/" + _scriptFilename; // location.root + _scriptFilename
+            _query_string = HTTPParser.getQueryString();
+            _body = HTTPParser.getBody(); // need to parse still
+            _content_type = HTTPParser.getContentType();
+            _content_length = HTTPParser.getContentLength();
+            _method = HTTPParser.getMethod();      
+            _isCGI = true;
+            return true;
+        }
+    }
+
+    if (requestValid == true && HTTPParser.findMethods() == false){
         std::cerr << "Error Method not implemented: " << strerror(errno) << std::endl;
     }
 
@@ -335,9 +428,22 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         }
             
     }
-    if (HTTPParser.getType() == "image/jpeg" || HTTPParser.getType() == "image/png"){
+    if (HTTPParser.getType() == "text/plain"){
         
-        if (answerFileImage() == false){
+        std::string file = getFileUpload(HTTPParser.getCode()); 
+        if (answerFile(file) == false){
+            
+            HTTPParser.setCode("404");
+            HTTPParser.setCode("text/html");
+        }
+            
+    }
+    if (HTTPParser.getType() == "image/jpeg" || HTTPParser.getType() == "image/png" || HTTPParser.getType() == "image/gif"){
+        
+        std::string file = getFileImage(HTTPParser.getCode()); 
+        // if (answerFileImage(file) == false){
+        if (answerFile(file) == false){
+
          
             HTTPParser.setCode("404");
             HTTPParser.setType("text/html");
@@ -351,6 +457,15 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
             HTTPParser.setType("text/html");
         }
     }
+    if (HTTPParser.getType() == "multipart/form-data"){
+        
+        if (answerFileIcon() == false){
+         
+            HTTPParser.setCode("404");
+            HTTPParser.setCode("text/html");
+        }
+    }
+    
     buildAnswerHeader(HTTPParser.getCode(), HTTPParser.getType());
 
     return true;

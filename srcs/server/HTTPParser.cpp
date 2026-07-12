@@ -3,16 +3,16 @@
 /*                                                        :::      ::::::::   */
 /*   HTTPParser.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/23 13:54:40 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/11 20:51:08 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "HTTPParser.hpp"
 #include "../lexer/Lexer.hpp"
 #include "../parser/config/ServerConfig.hpp"
+#include "HTTPParser.hpp"
 
 /*
 ** ============================================================================
@@ -20,16 +20,17 @@
 ** ============================================================================
 */
 
-HTTPParser::HTTPParser( std::string const & request, const ServerConfig &serverConfig ) :
-    _allTokens(), _request(request), _serverConfig(serverConfig), _code(), _type()
-{
-}
+HTTPParser:: HTTPParser(  std::string const & request,  const ServerConfig &serverConfig) : _allTokens(), _request(request),
+    _serverConfig(serverConfig), _code(), _type(), _method(), _requesttarget(), _httpversion(), _isCGI(false),
+ _fullPath(), _query_string(), _scriptFilename(), _body(), _content_type(), _content_length(),  _content_int(0),
+ _boundary(), _fileLength() {}
 
-HTTPParser::HTTPParser( HTTPParser const & src ) :
-    _allTokens(src._allTokens), _request(src._request), _serverConfig(src._serverConfig),
-    _code(src._code), _type(src._type)
-{
-}
+HTTPParser::HTTPParser( HTTPParser const & src ) : _allTokens(src._allTokens), _request(src._request), _serverConfig(src._serverConfig),
+_code(src._code), _type(src._type), _method(src._method), _requesttarget(src._requesttarget),
+ _httpversion(src._httpversion), _isCGI(src._isCGI), 
+ _fullPath(src._fullPath), _query_string(src._query_string), _scriptFilename(src._scriptFilename), 
+ _body(src._body), _content_type(src._content_type), _content_length(src._content_length),  _content_int(src._content_int), _boundary(src._boundary),
+ _fileLength(src._fileLength) {}
 
 HTTPParser::~HTTPParser(){
     
@@ -42,9 +43,20 @@ HTTPParser &    HTTPParser::operator=( HTTPParser const & other ){
         this->_allTokens = other._allTokens;
         this->_request = other._request;
         this->_code = other._code;
-        this->_method = other._method;
         this->_type = other._type;
-
+        this->_method = other._method;
+        this->_requesttarget = other._requesttarget;
+        this->_httpversion = other._httpversion;
+        this->_isCGI = other._isCGI;
+        this->_fullPath = other._fullPath;
+        this->_query_string = other._query_string;
+        this->_scriptFilename = other._scriptFilename;
+        this->_body = other._body;
+        this->_content_type = other._content_type;
+        this->_content_length = other._content_length;
+        this->_content_int = other._content_int;
+        this->_boundary = other._boundary;
+        this->_fileLength = other._fileLength;
     }
     
     return *this;
@@ -63,6 +75,11 @@ std::string HTTPParser::getType() const{
 std::string HTTPParser::getMethod() const{
     
     return _method;
+}
+
+std::string HTTPParser::getBoundary() const{
+        
+    return _boundary;
 }
 
 std::string HTTPParser::setCode( std::string const & code ){
@@ -175,10 +192,37 @@ static bool isTokenWord( Token const & t ){
     return t.type == Word;
 }
 
-
 static bool isMethod( Token const & t ){
     
     return t.value == "GET" || t.value == "POST" || t.value == "DELETE";
+}
+
+static bool isHost( Token const & t ){
+    
+    return t.value == "Host:";
+}
+
+static bool isContentType( Token const & t ){
+    
+    return t.value == "Content-Type:";
+}
+
+static bool isContentLength( Token const & t ){
+    
+    return t.value == "Content-Length:";
+}
+
+void HTTPParser::extractBody()
+{
+    size_t headerEnd = _request.find("\r\n\r\n");
+    size_t sepLen = 4;
+    if (headerEnd == std::string::npos)
+    {
+        headerEnd = _request.find("\n\n");
+        sepLen = 2;
+    }
+    if (headerEnd != std::string::npos)
+        _body = _request.substr(headerEnd + sepLen);
 }
 
 
@@ -200,11 +244,10 @@ bool    HTTPParser::checkRequestLine(){
             
             char const *slash = strrchr(found->value.c_str(), '/');
             if (slash){
-          
                 _requesttarget = found->value;
                 std::cout << "RequestTarget: " << _requesttarget<< std::endl;
                 found++;
-                
+
                 if (found->value == "HTTP/1.1"){
                 
                     _httpversion = found->value;
@@ -212,15 +255,13 @@ bool    HTTPParser::checkRequestLine(){
                     return true;
                 } 
             }
-
         }
         else{
+            
             _code = "405";
             _type = "text/html";
             return false;
-            
         }
-    
     }
 
     _code = "400";
@@ -236,37 +277,127 @@ bool    HTTPParser::checkHost( ListenerManager const & listener ){
     std::string hostname = listener.getNode();
     hostname += ":";
     hostname += listener.getService();
+
+    std::cout << "hostname:" << hostname << std::endl;
+        std::vector<Token>::iterator found;
     
-    std::vector<Token>::iterator it;
+    found = find_if(_allTokens.begin(), _allTokens.end(), isTokenWord);
+    if (found != _allTokens.end()){ // same as EOF
+        
+        
+        found = find_if(_allTokens.begin(), _allTokens.end(), isHost);
+        if (found != _allTokens.end()){
+            
+            found++;
+            if (found->value != hostname){
+                
+                std::cout << "found->value:" << found->value << std::endl;
 
-    for (it = _allTokens.begin(); it != _allTokens.end(); ++it)
-    {
-        if (it->type == Word)
-        {
-            if (it->value == "Host:")
-            {
-                it++;
-                if (it->type == Word)
-                {
-                    if (it->value != hostname)
-                    {
-                        _code = "421";
-                        _type = "text/html";
-
-                        return false;
-                    }
-                }
+                _code = "421";
+                _type = "text/html";
+                
+                return false;
             }
-        }
-        else if (it->type != Semicolon && it->type != End)
-        {
-            _code = "400";
-            _type = "text/html";
-
-            return false;
+            
+            return true;
+            
         }
     }
-    return true;
+    _code = "400";
+    _type = "text/html";
+    
+    return false;
+}
+
+bool    HTTPParser::checkContentType(){
+
+    std::vector<Token>::iterator found;
+    
+    found = find_if(_allTokens.begin(), _allTokens.end(), isTokenWord);
+    if (found != _allTokens.end()){ // same as EOF
+        
+        
+        found = find_if(_allTokens.begin(), _allTokens.end(), isContentType);
+        if (found != _allTokens.end()){
+            
+            found++;
+            _type = found->value;
+        
+            std::cout << "Content-Type:" << _type << std::endl;
+            if (_type.find("multipart/form-data") != std::string::npos)
+            {
+                found++;
+                found++;
+                if (found != _allTokens.end() && found->value.size() > 8)
+                {
+                    _boundary = found->value;
+                    _boundary.erase(_boundary.begin(), _boundary.begin() + 8);
+                    std::cout << "boundary:" << _boundary << std::endl;
+                }
+            }
+            return true;
+        }
+    }
+    _code = "400";
+    _type = "text/html";
+    return false;
+}
+
+bool    HTTPParser::checkContentLength(){
+
+    std::vector<Token>::iterator found;
+    
+    found = find_if(_allTokens.begin(), _allTokens.end(), isTokenWord);
+    if (found != _allTokens.end()){ // same as EOF
+        
+        
+        found = find_if(_allTokens.begin(), _allTokens.end(), isContentLength);
+        if (found != _allTokens.end()){
+            
+            found++;
+            // std::cout << "found->value:" << found->value << std::endl;
+            if (_isCGI){
+                _content_length = found->value;
+                std::stringstream ss(_fileLength);
+                int len; 
+                ss >> len;
+                std::cout << "Content-Length:" << _content_length << std::endl;
+                std::cout << "Content-Length:" << len << std::endl;
+                if (len > BUF_SIZE)
+                {
+                    std::cerr << "File size is too big." << std::endl;
+                    return false;
+                }
+                _content_int = len;
+                return true ; 
+            }
+            _fileLength = found->value;
+            std::stringstream ss(_fileLength);
+            size_t len; 
+            ss >> len;
+            std::cout << "Content-Length:" << _fileLength << std::endl;
+            std::cout << "Content-Length:" << len << std::endl;
+            // while(found->type != LBracket){
+            //     if (found->value != _boundary){
+                    
+            //         std::cout << "found->value:" << found->value << std::endl;
+            //         found++;
+            //     }
+            // }
+
+            if (len > BUF_SIZE){
+                std::cerr << "File size is too big." << std::endl;
+                return false;
+            }
+
+            return true;
+            
+        }
+    }
+    _code = "400";
+    _type = "text/html";
+    
+    return false;
 }
 
 bool    HTTPParser::isRequestValid( ListenerManager const & listen ){
@@ -280,6 +411,10 @@ bool    HTTPParser::isRequestValid( ListenerManager const & listen ){
         std::cerr << "Error Request Line wrong: " << strerror(errno) << std::endl;
         return false;
     }
+
+    // check for root because need full path
+    extractBody();
+    parseCGI();
     
     if (checkHost(listen) == false){
         std::cerr << "Error Host not found: " << strerror(errno) << std::endl;
@@ -289,8 +424,76 @@ bool    HTTPParser::isRequestValid( ListenerManager const & listen ){
     return true;
 }
 
+/* --------- CGI PARSING INCLUSION ------------*/
+
+void    HTTPParser::parseCGI(){
+        // GET /cgi-bin/hello.py?name=andi HTTP/1.1
+    if (_requesttarget.find("/cgi-bin/") == std::string::npos)
+    {
+        _isCGI = false;
+        return;
+    }
+
+    size_t pos = _requesttarget.find('?');
+    if (pos != std::string::npos)
+    {
+        _scriptFilename = _requesttarget.substr(0, pos);
+        _query_string = _requesttarget.substr(pos + 1);
+    }
+    else
+    {
+        _scriptFilename = _requesttarget;
+        _query_string = "";
+    }
+    _isCGI = true;
+    return;
+}
+
+bool    HTTPParser::isCGI() const{
+    return _isCGI;
+}
+
+bool HTTPParser::validateCGIRequest()
+{
+    if (_method != "GET" && _method != "POST" &&
+        _method != "DELETE")
+    {
+        _code = "405";
+        return false;
+    }
+    if (_method == "POST")
+    {
+        if (!checkContentType())  { std::cerr << "no Content-Type" << std::endl; return false; }
+        if (!checkContentLength()){ std::cerr << "no Content-Length" << std::endl; return false; }
+    }
+    _code = "cgi";
+    return true;
+}
+
+std::string     HTTPParser::getFilename() const {
+    return _scriptFilename;
+}
+
+std::string     HTTPParser::getQueryString() const {
+    return _query_string;
+}
+std::string     HTTPParser::getBody() const{
+    return _body;
+}
+std::string     HTTPParser::getContentType() const{
+    return _content_type;
+}
+std::string     HTTPParser::getContentLength() const{
+    return _content_length;
+}
+std::string     HTTPParser::getRequestTarget() const{
+    return _requesttarget;
+}
+
+/* --------- CGI PARSING INCLUSION ------------*/
+
 bool    HTTPParser::findMethods(){
-    
+
     if (_method == "GET"){
         
         if (_requesttarget == "/"){
@@ -300,33 +503,50 @@ bool    HTTPParser::findMethods(){
             
             return true;
         }
+        else if (_requesttarget == "/image.html"){
+            
+            _code = "image";
+            _type = "text/html";
+            return true;
+
+        }
+        else if (_requesttarget == "/gallery.html"){
+            
+            _code = "gallery";
+            _type = "text/html";
+            return true;
+
+        }
+        else if (_requesttarget == "/form.html"){
+            _code = "form";
+            _type = "text/html";
+            return true;
+        }
         else if (_requesttarget.find("/images") != std::string::npos){
             
             std::cout <<  "found /images " << std::endl;
             
-            char const *lastSlash = strrchr(_requesttarget.c_str(), '.');
-            if (lastSlash)
-            std::cout <<  "lastSlash:" << lastSlash << std::endl;
-            std::string suffix = std::string(lastSlash);
+            char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
+            if (lastPoint)
+            std::cout <<  "lastPoint:" << lastPoint << std::endl;
+            char const *lastSlash = strrchr(_requesttarget.c_str(), '/');
+            std::string name = std::string(lastSlash, strlen(lastSlash));
+            name.erase(name.begin());
+
+            std::cout <<  "name:" << name << std::endl;
+            
+            _code = name;
+            std::string suffix = std::string(lastPoint, strlen(lastPoint));
             if (suffix  == ".jpg"){
-                
-                _code = "index";
                 _type = "image/jpeg";
-                
                 return true;
             }
             if (suffix  == ".png"){
-                
-                _code = "index";
                 _type = "image/png";
-                
                 return true;
             }
             if (suffix  == ".gif"){
-                
-                _code = "index";
                 _type = "image/gif";
-                
                 return true;
             }
         }
@@ -340,25 +560,90 @@ bool    HTTPParser::findMethods(){
         _code = "index";
         _type = "text/html";
         return true;
+        
+        if (_requesttarget.find("/upload") != std::string::npos){
+            
+            _code = "upload";
+            _type = "text/html";
+            return true;
+        }
     }
     else if (_method == "POST"){
-        
-        _code = "200"; //? fichier specifique 
-        return true;
+        if (_requesttarget.find("/upload") != std::string::npos){
+            
+            if (_requesttarget == "/upload"){
+                
+                if (checkContentType() == false){
+                    std::cerr << "Error Content-Type not found: " << strerror(errno) << std::endl;
+                    return false;
+                }
+                if (checkContentLength() == false){
+                    std::cerr << "Error Content-Length not found: " << strerror(errno) << std::endl;
+                    return false;
+                }
+                return true;
+            }
+            else{
+                
+                char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
+                if (lastPoint)
+                std::cout <<  "lastPoint:" << lastPoint << std::endl;
+                
+                char const *lastSlash = strrchr(_requesttarget.c_str(), '/');
+                std::string name = std::string(lastSlash, strlen(lastSlash));
+                name.erase(name.begin());
+                
+                std::cout <<  "name:" << name << std::endl;
+                
+                _code = name; //? fichier specifique 
+                std::string suffix = std::string(lastPoint, strlen(lastPoint));
+                if (suffix == ".txt"){
+                    _type = "text/plain";
+                    return true;
+                }
+                if (suffix == ".html"){
+                    _type = "text/html";
+                    return true;
+                }
+            }
+            //on success send 201 CREATED + Location: path to ressource
+            // return true;
+        }
     }
     else if (_method == "DELETE"){
         
-        _code = "200"; //? fichier specifique 
-        return true;
-        
+        if (_requesttarget.find("/upload") != std::string::npos){
+            
+            char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
+            if (lastPoint)
+            std::cout <<  "lastPoint:" << lastPoint << std::endl;
+            
+            char const *lastSlash = strrchr(_requesttarget.c_str(), '/');
+            std::string name = std::string(lastSlash, strlen(lastSlash));
+            name.erase(name.begin());
+            
+            std::cout <<  "name:" << name << std::endl;
+            
+            _code = name; //? fichier specifique 
+            std::string suffix = std::string(lastPoint, strlen(lastPoint));
+            if (suffix == ".txt"){
+                _type = "text/plain";
+                return true;
+            }
+            if (suffix == ".html"){
+                _type = "text/html";
+                return true;
+            }
+            
+            // _code = "200"; //? fichier specifique 
+            // 204 No Content
+            return true;
+        }
     }
-    else {
-        _code = "404";
-        _type = "text/html";
-
-        return false;
-    }
-    return true;
+    _code = "404";
+    _type = "text/html";
+    return false;
+ 
 }
 
 bool    HTTPParser::findPath(){
