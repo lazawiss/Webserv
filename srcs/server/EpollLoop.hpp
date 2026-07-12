@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:27:21 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/02 18:43:04 by ankim            ###   ########.fr       */
+/*   Updated: 2026/07/12 17:17:40 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,16 +64,13 @@ public:
     EpollLoop & operator=( EpollLoop const & other );
 
     int         setnonblocking( int fd );
-<<<<<<< HEAD
 
-    bool        do_use_fd( int fd, std::vector<ListenerManager*> const & listeners, const GlobalConfig &config );
+    bool        do_use_fd( int fd, std::vector<ListenerManager*> const & listeners, const GlobalConfig &config, int epollfd );
     bool        readingSocket( std::vector<ListenerManager*> const & listeners, const GlobalConfig &config );
-=======
     // bool        do_use_fd( int fd, ListenerManager const & listen );
     // bool        readingSocket( ListenerManager const & listen );
 
-    bool        do_use_fd(  int fd, std::vector<ListenerManager> const & listeners, int epollfd );
-    bool        readingSocket( std::vector<ListenerManager> const & listeners );
->>>>>>> d290547f4ea743f30a0f8a6e0ff3bff9a314d343
+    // bool        do_use_fd(  int fd, std::vector<ListenerManager> const & listeners, int epollfd );
+    // bool        readingSocket( std::vector<ListenerManager> const & listeners );
 
 };

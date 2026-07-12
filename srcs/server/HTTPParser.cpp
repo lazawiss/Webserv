@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/11 20:51:08 by ankim            ###   ########.fr       */
+/*   Updated: 2026/07/12 17:21:55 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,11 +92,6 @@ std::string HTTPParser::setType( std::string const & type ){
 
     _type = type;
     return _type;
-}
-
-std::string HTTPParser::getRequestTarget() const{
-
-    return _requesttarget;
 }
 
 
@@ -657,8 +652,8 @@ bool    HTTPParser::findHeaders(){
     
 }
 
-bool    HTTPParser::findCGI(){
+// bool    HTTPParser::findCGI(){
     
-    return true;
+//     return true;
     
-}
+// }

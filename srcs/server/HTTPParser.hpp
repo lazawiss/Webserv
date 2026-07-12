@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/11 20:50:25 by ankim            ###   ########.fr       */
+/*   Updated: 2026/07/12 17:19:55 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -83,7 +83,6 @@ public:
     std::string     getCode() const;
     std::string     getType() const;
     std::string     getMethod() const;
-    std::string     getRequestTarget()  const;
 
     /* ADD INS FOR CGI-------------*/
     std::string     getPath() const;

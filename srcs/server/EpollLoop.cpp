@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/12 17:10:49 by ankim            ###   ########.fr       */
+/*   Updated: 2026/07/12 17:18:51 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,7 +86,7 @@ int EpollLoop::setnonblocking( int fd ){
 // handle fds : no closing fds in other classes only in EpollLoop 
 // TO ENSURE NO HANGING FDS : if boolean == false > error caught fd closed in EPollLoop
 // then throw in Server >> quit program
-bool    EpollLoop::do_use_fd( int fd, std::vector<ListenerManager*> const & listeners, const GlobalConfig &config ){
+bool    EpollLoop::do_use_fd( int fd, std::vector<ListenerManager*> const & listeners, const GlobalConfig &config, int epollfd){
 
     std::cout << "[global] root: " << config.getRoot() << std::endl;
     const std::vector<ServerConfig> &servers = config.getServers();
@@ -334,7 +334,7 @@ bool EpollLoop::readingSocket( std::vector<ListenerManager*> const & listeners, 
                         }
                     }
                 }
-                else if (do_use_fd(events[n].data.fd, listeners, epollfd) == false)
+                else if (do_use_fd(events[n].data.fd, listeners, config, epollfd) == false)
                     break;
             }
         }

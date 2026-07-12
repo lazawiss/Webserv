@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/11 20:13:05 by ankim            ###   ########.fr       */
+/*   Updated: 2026/07/12 17:35:04 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,10 +23,11 @@
 ** ============================================================================
 */
 
-<<<<<<< HEAD
 RequestHandler::RequestHandler( std::string const & request, const ServerConfig &serverConfig ) :
     _request(request), _serverConfig(serverConfig),
-    _root(serverConfig.getRoot()), _header(), _size(), _n_read_index(0)
+    _root(serverConfig.getRoot()), _header(), _size(), _n_read_index(0), _isCGI(false),
+    _fullPath(), _query_string(), _scriptFilename(), _body(), _content_type(), _content_length(),
+    _method()
 {
     std::cout << "[RequestHandler] _root: '" << _root << "'" << std::endl;
     memset(_buffer, 0, BUF_SIZE);
@@ -35,19 +36,12 @@ RequestHandler::RequestHandler( std::string const & request, const ServerConfig 
 RequestHandler::RequestHandler( RequestHandler const & src ) :
     _request(src._request), _serverConfig(src._serverConfig),
     _root(src._root), _header(src._header),
-    _size(src._size), _n_read_index(src._n_read_index)
-=======
-RequestHandler::RequestHandler( std::string const & request ) : _request(request),
-_root("data/html"), _header(), _size(), _n_read_index(0), _isCGI(false){
-
-    memset(_buffer, 0, BUF_SIZE);
-}
-
-RequestHandler::RequestHandler( RequestHandler const & src ) : 
-    _request(src._request), _root(src._root), _header(src._header),
-    _size(src._size),_n_read_index(src._n_read_index), _isCGI(src._isCGI)
->>>>>>> d290547f4ea743f30a0f8a6e0ff3bff9a314d343
+    _size(src._size), _n_read_index(src._n_read_index), _isCGI(src._isCGI),
+    _fullPath(src._fullPath), _query_string(src._query_string), _scriptFilename(src._scriptFilename), 
+    _body(src._body), _content_type(src._content_type), _content_length(src._content_length),
+    _method(src._method)
 {
+
     memcpy(_buffer, src._buffer, BUF_SIZE);
 }
 
@@ -60,9 +54,16 @@ RequestHandler & RequestHandler::operator=( RequestHandler const & other ){
         this->_root = other._root;
         this->_header = other._header;
         this->_size = other._size;
-         memcpy(this->_buffer, other._buffer, BUF_SIZE);
+        memcpy(this->_buffer, other._buffer, BUF_SIZE);
         this->_n_read_index = other._n_read_index;
         this->_isCGI = other._isCGI;
+        this->_fullPath = other._fullPath;
+        this->_query_string = other._query_string;
+        this->_scriptFilename = other._scriptFilename;
+        this->_body = other._body;
+        this->_content_type = other._content_type;
+        this->_content_length = other._content_length;
+        this->_method = other._method;
     }
 
     return *this;
@@ -82,7 +83,6 @@ std::string RequestHandler::getSize() const{
 
     return _size;
 }
-
 
 ssize_t RequestHandler::getNReadIndex() const{
     
@@ -178,19 +178,19 @@ std::string     RequestHandler::getMethod() const {
 std::string RequestHandler::buildAnswerHeader( std::string const & code, std::string const & type ){
     
     //cherche dans tableau >> code + reason
-    std::string codeName[6] = {
+    std::string codeName[7] = {
     
         "400",
         "404",
         "405",
         "413",
         "414",
-        "421"
+        "421",
+        "201",
     };
     
     int index = -1;
-    for (int i = 0 ;i < 6; i++){
-        
+    for (int i = 0 ; i < 7; i++){
         if (codeName[i] == code){
             index = i;
             break;
@@ -198,7 +198,8 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
     }
     
     std::string str;
-    switch (index){
+
+    switch (index) {
         
         case(0):
         str = "400 BAD REQUEST";
