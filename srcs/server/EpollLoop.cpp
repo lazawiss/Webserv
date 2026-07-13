@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   EpollLoop.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
+/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/12 18:59:46 by ankim            ###   ########.fr       */
+/*   Updated: 2026/07/13 17:25:07 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -109,7 +109,7 @@ bool    EpollLoop::do_use_fd( int fd, std::vector<ListenerManager*> const & list
     // n_Read = -1 means error, n_read == 0 means eof
 
     std::string request = std::string(buf, n_read);
-    // std::cout << request << std::endl;
+    std::cout << request << std::endl;
     // Parse request
     
 

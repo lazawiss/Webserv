@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HTTPParser.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
+/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/12 18:03:24 by ankim            ###   ########.fr       */
+/*   Updated: 2026/07/13 17:39:13 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,7 +49,6 @@ class HTTPParser {
 
 private:
 
-    std::vector<Token>              _allTokens;
     std::string                     _request;
     const ServerConfig              &_serverConfig;
     std::string                     _code;
@@ -61,7 +60,6 @@ private:
     std::string                     _fileLength;
     std::string                     _fileName;
     std::string                     _fileBuf;
-    std::vector<Token>::iterator    _found;
     std::string::iterator           _pos;
     bool                            _errors;
     
@@ -75,10 +73,6 @@ private:
     std::string         _content_length;
     int                 _content_int;
 
-/* -------------------*/
-// protected:
-    // std::string         _boundary;
-    // std::string         _fileLength;
     
 
 public:
@@ -128,8 +122,6 @@ public:
     bool                        checkContentDisposition();
     bool                        gatherFile();
             
-            
-    // v    oid                    HTTPparse_file(const std::string& path);
     std::string                 addSuffix(std::string suffix);
                 
     bool                        findMethods();
