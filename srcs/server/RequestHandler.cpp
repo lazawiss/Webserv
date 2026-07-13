@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/13 17:28:16 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/13 18:30:05 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -120,11 +120,14 @@ static std::string resolveRoot(const ServerConfig &cfg, const std::string &uri)
 
 // build path toward file
 std::string RequestHandler::getFile( std::string const & code, bool const & error ){
-    
-    std::string file = _root;
-    file += "/";
+    std::string file;
     if (error == true)
-        file += "errors/";
+        file = "data/errors/";
+    else {
+        
+        file = _root;
+        file += "/";
+    }
     file += code;
     file += ".";
     file += "html";
