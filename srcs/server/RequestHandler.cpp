@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/13 17:25:18 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/13 17:28:16 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -211,7 +211,6 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
         
         case(0):
         str = "400 BAD REQUEST";
-        // str = "302 FOUND\r\nLocation: /html/400.html";
         break;
 
         case(1):
@@ -442,8 +441,6 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
     
     HTTPParser HTTPParser(_request, _serverConfig);
 
-    // HTTPParser.HTTPparse_file(_request);
-    
     bool    requestValid = true;
 
     //  check request
