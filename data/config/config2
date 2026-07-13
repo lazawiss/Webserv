@@ -1,0 +1,23 @@
+# ─────────────────────────────────────────
+#  SERVEUR 3 — Même port, autre interface
+# ─────────────────────────────────────────
+server {
+    listen       127.0.0.1:8080;     # même port, mais interface différente
+    server_name  internal.localhost;
+
+    error_page 400 /errors/404.html;
+
+    location / {
+        root        data/www/html;
+        index       index.html index2.html;
+        methods     GET;
+        autoindex   off;
+    }
+
+    location /api {
+        root        data/www/html1;
+        methods     GET;
+        autoindex   off;
+    }
+}
+
