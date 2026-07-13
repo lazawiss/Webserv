@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/11 18:51:02 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/13 15:41:28 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -107,7 +107,7 @@ bool    EpollLoop::do_use_fd( int fd, std::vector<ListenerManager*> const & list
     }
 
     std::string request = std::string(buf, n_read);
-    // std::cout << request << std::endl;
+    std::cout << request << std::endl;
     // Parse request
     
 

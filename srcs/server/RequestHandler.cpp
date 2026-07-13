@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/12 16:58:13 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/13 17:21:05 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -141,7 +141,7 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
     std::cout << "code:" << code << std::endl;
     
     //cherche dans tableau >> code + reason
-    std::string codeName[7] = {
+    std::string codeName[8] = {
     
         "400",
         "404",
@@ -149,11 +149,12 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
         "413",
         "414",
         "421",
-        "201"
+        "201",
+        "204"
     };
     
     int index = -1;
-    for (int i = 0 ;i < 7; i++){
+    for (int i = 0 ;i < 8; i++){
         
         if (codeName[i] == code){
             index = i;
@@ -191,6 +192,10 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
         
         case(6):
         str = "201 CREATED\r\nLocation: " + _pathToFile;
+        break;
+        
+         case(7):
+        str = "204 NO CONTENT";
         break;
 
         default:
@@ -414,13 +419,15 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         
         std::string file = getFileUpload(HTTPParser.getCode()); 
 
-        if (answerFile(file) == false){
+        if (removeFile(file) == false){
             HTTPParser.setError(true);
             HTTPParser.setCode("404");
             HTTPParser.setType("text/html");
         }
+        HTTPParser.setCode("204");
+        HTTPParser.setType("text/html");
     }
-    if (HTTPParser.getType() == "text/html"){
+    else if (HTTPParser.getType() == "text/html"){
         
         std::string file = getFile(HTTPParser.getCode(), HTTPParser.getError()); 
         if (answerFile(file) == false){
@@ -429,7 +436,7 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
             HTTPParser.setType("text/html");
         }
     }
-    if (HTTPParser.getType() == "text/plain"){
+    else if (HTTPParser.getType() == "text/plain"){
         
         std::string file = getFileUpload(HTTPParser.getCode()); 
         if (answerFile(file) == false){
@@ -438,7 +445,7 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
             HTTPParser.setType("text/html");
         }
     }
-    if (HTTPParser.getType() == "image/jpeg" || HTTPParser.getType() == "image/png" || HTTPParser.getType() == "image/gif" || HTTPParser.getType() == "image/webp"){
+    else if (HTTPParser.getType() == "image/jpeg" || HTTPParser.getType() == "image/png" || HTTPParser.getType() == "image/gif" || HTTPParser.getType() == "image/webp"){
         
         std::string file = getFileImage(HTTPParser.getCode()); 
         // if (answerFileImage(file) == false){
@@ -448,7 +455,7 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
             HTTPParser.setType("text/html");
         }
     }
-    if (HTTPParser.getType() == "image/x-icon"){
+    else if (HTTPParser.getType() == "image/x-icon"){
         
         if (answerFileIcon() == false){
             HTTPParser.setError(true);
@@ -456,9 +463,8 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
             HTTPParser.setType("text/html");
         }
     }
-    if (HTTPParser.getType() == "multipart/form-data"){
+    else if (HTTPParser.getType() == "multipart/form-data"){
         
-        std::cout << HTTPParser.getFileName() << std::endl;
         if (uploadFile(HTTPParser.getFileName(), HTTPParser.getFileBuf()) == false){
          
             HTTPParser.setError(true);

@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/12 17:30:00 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/13 16:02:27 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -673,8 +673,9 @@ bool    HTTPParser::gatherFile(){
             _fileBuf += *_pos;
         _pos++;
     }
-
-    _fileBuf.erase(_fileBuf.end() - (len + 2), _fileBuf.end());
+    
+    _fileBuf.erase(_fileBuf.end() - (len + 4), _fileBuf.end() - 1);
+    std::cout << _fileBuf<< std::endl;
     return true;
     
     // _code = "400";
@@ -752,9 +753,9 @@ bool    HTTPParser::findMethods(){
             _type = "text/html";
             return true;
         }
-        _code = "index";
-        _type = "text/html";
-        return true;
+        // _code = "index";
+        // _type = "text/html";
+        // return true;
     }
     else if (_method == "POST"){
         if (_requesttarget.find("/upload") != std::string::npos){
