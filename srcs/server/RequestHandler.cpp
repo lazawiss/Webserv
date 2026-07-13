@@ -6,9 +6,10 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/13 17:21:05 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/13 17:25:18 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 
 #include "../lexer/Lexer.hpp"
 #include "ListenerManager.hpp"
@@ -25,7 +26,9 @@
 
 RequestHandler::RequestHandler( std::string const & request, const ServerConfig &serverConfig ) :
     _request(request), _serverConfig(serverConfig),
-    _root(serverConfig.getRoot()), _header(), _size(), _pathToFile(), _n_read_index(0)
+    _root(serverConfig.getRoot()), _header(), _size(), _pathToFile(), _n_read_index(0), _isCGI(false),
+    _fullPath(), _query_string(), _scriptFilename(), _body(), _content_type(), _content_length(),
+    _method()
 {
     std::cout << "[RequestHandler] _root: '" << _root << "'" << std::endl;
     memset(_buffer, 0, BUF_SIZE);
@@ -34,8 +37,12 @@ RequestHandler::RequestHandler( std::string const & request, const ServerConfig 
 RequestHandler::RequestHandler( RequestHandler const & src ) :
     _request(src._request), _serverConfig(src._serverConfig),
     _root(src._root), _header(src._header),
-    _size(src._size), _pathToFile(src._pathToFile), _n_read_index(src._n_read_index)
+    _size(src._size), _pathToFile(src._pathToFile), _n_read_index(src._n_read_index), _isCGI(src._isCGI),
+    _fullPath(src._fullPath), _query_string(src._query_string), _scriptFilename(src._scriptFilename), 
+    _body(src._body), _content_type(src._content_type), _content_length(src._content_length),
+    _method(src._method)
 {
+
     memcpy(_buffer, src._buffer, BUF_SIZE);
 }
 
@@ -51,6 +58,14 @@ RequestHandler & RequestHandler::operator=( RequestHandler const & other ){
         this->_pathToFile = other._pathToFile;
         memcpy(this->_buffer, other._buffer, BUF_SIZE);
         this->_n_read_index = other._n_read_index;
+        this->_isCGI = other._isCGI;
+        this->_fullPath = other._fullPath;
+        this->_query_string = other._query_string;
+        this->_scriptFilename = other._scriptFilename;
+        this->_body = other._body;
+        this->_content_type = other._content_type;
+        this->_content_length = other._content_length;
+        this->_method = other._method;
     }
 
     return *this;
@@ -74,6 +89,10 @@ std::string RequestHandler::getSize() const{
 ssize_t RequestHandler::getNReadIndex() const{
     
     return _n_read_index;
+}
+
+bool RequestHandler::getCGI() const {
+    return _isCGI;
 }
 
 /*
@@ -133,6 +152,30 @@ std::string RequestHandler::getFileUpload( std::string const & code){
     std::cout << "FileImage:" << file << std::endl;
     return file;
 }
+
+std::string RequestHandler::getPath() const{
+        return _fullPath; // location root + script name, set in handleRequest
+    }
+
+std::string     RequestHandler::getFilename() const {
+        return _scriptFilename;
+    }
+
+std::string     RequestHandler::getQueryString() const {
+        return _query_string;
+    }
+std::string     RequestHandler::getBody() const{
+        return _body;
+    }
+std::string     RequestHandler::getContentType() const{
+        return _content_type;
+    }
+std::string     RequestHandler::getContentLength() const{
+        return _content_length;
+    }
+std::string     RequestHandler::getMethod() const {
+        return _method;
+    }
  
 // construct message to send back to client 
 //  header : code + Content-Type
@@ -163,7 +206,8 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
     }
     
     std::string str;
-    switch (index){
+
+    switch (index) {
         
         case(0):
         str = "400 BAD REQUEST";
@@ -407,8 +451,28 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         std::cout << "Request Invalid." << std::endl;
         requestValid = false;
     }
-    // find method
-    else if (requestValid == true && HTTPParser.findMethods() == false){
+
+    else if (requestValid == true && HTTPParser.findMethods() == false)
+    {
+        if (requestValid == true && HTTPParser.isCGI())
+        {
+            if (HTTPParser.validateCGIRequest() == false){
+                std::cout << "CGI Request not validated" << std::endl;
+                return false;
+            }
+            _scriptFilename = HTTPParser.getFilename();
+            _fullPath = "data/" + _scriptFilename; // location.root + _scriptFilename
+            _query_string = HTTPParser.getQueryString();
+            _body = HTTPParser.getBody(); // need to parse still
+            _content_type = HTTPParser.getContentType();
+            _content_length = HTTPParser.getContentLength();
+            _method = HTTPParser.getMethod();      
+            _isCGI = true;
+            return true;
+        }
+    }
+
+    if (requestValid == true && HTTPParser.findMethods() == false){
         std::cerr << "Error Method not implemented: " << strerror(errno) << std::endl;
     }
 

@@ -10,7 +10,7 @@ LocationConfig::LocationConfig() : AConfig() {}
 
 LocationConfig::LocationConfig(const LocationConfig &ref) : AConfig(ref),
     _path(ref._path), _methods(ref._methods), _upload(ref._upload),
-    _return(ref._return) {}
+    _return(ref._return), _cgi_extension(ref._cgi_extension) {}
 
 LocationConfig& LocationConfig::operator=(const LocationConfig &ref)
 {
@@ -21,6 +21,7 @@ LocationConfig& LocationConfig::operator=(const LocationConfig &ref)
         _methods      = ref._methods;
         _upload       = ref._upload;
         _return       = ref._return;
+        _cgi_extension = ref._cgi_extension;
     }
     return *this;
 }
@@ -76,4 +77,14 @@ const std::map<int, std::string>& LocationConfig::getReturn() const
 void LocationConfig::addReturn(int code, const std::string &uri)
 {
     _return[code] = uri;
+}
+// ── CGI ─────────────────────────────────────────────────────────────────────
+const std::map<std::string, std::string>& LocationConfig::getMap() const
+{
+    return _cgi_extension;
+}
+
+void LocationConfig::addMap(const std::string &key, const std::string &value)
+{
+    _cgi_extension.insert(std::make_pair(key, value));
 }
