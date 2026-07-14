@@ -6,7 +6,7 @@
 /*   By: andikim <andikim@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/14 15:04:36 by andikim          ###   ########.fr       */
+/*   Updated: 2026/07/14 20:10:17 by andikim          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <libexplain/stat.h>
+
 
 /*
 ** ============================================================================
@@ -577,11 +579,12 @@ bool    HTTPParser::findMethods(){
         if (stat(_fullPath.c_str(), &path_stat) == -1)
         {
             _errors = true;
-            _code = "404";
+            std::cerr << explain_stat(_fullPath.c_str(), &path_stat) << std::endl;
+            _code = "404"; // assuming that we are just not existing
             _type = "text/html";
             return false;
         }
-        if (S_ISDIR(path_stat.st_mode)) // file tpye and mode
+        if (S_ISDIR(path_stat.st_mode)) // file type and mode, is a directory?
         {
             std::string indexPath = _fullPath;
             if (indexPath[indexPath.size() - 1] != '/')
@@ -601,6 +604,7 @@ bool    HTTPParser::findMethods(){
                 _type = "text/html";
                 return true;
             }
+            // case of autoindex == off and index doesn't exist
             _errors = true;
             _code = "403"; // because directory is and it exists but we are not going to show you. authorization code
             _type = "text/html";

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   EpollLoop.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: andikim <andikim@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/13 17:25:07 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/14 19:23:36 by andikim          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -304,15 +304,11 @@ bool EpollLoop::readingSocket( std::vector<ListenerManager*> const & listeners, 
                     // event only carries raw fd, not why you registered
                     if (activeFd == cgi->getStdinFd())
                     {
-                        // feeding the request body to the script
                         if (cgi->onWritable())
                         {
-                            // body fully sent
-                            // Closing = EOF on the script's stdin, which is
-                            // how it knows the POST body is complete.
                             epoll_ctl(epollfd, EPOLL_CTL_DEL, activeFd, NULL);
                             _fdToCGI.erase(it);
-                            cgi->closeStdin(); // closing write end, sends EOF to CGI process 
+                            cgi->closeStdin();
                         }
                     }
                     else

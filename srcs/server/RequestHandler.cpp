@@ -6,7 +6,7 @@
 /*   By: andikim <andikim@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/14 15:33:21 by andikim          ###   ########.fr       */
+/*   Updated: 2026/07/14 19:44:47 by andikim          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -438,14 +438,16 @@ std::string RequestHandler::generateAutoindex(const std::string &fullPath, const
 {
     DIR *dir = opendir(_fullPath.c_str());
     if (dir == NULL)
-        return (""); // and thebn after should be 403? or 500, is it an error unexpected though?
+        return (""); 
+    // and then after should be 403? or 500, is it an error unexpected though?
     std::string html;
     html += "<DOCTYPE html>\n<html>\n<head><title> Index of ";
     html+= requestTarget; // or requestTarget - is it same thing here?
     html += "</title></head>\n<body>";
     // Look at how to create this HTML file. 
     
-    struct dirent *entry; // format of directory entries, useful to grab all the files that are existing, girl 
+    struct dirent *entry; // format of directory entries, useful to grab all the files that are existing, girl
+     
     
 }
 
@@ -490,7 +492,7 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
     if (requestValid == true && HTTPParser.findMethods() == false){
         std::cerr << "Error Method not implemented: " << strerror(errno) << std::endl;
     }
-
+// need this for CGI no? so maybe before?
     if (_root.empty())
         _root = resolveRoot(_serverConfig, HTTPParser.getRequestTarget());
 
@@ -506,19 +508,19 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         HTTPParser.setCode("204");
         HTTPParser.setType("text/html");
     }
-    // else if (HTTPParser.getCode() == "autoindex")
-    // {
-    //     _body = generateAutoindex(HTTPParser.getPath(), HTTPParser.getRequestTarget());
-    //     if (_body.empty())
-    //     {
-    //         // means that opendir didn't open for real directory
-    //         // so
-    //         HTTPParser.setError(true);
-    //         HTTPParser.setCode("403");
-    //         HTTPParser.setType("text/html");
-    //     }
-    //     // OR HERE: status 200, Content-Type: text/html in
-    //     // Content-Length = _body.size() like all static pages
+    else if (HTTPParser.getCode() == "autoindex")
+    {
+        _body = generateAutoindex(HTTPParser.getPath(), HTTPParser.getRequestTarget());
+        if (_body.empty())
+        {
+            // means that opendir didn't open for real directory
+            // so
+            HTTPParser.setError(true);
+            HTTPParser.setCode("403");
+            HTTPParser.setType("text/html");
+        }
+    //  ALL THE WAY ON BOTTOMG: 
+    // status 200, Content-Type: text/html in Content-Length = _body.size() like all static pages
     }
     else if (HTTPParser.getType() == "text/html"){
         
