@@ -248,7 +248,7 @@ void Parser::applyInheritance(AConfig &child, const AConfig &parent)
         !parent.getClientMaxBodySize().empty())
             child.setClientMaxBodySize(parent.getClientMaxBodySize());
     // Index implementation
-    if (child .getIndex().empty() && !parent.getIndex().empty())
+    if (child.getIndex().empty() && !parent.getIndex().empty())
     {
         const std::vector<std::string> &index = parent.getIndex();
         for (size_t i = 0; i < index.size(); i++)

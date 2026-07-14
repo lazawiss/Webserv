@@ -3,16 +3,19 @@
 /*                                                        :::      ::::::::   */
 /*   HTTPParser.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: andikim <andikim@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/13 18:06:39 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/14 15:04:36 by andikim          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../lexer/Lexer.hpp"
 #include "../parser/config/ServerConfig.hpp"
 #include "HTTPParser.hpp"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 /*
 ** ============================================================================
@@ -570,7 +573,39 @@ std::string     HTTPParser::addSuffix(std::string suffix){
 bool    HTTPParser::findMethods(){
 
     if (_method == "GET"){
-        
+        struct stat path_stat;
+        if (stat(_fullPath.c_str(), &path_stat) == -1)
+        {
+            _errors = true;
+            _code = "404";
+            _type = "text/html";
+            return false;
+        }
+        if (S_ISDIR(path_stat.st_mode)) // file tpye and mode
+        {
+            std::string indexPath = _fullPath;
+            if (indexPath[indexPath.size() - 1] != '/')
+                indexPath += "/";
+            indexPath += "index.html";
+            struct stat index_stat;
+            if (stat(indexPath.c_str(), &index_stat) == 0 && S_ISREG(index_stat.st_mode))
+            {
+                // this means that the index file exists and it is a file
+                _code = "index.html";
+                _type = "text/html";
+                return true;
+            }
+            if (_serverConfig.getAutoindex() == "on")
+            {
+                _code = "autoindex";
+                _type = "text/html";
+                return true;
+            }
+            _errors = true;
+            _code = "403"; // because directory is and it exists but we are not going to show you. authorization code
+            _type = "text/html";
+            return false;
+        }
         if (_requesttarget == "/" || _requesttarget == "/api"){
             
             _code = "index";

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestHandler.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: andikim <andikim@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/13 18:30:05 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/14 15:33:21 by andikim          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@
 #include "HTTPParser.hpp"
 #include "RequestHandler.hpp"
 #include "../parser/config/ServerConfig.hpp"
+#include <dirent.h> 
 
 /*
 ** ============================================================================
@@ -145,7 +146,6 @@ std::string RequestHandler::getFileImage( std::string const & code){
     std::cout << "FileImage:" << file << std::endl;
     return file;
 }
-
 // build path toward file
 std::string RequestHandler::getFileUpload( std::string const & code){
     
@@ -434,6 +434,21 @@ bool    RequestHandler::removeFile( std::string const & filename ){
     return true;
 }
 
+std::string RequestHandler::generateAutoindex(const std::string &fullPath, const std::string &requestTarget)
+{
+    DIR *dir = opendir(_fullPath.c_str());
+    if (dir == NULL)
+        return (""); // and thebn after should be 403? or 500, is it an error unexpected though?
+    std::string html;
+    html += "<DOCTYPE html>\n<html>\n<head><title> Index of ";
+    html+= requestTarget; // or requestTarget - is it same thing here?
+    html += "</title></head>\n<body>";
+    // Look at how to create this HTML file. 
+    
+    struct dirent *entry; // format of directory entries, useful to grab all the files that are existing, girl 
+    
+}
+
 // main function : 
 // instanciate HTTPParser 
 // checks if request valid
@@ -452,7 +467,7 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         requestValid = false;
     }
 
-    else if (requestValid == true && HTTPParser.findMethods() == false)
+    else if (requestValid == true)
     {
         if (requestValid == true && HTTPParser.isCGI())
         {
@@ -490,6 +505,20 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         }
         HTTPParser.setCode("204");
         HTTPParser.setType("text/html");
+    }
+    // else if (HTTPParser.getCode() == "autoindex")
+    // {
+    //     _body = generateAutoindex(HTTPParser.getPath(), HTTPParser.getRequestTarget());
+    //     if (_body.empty())
+    //     {
+    //         // means that opendir didn't open for real directory
+    //         // so
+    //         HTTPParser.setError(true);
+    //         HTTPParser.setCode("403");
+    //         HTTPParser.setType("text/html");
+    //     }
+    //     // OR HERE: status 200, Content-Type: text/html in
+    //     // Content-Length = _body.size() like all static pages
     }
     else if (HTTPParser.getType() == "text/html"){
         
@@ -538,7 +567,7 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         HTTPParser.setCode("201");
         HTTPParser.setType("image/png");
     }
-    
+
     buildAnswerHeader(HTTPParser.getCode(), HTTPParser.getType());
 
     return true;

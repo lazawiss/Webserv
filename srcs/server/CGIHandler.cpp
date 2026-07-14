@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CGIHandler.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
+/*   By: andikim <andikim@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 18:29:42 by andikim           #+#    #+#             */
-/*   Updated: 2026/07/12 13:57:07 by ankim            ###   ########.fr       */
+/*   Updated: 2026/07/13 23:05:45 by andikim          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,7 +55,6 @@ CGI::~CGI()
         close(_stdout_pipe[0]);
     if (_pid > 0)
     {
-        // child still alive at destruction = script hung -> kill + reap
         kill(_pid, SIGKILL);
         waitpid(_pid, NULL, 0);
     }
@@ -103,7 +102,7 @@ void CGI::buildEnv()
     _env.push_back("SERVER_PROTOCOL=HTTP/1.1");
     _env.push_back("SERVER_NAME=" + _serverName);
     _env.push_back("SERVER_PORT=" + _serverPort);
-    _env.push_back("REDIRECT_STATUS=200"); // php-cgi refuses to run without this (security guard against CVE-2012-1823)
+    _env.push_back("REDIRECT_STATUS=200"); 
 
     if (_method == "POST")
     {
@@ -111,8 +110,6 @@ void CGI::buildEnv()
         _env.push_back("CONTENT_LENGTH=" + _contentLength);
     }
 
-    // execve wants char*[]: point into _env's storage, NULL-terminated.
-    // _env must stay alive until execve 
     _envp.clear();
     for (size_t i = 0; i < _env.size(); ++i)
         _envp.push_back(const_cast<char*>(_env[i].c_str()));

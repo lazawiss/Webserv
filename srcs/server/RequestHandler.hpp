@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestHandler.hpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
+/*   By: andikim <andikim@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:00:06 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/12 18:05:29 by ankim            ###   ########.fr       */
+/*   Updated: 2026/07/14 15:18:23 by andikim          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -82,7 +82,7 @@ public:
     std::string         getSize() const;
     ssize_t             getNReadIndex() const;
 
-    
+    std::string         generateAutoindex(const std::string &fullPath, const std::string &requestTarget);
     std::string         buildAnswerHeader( std::string const & code, std::string const & type );
     
     std::string         getFile( std::string const & code, bool const & error );
@@ -103,7 +103,7 @@ public:
     bool                uploadFile( std::string const & filename, std::string const & buf );
     bool                removeFile( std::string const & filename );
 
-
+    
     bool                handleRequest(  ListenerManager const & listen );
     bool                getCGI() const;
 };

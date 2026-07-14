@@ -77,3 +77,40 @@ chunked transfer encoding- body format : client chooses the body in explicit pie
 // requests sent by client to trigger action on server
 // response s: answer that server sends in response to Request
 start line , headers, empty line, and then body (optional that would contain data)
+
+
+206 Partial Content - response server sends when a client asks for only part of a resource
+instead of the whole thing - using Range headers
+
+Request side: 
+GET /video.mp4 HTTP/1.1
+Range: bytes=1000-1999 // range 
+
+response side:
+HTTP/1.1 206 Partial Content
+Content-Range: bytes 1000-1999/50000
+Content-Range: bytes start-end/total (total = full file)
+Content-Length: 1000
+Content-Type: video/mp4
+
+<the 1000 bytes>
+
+if range is invalid 416:
+HTTP/1.1 416 Range Not Satisfiable
+Content-Range: bytes */50000
+
+stat() or readlink() - metadata: size, type (file or directory or )
+ // distplay file status 
+struct stat {
+    mode_t st_mode; // file type and permission bits
+    off_t  st_size; // size in bytes (for reg files)
+    time_t st_mtime;// last modified time
+};
+exit status of stat and readlink is 0 on success and >0 if err
+
+for autoindex use stat too 
+struct stat sb;
+if (stat(full_path.c_str(), &sb) == -1)
+    404 because path doesn't exist
+
+only for GET bc auto-index produces a rep of a resource 
