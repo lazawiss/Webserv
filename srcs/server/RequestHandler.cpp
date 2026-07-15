@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/13 18:30:05 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/15 18:02:11 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -386,12 +386,21 @@ bool    RequestHandler::uploadFile( std::string const & filename, std::string co
     
     std::cout << "_pathToFile: " << _pathToFile <<std::endl;
     
-
     std::ofstream outfile(_pathToFile.c_str(), std::ios::binary);
-    outfile << buf << std::endl; 
-    // outfile.write(buf.data(), buf.size());
+    if (!outfile){
+        std::cerr << "Error outfile couldn't open: " << strerror(errno) << std::endl;
+        return false;
+    } 
+    outfile.write(buf.data(), buf.size());
+
+    if (!outfile.good()){
+        std::cerr << "Error fail to write in file: " << strerror(errno) << std::endl;
+        return false;
+    }
     _n_read_index = buf.size();
     
+    outfile.close();
+
     
     struct stat sb;
     
@@ -407,7 +416,6 @@ bool    RequestHandler::uploadFile( std::string const & filename, std::string co
         return false;
     }
     
-    outfile.close();
     
     return true;
 }
@@ -536,7 +544,12 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
             HTTPParser.setType("text/html");
         }
         HTTPParser.setCode("201");
-        HTTPParser.setType("image/png");
+        char const *lastPoint = strrchr(HTTPParser.getFileName().c_str(), '.');
+        // char const *lastSlash = strrchr(HTTPParser.getFileName().c_str(), '/');
+        // std::string name = std::string(lastSlash, strlen(lastSlash));
+        // name.erase(name.begin());
+        std::string suffix = std::string(lastPoint, strlen(lastPoint));
+        HTTPParser.setType(HTTPParser.addSuffix(suffix));
     }
     
     buildAnswerHeader(HTTPParser.getCode(), HTTPParser.getType());

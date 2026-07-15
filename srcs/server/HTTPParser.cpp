@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/13 18:06:39 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/15 18:36:14 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -526,27 +526,44 @@ bool    HTTPParser::checkContentDisposition(){
 bool    HTTPParser::gatherFile(){
     
     _pos++;
-    _pos++;
-    _pos++;
+    std::vector<size_t> space_inter = collectSpace(_pos);
+
+    std::vector<std::string> subss = collectString(space_inter);
+
+    std::cout << "subss[1]: " << subss[1] << std::endl;
+  
+    _pos += 3;
+    std::cout << "_pos: " << *_pos << std::endl;
+    
     std::string endOfFile = _boundary + "--";
+    std::cout << "endOfFile: " << endOfFile << std::endl;
+    std::cout << "Derniers 100 octets de _request : '" <<
+    std::string(_request.end() - 100, _request.end()) << "'" << std::endl;
 
-    size_t len =  endOfFile.size();
+    // size_t len =  endOfFile.size();
+    size_t end_pos = _request.find(endOfFile);
+    std::cout << "end_pos: " << end_pos << std::endl;
     
-    while (_pos != _request.end()){
-
-        // if (_pos != endOfFile)
-            _fileBuf += *_pos;
-        _pos++;
+    if (end_pos == std::string::npos){
+        
+        std::cerr << "Error last boundary not found: " << strerror(errno) << std::endl;
+        return false;
     }
+    _fileBuf.assign(_pos, _pos + end_pos);
+    std::cout << "Firsts 100 octets de _fileBuf : '" <<
+    std::string(_fileBuf.begin(), _fileBuf.begin() + 100) << "'" << std::endl;
+    std::cout << "Derniers 100 octets de _fileBuf : '" <<
+    std::string(_fileBuf.end() - 100, _fileBuf.end()) << "'" << std::endl;
+    // while (_pos != _request.end()){
+
+    //     // if (_pos != endOfFile)
+    //         _fileBuf += *_pos;
+    //     _pos++;
+    // }
     
-    _fileBuf.erase(_fileBuf.end() - (len + 4), _fileBuf.end() - 1);
-    std::cout << _fileBuf<< std::endl;
+    // _fileBuf.erase(_fileBuf.end() - (len + 4), _fileBuf.end() - 1);
+    // std::cout << _fileBuf<< std::endl;
     return true;
-    
-    // _code = "400";
-    // _type = "text/html";
-    
-    // return false;
 }
 
 std::string     HTTPParser::addSuffix(std::string suffix){
