@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/15 18:36:14 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/15 19:04:59 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -549,11 +549,16 @@ bool    HTTPParser::gatherFile(){
         std::cerr << "Error last boundary not found: " << strerror(errno) << std::endl;
         return false;
     }
-    _fileBuf.assign(_pos, _pos + end_pos);
+    _fileBuf.assign(_pos, _request.begin() + end_pos -4);
     std::cout << "Firsts 100 octets de _fileBuf : '" <<
     std::string(_fileBuf.begin(), _fileBuf.begin() + 100) << "'" << std::endl;
     std::cout << "Derniers 100 octets de _fileBuf : '" <<
     std::string(_fileBuf.end() - 100, _fileBuf.end()) << "'" << std::endl;
+    std::cout << "20 derniers octets de _fileBuf : ";
+for (size_t i = _fileBuf.size() - 20; i < _fileBuf.size(); ++i) {
+    printf("%02X ", static_cast<unsigned char>(_fileBuf[i]));
+}
+std::cout << std::endl;
     // while (_pos != _request.end()){
 
     //     // if (_pos != endOfFile)
