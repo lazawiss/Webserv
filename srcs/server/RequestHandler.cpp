@@ -6,7 +6,7 @@
 /*   By: andikim <andikim@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/14 19:44:47 by andikim          ###   ########.fr       */
+/*   Updated: 2026/07/17 19:14:27 by andikim          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -436,19 +436,44 @@ bool    RequestHandler::removeFile( std::string const & filename ){
 
 std::string RequestHandler::generateAutoindex(const std::string &fullPath, const std::string &requestTarget)
 {
-    DIR *dir = opendir(_fullPath.c_str());
+    DIR *dir = opendir(fullPath.c_str());
     if (dir == NULL)
         return (""); 
     // and then after should be 403? or 500, is it an error unexpected though?
     std::string html;
-    html += "<DOCTYPE html>\n<html>\n<head><title> Index of ";
+    html += "<!DOCTYPE html>\n<html>\n<head><title>Index of ";
     html+= requestTarget; // or requestTarget - is it same thing here?
-    html += "</title></head>\n<body>";
-    // Look at how to create this HTML file. 
-    
+    html += "</title></head>\n<body>\n<h1>Index of ";
+    html += "</h1>\n<hr>\n<ul>\n";
+
     struct dirent *entry; // format of directory entries, useful to grab all the files that are existing, girl
-     
-    
+    while ((entry = readdir(dir)) != NULL)
+    {
+        std::string name = entry->d_name;
+        if (name == ".")
+            continue;
+        std::string entryPath = fullPath;  // check entry a dir
+        if (entryPath[entryPath.size() - 1] != '/')
+            entryPath += "/";
+        entryPath += name;
+        
+        struct stat entry_stat;
+        bool isDir = (stat(entryPath.c_str(), &entry_stat) == 0 
+            && S_ISDIR(entry_stat.st_mode));
+        html = html + "<li><a href=\"";
+        html += name;
+        if (isDir)
+            html += "/"; // this = trailing slash on directory
+        html += "\">";
+        html += name;
+        if (isDir)
+            html += "/";
+        html += "</a></li>\n";
+    }
+    closedir(dir);
+
+    html += "</ul>\n<hr>\n</body>\n</html>\n";
+    return html;
 }
 
 // main function : 
