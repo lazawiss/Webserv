@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/15 19:04:59 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/17 19:00:29 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -595,37 +595,31 @@ bool    HTTPParser::findMethods(){
         
         if (_requesttarget == "/" || _requesttarget == "/api"){
             
-            _code = "index";
-            _type = "text/html";
-            
-            return true;
-        }
-        else if (_requesttarget == "/image.html"){
-            
-            _code = "image";
-            _type = "text/html";
-            return true;
-
-        }
-        else if (_requesttarget == "/gallery.html" || _requesttarget == "/html/gallery.html" || _requesttarget == "/html/html/gallery.html"){
-            
-            _code = "gallery";
-            _type = "text/html";
-            return true;
-
-        }
-        else if (_requesttarget == "/form.html"){
-            _code = "form";
+            const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
+            std::string index;
+            for (size_t i = 0;i < locs.size(); i++){
+                const std::vector<std::string> &indexVector = locs[i].getIndex();
+                if (indexVector.size() > 0){
+                    for (size_t i = 0; i < indexVector.size() ; i++){
+                        if (!indexVector[i].empty()){
+                            _code = indexVector[i];
+                            break ;
+                        }
+                    }
+                }
+                else
+                _code = "index.html";
+            }
             _type = "text/html";
             return true;
         }
-        else if (_requesttarget.find("/images") != std::string::npos){
+        if (_requesttarget.find("/images") != std::string::npos){
             
             char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
             char const *lastSlash = strrchr(_requesttarget.c_str(), '/');
             std::string name = std::string(lastSlash, strlen(lastSlash));
             name.erase(name.begin());
-
+            
             _code = name;
             std::string suffix = std::string(lastPoint, strlen(lastPoint));
             _type = addSuffix(suffix);
@@ -639,16 +633,11 @@ bool    HTTPParser::findMethods(){
             
             return true;
         }
-        
-        if (_requesttarget.find("/upload") != std::string::npos){
-            
-            _code = "upload";
+        else{
+            _code = _requesttarget;
             _type = "text/html";
             return true;
         }
-        // _code = "index";
-        // _type = "text/html";
-        // return true;
     }
     else if (_method == "POST"){
         if (_requesttarget.find("/upload") != std::string::npos){

@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/17 14:50:28 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/17 18:51:18 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -121,16 +121,19 @@ static std::string resolveRoot(const ServerConfig &cfg, const std::string &uri)
 // build path toward file
 std::string RequestHandler::getFile( std::string const & code, bool const & error ){
     std::string file;
-    if (error == true)
+    if (error == true){
+        
         file = "data/errors/";
+        file += code;
+        file += ".";
+        file += "html";
+    }
     else {
         
         file = _root;
         file += "/";
+        file += code;
     }
-    file += code;
-    file += ".";
-    file += "html";
  
     std::cout << "File:" << file << std::endl;
     return file;
@@ -478,11 +481,10 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
             _isCGI = true;
             return true;
         }
+        else
+            std::cerr << "Error Method not implemented: " << strerror(errno) << std::endl;
     }
 
-    if (requestValid == true && HTTPParser.findMethods() == false){
-        std::cerr << "Error Method not implemented: " << strerror(errno) << std::endl;
-    }
 
     if (_root.empty())
         _root = resolveRoot(_serverConfig, HTTPParser.getRequestTarget());
