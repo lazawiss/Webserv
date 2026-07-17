@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/15 18:02:11 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/17 14:50:28 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -496,8 +496,11 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
             HTTPParser.setCode("404");
             HTTPParser.setType("text/html");
         }
-        HTTPParser.setCode("204");
-        HTTPParser.setType("text/html");
+        else{
+            
+            HTTPParser.setCode("204");
+            HTTPParser.setType("text/html");
+        }
     }
     else if (HTTPParser.getType() == "text/html"){
         
@@ -543,13 +546,13 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
             HTTPParser.setCode("404");
             HTTPParser.setType("text/html");
         }
-        HTTPParser.setCode("201");
-        char const *lastPoint = strrchr(HTTPParser.getFileName().c_str(), '.');
-        // char const *lastSlash = strrchr(HTTPParser.getFileName().c_str(), '/');
-        // std::string name = std::string(lastSlash, strlen(lastSlash));
-        // name.erase(name.begin());
-        std::string suffix = std::string(lastPoint, strlen(lastPoint));
-        HTTPParser.setType(HTTPParser.addSuffix(suffix));
+        else{
+            
+            HTTPParser.setCode("201");
+            char const *lastPoint = strrchr(HTTPParser.getFileName().c_str(), '.');
+            std::string suffix = std::string(lastPoint, strlen(lastPoint));
+            HTTPParser.setType(HTTPParser.addSuffix(suffix));
+        }
     }
     
     buildAnswerHeader(HTTPParser.getCode(), HTTPParser.getType());
