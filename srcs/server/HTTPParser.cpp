@@ -16,8 +16,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <libexplain/stat.h>
-
 
 /*
 ** ============================================================================
@@ -579,7 +577,11 @@ bool    HTTPParser::findMethods(){
         if (stat(_fullPath.c_str(), &path_stat) == -1)
         {
             _errors = true;
-            std::cerr << explain_stat(_fullPath.c_str(), &path_stat) << std::endl;
+        if (stat(_fullPath.c_str(), &path_stat) == -1)
+        {
+            std::cerr << "stat failed for " << _fullPath
+                    << ": " << std::strerror(errno) << std::endl;
+        }
             _code = "404"; // assuming that we are just not existing
             _type = "text/html";
             return false;

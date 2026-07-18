@@ -535,7 +535,7 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
     }
     else if (HTTPParser.getCode() == "autoindex")
     {
-        _body = generateAutoindex(HTTPParser.getPath(), HTTPParser.getRequestTarget());
+        _body = generateAutoindex(getPath(), HTTPParser.getRequestTarget());
         if (_body.empty())
         {
             // means that opendir didn't open for real directory
