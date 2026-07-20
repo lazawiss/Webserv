@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/17 19:00:29 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/20 18:01:17 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -375,7 +375,7 @@ bool HTTPParser::validateCGIRequest()
     return true;
 }
 
-std::string     HTTPParser::getFilename() const {
+std::string     HTTPParser::getScriptFilename() const {
     return _scriptFilename;
 }
 
@@ -429,7 +429,7 @@ bool    HTTPParser::checkContentType(){
         _boundary = subss[2];
         if (_isCGI)
             return true;
-        _boundary.erase(_boundary.begin(),_boundary.begin()+9);
+        _boundary.erase(_boundary.begin(),_boundary.begin() + 9);
         std::cout << "boundary:" << _boundary << std::endl;
         
         return true;
@@ -559,16 +559,45 @@ for (size_t i = _fileBuf.size() - 20; i < _fileBuf.size(); ++i) {
     printf("%02X ", static_cast<unsigned char>(_fileBuf[i]));
 }
 std::cout << std::endl;
-    // while (_pos != _request.end()){
-
-    //     // if (_pos != endOfFile)
-    //         _fileBuf += *_pos;
-    //     _pos++;
-    // }
-    
-    // _fileBuf.erase(_fileBuf.end() - (len + 4), _fileBuf.end() - 1);
-    // std::cout << _fileBuf<< std::endl;
     return true;
+}
+
+/*
+** ============================================================================
+** Parser HTTP - Third Part: Dispatch per Method + Helpers
+** ============================================================================
+*/
+
+// Main function findMethods() :
+// Compare method found in request and in config file
+// if no correspondance : error 405 method not accepted
+// then get index from config file :
+// if multiple, check if valide then goes to the next
+// if none valid, index by default
+
+bool HTTPParser::compareMethodWithConfigFile(){
+    
+    const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
+    if (locs.size() == 0){
+        _code = "index.html";
+        _type = "text/html";
+        return true;
+    }
+    
+    for (size_t i = 0;i < locs.size(); i++){
+        const std::vector<std::string> &methodVector = locs[i].getMethods();
+        if (methodVector.size() > 0){
+            for (size_t i = 0; i < methodVector.size() ; i++){
+                if ( _method == methodVector[i])
+                    return true;
+            }
+        }
+    }
+    _errors = true;
+    _code = "405";
+    _type = "text/html";
+    
+    return false;
 }
 
 std::string     HTTPParser::addSuffix(std::string suffix){
@@ -590,79 +619,107 @@ std::string     HTTPParser::addSuffix(std::string suffix){
 
 
 bool    HTTPParser::findMethods(){
-
-    if (_method == "GET"){
+    
+    if (compareMethodWithConfigFile() == true){
         
-        if (_requesttarget == "/" || _requesttarget == "/api"){
+        if (_method == "GET"){
             
-            const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
-            std::string index;
-            for (size_t i = 0;i < locs.size(); i++){
-                const std::vector<std::string> &indexVector = locs[i].getIndex();
-                if (indexVector.size() > 0){
-                    for (size_t i = 0; i < indexVector.size() ; i++){
-                        if (!indexVector[i].empty()){
-                            _code = indexVector[i];
-                            break ;
+            if (_requesttarget == "/" || _requesttarget == "/api"){
+                
+                const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
+               
+                for (size_t i = 0;i < locs.size(); i++){
+                    const std::vector<std::string> &indexVector = locs[i].getIndex();
+                    if (indexVector.size() > 0){
+                        for (size_t i = 0; i < indexVector.size() ; i++){
+                            struct stat sb;
+                            std::string index = "data/www/html/" + indexVector[i];
+                            if (stat(index.c_str(), &sb) == 0){
+                                _code = indexVector[i];
+                                break ;
+                            }
                         }
                     }
+                    else
+                    _code = "index.html";
                 }
-                else
-                _code = "index.html";
+                _type = "text/html";
+                return true;
             }
-            _type = "text/html";
-            return true;
-        }
-        if (_requesttarget.find("/images") != std::string::npos){
-            
-            char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
-            char const *lastSlash = strrchr(_requesttarget.c_str(), '/');
-            std::string name = std::string(lastSlash, strlen(lastSlash));
-            name.erase(name.begin());
-            
-            _code = name;
-            std::string suffix = std::string(lastPoint, strlen(lastPoint));
-            _type = addSuffix(suffix);
-            
-            return true;
-        }
-        if (_requesttarget == "/favicon.ico"){
-            
-            _code = "favicon.ico";
-            _type = "image/x-icon";
-            
-            return true;
-        }
-        else{
-            _code = _requesttarget;
-            _type = "text/html";
-            return true;
-        }
-    }
-    else if (_method == "POST"){
-        if (_requesttarget.find("/upload") != std::string::npos){
-            
-            if (_requesttarget == "/upload"){
+            if (_requesttarget.find("/images") != std::string::npos){
                 
-                if (checkContentType() == false){
-                    std::cerr << "Error Content-Type not found: " << strerror(errno) << std::endl;
-                    return false;
-                }
-                if (checkContentLength() == false){
-                    std::cerr << "Error Content-Length not found: " << strerror(errno) << std::endl;
-                    return false;
-                }
-                if (checkContentDisposition() == false){
-                    std::cerr << "Error Content-Disposition not found: " << strerror(errno) << std::endl;
-                    return false;
-                }
-                if (gatherFile() == false){
-                    std::cerr << "Error Content not found: " << strerror(errno) << std::endl;
-                    return false;
-                }
+                char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
+                char const *lastSlash = strrchr(_requesttarget.c_str(), '/');
+                std::string name = std::string(lastSlash, strlen(lastSlash));
+                name.erase(name.begin());
+                
+                _code = name;
+                std::string suffix = std::string(lastPoint, strlen(lastPoint));
+                _type = addSuffix(suffix);
+                
+                return true;
+            }
+            if (_requesttarget == "/favicon.ico"){
+                
+                _code = "favicon.ico";
+                _type = "image/x-icon";
+                
                 return true;
             }
             else{
+                _code = _requesttarget;
+                _code.erase(_code.begin());
+                _type = "text/html";
+                return true;
+            }
+        }
+        else if (_method == "POST"){
+            if (_requesttarget.find("/upload") != std::string::npos){
+                
+                if (_requesttarget == "/upload"){
+                    
+                    if (checkContentType() == false){
+                        std::cerr << "Error Content-Type not found: " << strerror(errno) << std::endl;
+                        return false;
+                    }
+                    if (checkContentLength() == false){
+                        std::cerr << "Error Content-Length not found: " << strerror(errno) << std::endl;
+                        return false;
+                    }
+                    if (checkContentDisposition() == false){
+                        std::cerr << "Error Content-Disposition not found: " << strerror(errno) << std::endl;
+                        return false;
+                    }
+                    if (gatherFile() == false){
+                        std::cerr << "Error Content not found: " << strerror(errno) << std::endl;
+                        return false;
+                    }
+                    return true;
+                }
+                else{
+                    
+                    char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
+                    if (lastPoint)
+                    std::cout <<  "lastPoint:" << lastPoint << std::endl;
+                    
+                    char const *lastSlash = strrchr(_requesttarget.c_str(), '/');
+                    std::string name = std::string(lastSlash, strlen(lastSlash));
+                    name.erase(name.begin());
+                    
+                    std::cout <<  "name:" << name << std::endl;
+                    
+                    _code = name; //? fichier specifique 
+                    std::string suffix = std::string(lastPoint, strlen(lastPoint));
+                    _type = addSuffix(suffix);
+                    return true;
+                }
+                //on success send 201 CREATED + Location: path to ressource
+                // return true;
+            }
+        }
+        else if (_method == "DELETE"){
+            
+            if (_requesttarget.find("/upload") != std::string::npos){
                 
                 char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
                 if (lastPoint)
@@ -676,44 +733,24 @@ bool    HTTPParser::findMethods(){
                 
                 _code = name; //? fichier specifique 
                 std::string suffix = std::string(lastPoint, strlen(lastPoint));
+                // _code = "200"; //? fichier specifique 
+                // 204 No Content
                 _type = addSuffix(suffix);
                 return true;
             }
-            //on success send 201 CREATED + Location: path to ressource
-            // return true;
         }
+        _errors = true;
+        _code = "404";
+        _type = "text/html";
+        return false;
     }
-    else if (_method == "DELETE"){
-        
-        if (_requesttarget.find("/upload") != std::string::npos){
-            
-            char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
-            if (lastPoint)
-            std::cout <<  "lastPoint:" << lastPoint << std::endl;
-            
-            char const *lastSlash = strrchr(_requesttarget.c_str(), '/');
-            std::string name = std::string(lastSlash, strlen(lastSlash));
-            name.erase(name.begin());
-            
-            std::cout <<  "name:" << name << std::endl;
-            
-            _code = name; //? fichier specifique 
-            std::string suffix = std::string(lastPoint, strlen(lastPoint));
-            // _code = "200"; //? fichier specifique 
-            // 204 No Content
-            _type = addSuffix(suffix);
-            return true;
-        }
-    }
-    _errors = true;
-    _code = "404";
-    _type = "text/html";
+
     return false;
- 
 }
+    
 
 bool    HTTPParser::findPath(){
-
+    
     return true;
 }
 

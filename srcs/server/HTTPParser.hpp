@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/13 17:39:13 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/20 17:59:50 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,6 +33,8 @@
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
+
 // #include <sys/epoll.h>
 #include <csignal>
 #include <cerrno>
@@ -49,29 +51,29 @@ class HTTPParser {
 
 private:
 
-    std::string                     _request;
-    const ServerConfig              &_serverConfig;
-    std::string                     _code;
-    std::string                     _type;
-    std::string                     _method;
-    std::string                     _requesttarget; // CGI 
-    std::string                     _httpversion;
-    std::string                     _boundary;
-    std::string                     _fileLength;
-    std::string                     _fileName;
-    std::string                     _fileBuf;
-    std::string::iterator           _pos;
-    bool                            _errors;
+    std::string                 _request;
+    const ServerConfig          &_serverConfig;
+    std::string                 _code;
+    std::string                 _type;
+    std::string                 _method;
+    std::string                 _requesttarget; // CGI 
+    std::string                 _httpversion;
+    std::string                 _boundary;
+    std::string                 _fileLength;
+    std::string                 _fileName;
+    std::string                 _fileBuf;
+    std::string::iterator       _pos;
+    bool                        _errors;
     
 /* ADD INS FOR CGI------*/
-    bool                _isCGI;
-    std::string         _fullPath; // location.root + _scriptFilename
-    std::string         _query_string;
-    std::string         _scriptFilename;
-    std::string         _body;
-    std::string         _content_type;
-    std::string         _content_length;
-    int                 _content_int;
+    bool                        _isCGI;
+    std::string                 _fullPath; // location.root + _scriptFilename
+    std::string                 _query_string;
+    std::string                 _scriptFilename;
+    std::string                 _body;
+    std::string                 _content_type;
+    std::string                 _content_length;
+    int                         _content_int;
 
     
 
@@ -97,7 +99,7 @@ public:
 
     /* ADD INS FOR CGI-------------*/
     std::string                 getPath() const;
-    std::string                 getFilename() const;
+    std::string                 getScriptFilename() const;
     std::string                 getQueryString() const;
     std::string                 getBody() const;
     std::string                 getContentType() const;
@@ -123,6 +125,8 @@ public:
     bool                        gatherFile();
             
     std::string                 addSuffix(std::string suffix);
+    bool                        compareMethodWithConfigFile();
+
                 
     bool                        findMethods();
     bool                        findPath();

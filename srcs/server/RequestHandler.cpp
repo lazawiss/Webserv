@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/17 18:51:18 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/20 17:36:44 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -471,7 +471,7 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
                 std::cout << "CGI Request not validated" << std::endl;
                 return false;
             }
-            _scriptFilename = HTTPParser.getFilename();
+            _scriptFilename = HTTPParser.getScriptFilename();
             _fullPath = "data/" + _scriptFilename; // location.root + _scriptFilename
             _query_string = HTTPParser.getQueryString();
             _body = HTTPParser.getBody(); // need to parse still
