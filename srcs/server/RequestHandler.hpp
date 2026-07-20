@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestHandler.hpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
+/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:00:06 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/12 18:05:29 by ankim            ###   ########.fr       */
+/*   Updated: 2026/07/20 19:03:15 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -102,6 +102,8 @@ public:
 
     bool                uploadFile( std::string const & filename, std::string const & buf );
     bool                removeFile( std::string const & filename );
+
+    void                sendError( HTTPParser & parser );
 
 
     bool                handleRequest(  ListenerManager const & listen );

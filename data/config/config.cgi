@@ -6,14 +6,14 @@ server {
 
 
     location /cgi-bin/python {
-        root            /var/www/cgi-bin;
+        root            data/cgi-bin;
         methods         GET POST;
         cgi_extension   .py  /usr/bin/python3;
         index           index.py;
     }
 
     location /cgi-bin/php {
-        root            /var/www/cgi-bin;
+        root            data/cgi-bin;
         methods         GET POST;
         cgi_extension   .php /usr/bin/php-cgi;
         index           index.php;

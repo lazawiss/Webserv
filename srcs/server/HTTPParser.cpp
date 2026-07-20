@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/20 18:01:17 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/20 19:09:46 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -284,19 +284,23 @@ bool    HTTPParser::checkHost( ListenerManager const & listener ){
 
     std::vector<std::string> subss = collectString(space_inter);
 
-    if (!subss.empty()){
+    if (subss.size() > 1){
             
-        if (subss[1] != hostname){
+        char const *doublePoint = strrchr(subss[1] .c_str(), ':');
+        std::string service = std::string(doublePoint , strlen(doublePoint));
+        service.erase(service.begin());
+
+        if (subss[1] == hostname || (listener.getNode() == "0.0.0.0" && listener.getService() == service) ){
             
-            std::cout << "found->value:" << subss[1] << std::endl;
-            _errors = true;
-            _code = "421";
-            _type = "text/html";
-            
-            return false;
+            return true;
         }
+        std::cout << "found->value:" << subss[1] << std::endl;
+        _errors = true;
+        _code = "421";
+        _type = "text/html";
         
-        return true;
+        return false;
+        
     }
     _errors = true;
     _code = "400";
@@ -630,6 +634,7 @@ bool    HTTPParser::findMethods(){
                
                 for (size_t i = 0;i < locs.size(); i++){
                     const std::vector<std::string> &indexVector = locs[i].getIndex();
+                    std::cout << "indexVector.size(): " << indexVector.size() << std::endl;
                     if (indexVector.size() > 0){
                         for (size_t i = 0; i < indexVector.size() ; i++){
                             struct stat sb;
@@ -640,8 +645,12 @@ bool    HTTPParser::findMethods(){
                             }
                         }
                     }
-                    else
-                    _code = "index.html";
+                    else{
+                        _code = "index.html";
+                        std::cout << "_code: " << _code << std::endl;
+                        
+                    }
+                    
                 }
                 _type = "text/html";
                 return true;

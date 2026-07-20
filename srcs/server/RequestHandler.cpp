@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/20 17:36:44 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/20 19:08:27 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -319,37 +319,6 @@ bool    RequestHandler::answerFile( std::string const & file ){
     
 }
 
-// open file + stock it in buffer to send back to client
-// content = image
-bool    RequestHandler::answerFileImage( std::string const & file ){
-
-    struct stat sb;
-    
-    if (stat(file.c_str(), &sb) == -1){
-        std::cerr << "Error stat: " << strerror(errno) << std::endl;
-        return false;
-    }
-    std::cout << "File Size : " << sb.st_size <<std::endl;
-
-    int indexfd = open(file.c_str(), O_RDONLY);
-    if (indexfd == -1){
-        std::cerr << "Error file failed to open on indexfd:" << indexfd << std::endl;
-        return false;
-    }
-    
-    _n_read_index = read(indexfd, _buffer, BUF_SIZE);
-    close(indexfd);
-    std::cout << "n_read_index:" << _n_read_index << std::endl;
-    if (_n_read_index == -1)
-        return false;
-
-    if (_n_read_index > BUF_SIZE){
-        std::cerr << "Image size is too big." << std::endl;
-        return false;
-    }
-
-    return true;
-}
 
 // open file + stock it in buffer to send back to client
 // content = x-icon
@@ -445,6 +414,15 @@ bool    RequestHandler::removeFile( std::string const & filename ){
     return true;
 }
 
+void    RequestHandler::sendError( HTTPParser & parser ){
+    
+    parser.setError(true);
+    parser.setCode("404");
+    parser.setType("text/html");
+    std::string file = getFile(parser.getCode(), parser.getError()); 
+    answerFile(file);
+}
+
 // main function : 
 // instanciate HTTPParser 
 // checks if request valid
@@ -493,11 +471,8 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         
         std::string file = getFileUpload(HTTPParser.getCode()); 
 
-        if (removeFile(file) == false){
-            HTTPParser.setError(true);
-            HTTPParser.setCode("404");
-            HTTPParser.setType("text/html");
-        }
+        if (removeFile(file) == false)
+          sendError(HTTPParser);
         else{
             
             HTTPParser.setCode("204");
@@ -507,47 +482,30 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
     else if (HTTPParser.getType() == "text/html"){
         
         std::string file = getFile(HTTPParser.getCode(), HTTPParser.getError()); 
-        if (answerFile(file) == false){
-            HTTPParser.setError(true);
-            HTTPParser.setCode("404");
-            HTTPParser.setType("text/html");
-        }
+        if (answerFile(file) == false)
+            sendError(HTTPParser);
     }
     else if (HTTPParser.getType() == "text/plain"){
         
         std::string file = getFileUpload(HTTPParser.getCode()); 
-        if (answerFile(file) == false){
-            HTTPParser.setError(true);
-            HTTPParser.setCode("404");
-            HTTPParser.setType("text/html");
-        }
+        if (answerFile(file) == false)
+            sendError(HTTPParser);
     }
     else if (HTTPParser.getType() == "image/jpeg" || HTTPParser.getType() == "image/png" || HTTPParser.getType() == "image/gif" || HTTPParser.getType() == "image/webp"){
         
         std::string file = getFileImage(HTTPParser.getCode()); 
-        // if (answerFileImage(file) == false){
-        if (answerFile(file) == false){
-            HTTPParser.setError(true);
-            HTTPParser.setCode("404");
-            HTTPParser.setType("text/html");
-        }
+        if (answerFile(file) == false)
+            sendError(HTTPParser);
     }
     else if (HTTPParser.getType() == "image/x-icon"){
         
-        if (answerFileIcon() == false){
-            HTTPParser.setError(true);
-            HTTPParser.setCode("404");
-            HTTPParser.setType("text/html");
-        }
+        if (answerFileIcon() == false)
+            sendError(HTTPParser);
     }
     else if (HTTPParser.getType() == "multipart/form-data"){
         
-        if (uploadFile(HTTPParser.getFileName(), HTTPParser.getFileBuf()) == false){
-         
-            HTTPParser.setError(true);
-            HTTPParser.setCode("404");
-            HTTPParser.setType("text/html");
-        }
+        if (uploadFile(HTTPParser.getFileName(), HTTPParser.getFileBuf()) == false)
+            sendError(HTTPParser);
         else{
             
             HTTPParser.setCode("201");
