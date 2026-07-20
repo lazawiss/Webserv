@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/20 19:08:27 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/20 20:06:07 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -463,20 +463,26 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
             std::cerr << "Error Method not implemented: " << strerror(errno) << std::endl;
     }
 
-
     if (_root.empty())
         _root = resolveRoot(_serverConfig, HTTPParser.getRequestTarget());
 
     if (HTTPParser.getMethod() == "DELETE"){
         
-        std::string file = getFileUpload(HTTPParser.getCode()); 
-
-        if (removeFile(file) == false)
-          sendError(HTTPParser);
+        if (HTTPParser.getError() == true){
+            std::string file = getFile(HTTPParser.getCode(), HTTPParser.getError()); 
+            answerFile(file);
+        }
         else{
             
-            HTTPParser.setCode("204");
-            HTTPParser.setType("text/html");
+            std::string file = getFileUpload(HTTPParser.getCode()); 
+            
+            if (removeFile(file) == false)
+                sendError(HTTPParser);
+            else{
+                
+                HTTPParser.setCode("204");
+                HTTPParser.setType("text/html");
+            }
         }
     }
     else if (HTTPParser.getType() == "text/html"){
