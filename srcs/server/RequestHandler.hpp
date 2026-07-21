@@ -6,7 +6,7 @@
 /*   By: andikim <andikim@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:00:06 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/14 15:18:23 by andikim          ###   ########.fr       */
+/*   Updated: 2026/07/20 22:31:41 by andikim          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -95,7 +95,22 @@ public:
     std::string         getContentType() const;
     std::string         getContentLength() const;
     std::string         getMethod() const;
-    
+
+    // Partial resposnes: byte range responses
+    // valid - range is parsed and satisifable, 206
+    // invalid - range was given but out of bounds, 416
+    // if neither, then no usable range set, so 200 as per usuug
+    struct ByteRange {
+        long start;
+        long end;
+        bool valid;
+        bool unsatisfiable;
+    };
+    ByteRange           parseRangeHeader( std::string const & rangeValue, long fileSize );
+    bool                answerFilePartial( std::string const & file, ByteRange const & r );
+    std::string         buildPartialHeader( std::string const & type, ByteRange const & r, long fileSize );
+    std::string         build416Header( long fileSize );
+///     
     bool                answerFile( std::string const & file );
     bool                answerFileImage( std::string const & file );
     bool                answerFileIcon();

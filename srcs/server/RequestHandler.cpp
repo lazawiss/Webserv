@@ -6,7 +6,7 @@
 /*   By: andikim <andikim@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/17 19:14:27 by andikim          ###   ########.fr       */
+/*   Updated: 2026/07/21 18:31:30 by andikim          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -444,6 +444,7 @@ std::string RequestHandler::generateAutoindex(const std::string &fullPath, const
     html += "<!DOCTYPE html>\n<html>\n<head><title>Index of ";
     html+= requestTarget; // or requestTarget - is it same thing here?
     html += "</title></head>\n<body>\n<h1>Index of ";
+    html += requestTarget;
     html += "</h1>\n<hr>\n<ul>\n";
 
     struct dirent *entry; // format of directory entries, useful to grab all the files that are existing, girl
@@ -521,6 +522,9 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
     if (_root.empty())
         _root = resolveRoot(_serverConfig, HTTPParser.getRequestTarget());
 
+    // When a range branch builds its own 206/416 header for the partial guys heehee skip buildAnswerHeader.
+    bool rangeHandled = false;
+
     if (HTTPParser.getMethod() == "DELETE"){
         
         std::string file = getFileUpload(HTTPParser.getCode()); 
@@ -535,17 +539,22 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
     }
     else if (HTTPParser.getCode() == "autoindex")
     {
-        _body = generateAutoindex(getPath(), HTTPParser.getRequestTarget());
+        // HTTPParser.getPath() is the resolved on-disk directory (root + URI).
+        _body = generateAutoindex(HTTPParser.getPath(), HTTPParser.getRequestTarget());
         if (_body.empty())
-        {
-            // means that opendir didn't open for real directory
-            // so
+{        {
             HTTPParser.setError(true);
-            HTTPParser.setCode("403");
+            HTTPParser.setCode("403"); // if real dir didn't open
             HTTPParser.setType("text/html");
         }
-    //  ALL THE WAY ON BOTTOMG: 
-    // status 200, Content-Type: text/html in Content-Length = _body.size() like all static pages
+        else
+        {
+            // put the listing where epoll reads the response body (getBuffer()/getNReadIndex()) and let Content-Length mirror
+            if (_body.size() > (size_t)BUF_SIZE)
+                _body.resize(BUF_SIZE);
+            memcpy(_buffer, _body.data(), _body.size());
+            _n_read_index = (ssize_t)_body.size();
+        }
     }
     else if (HTTPParser.getType() == "text/html"){
         
@@ -566,10 +575,28 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         }
     }
     else if (HTTPParser.getType() == "image/jpeg" || HTTPParser.getType() == "image/png" || HTTPParser.getType() == "image/gif" || HTTPParser.getType() == "image/webp"){
-        
-        std::string file = getFileImage(HTTPParser.getCode()); 
-        // if (answerFileImage(file) == false){
-        if (answerFile(file) == false){
+
+        std::string file = getFileImage(HTTPParser.getCode());
+
+        //  206 Partial Content path (only range snet) 
+        struct stat sb;
+        std::string range = HTTPParser.getRange();
+        if (!range.empty() && stat(file.c_str(), &sb) == 0)
+        {
+            ByteRange r = parseRangeHeader(range, (long)sb.st_size);
+            if (r.unsatisfiable)
+            {
+                build416Header((long)sb.st_size);
+                rangeHandled = true;
+            }
+            else if (r.valid && answerFilePartial(file, r))
+            {
+                buildPartialHeader(HTTPParser.getType(), r, (long)sb.st_size);
+                rangeHandled = true;
+            }
+        }
+        // OR just normal 200 full-file response
+        if (!rangeHandled && answerFile(file) == false){
             HTTPParser.setError(true);
             HTTPParser.setCode("404");
             HTTPParser.setType("text/html");
@@ -595,8 +622,137 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         HTTPParser.setType("image/png");
     }
 
-    buildAnswerHeader(HTTPParser.getCode(), HTTPParser.getType());
+    if (!rangeHandled) // a 206/416 header was already built by the range path
+        buildAnswerHeader(HTTPParser.getCode(), HTTPParser.getType());
 
     return true;
 
+}
+
+// SO GIRLS: flow is set at the top of handleRequest()'s file branches:
+//  HTTPParser.getRange() gives the raw "Range:" value ("", if none)
+//  parseRangeHeader(value, fileSize) -> ByteRange
+//  r.unsatisfiable -> send build416Header(); r.valid -> answerFilePartial 
+//+ buildPartialHeader (206); otherwise fall through to the REGULar 200 // 
+//  single range only; multipart/multi-range (chec k with other teams but it would be such a pain uguys)
+// Parse a single "bytes=..." range against a known file size.
+// supported forms are the follw: "bytes=start-end", "bytes=start-" (to EOF), "bytes=-suffix".
+RequestHandler::ByteRange
+// Range : start - end
+// range : start - EOF
+// range : -N bytes
+RequestHandler::parseRangeHeader(std::string const& rangeValue, long fileSize)
+{
+    ByteRange r;
+    r.start = 0;
+    r.end = fileSize > 0 ? fileSize - 1 : 0;
+    r.valid = false;
+    r.unsatisfiable = false;
+
+    // only the bytes unit is ok; anything else considered no range (200).
+    const std::string prefix = "bytes=";
+    if (rangeValue.compare(0, prefix.size(), prefix) != 0)
+        return r;
+    std::string spec = rangeValue.substr(prefix.size());
+
+    size_t dash = spec.find('-');
+    if (dash == std::string::npos)
+        return r; // malformed ; ignore, serve 200
+
+    std::string startStr = spec.substr(0, dash);
+    std::string endStr = spec.substr(dash + 1);
+
+    long start;
+    long end;
+    if (startStr.empty())
+    {
+        // suffix form "-N" - last N bytes
+        if (endStr.empty())
+            return r;
+        long suffix = atol(endStr.c_str());
+        if (suffix <= 0)
+        {
+            r.unsatisfiable = true; // 416
+            return r;
+        }
+        if (suffix > fileSize)
+            suffix = fileSize;
+        start = fileSize - suffix;
+        end = fileSize - 1;
+    }
+    else
+    {
+        start = atol(startStr.c_str());
+        end = endStr.empty() ? fileSize - 1 : atol(endStr.c_str());
+        if (end > fileSize - 1)
+            end = fileSize - 1; // it's the clamp of EOF
+    }
+
+    if (start < 0 || start >= fileSize || start > end)
+    {
+        r.unsatisfiable = true; // 416;if start > end or start >= fileSize → the range is unsatisfiable: 
+        return r;
+    }
+
+    r.start = start;
+    r.end = end;
+    r.valid = true;
+    return r;
+}
+
+// read bytes (r.start to r.end) of FILE into _buffer and set _n_read_index to that length, so RS sends only the slice
+bool RequestHandler::answerFilePartial(std::string const & file, ByteRange const & r)
+{
+    long length = r.end - r.start + 1;
+    if (length <= 0 || length > BUF_SIZE)
+    {
+        std::cerr << "Partial length out of range: " << length << std::endl;
+        return false;
+    }
+
+    int fd = open(file.c_str(), O_RDONLY);
+    if (fd == -1)
+    {
+        std::cerr << "Error opening file for partial read: " << strerror(errno) << std::endl;
+        return false;
+    }
+    if (lseek(fd, r.start, SEEK_SET) == (off_t)-1)
+    {
+        std::cerr << "lseek failed: " << strerror(errno) << std::endl;
+        close(fd);
+        return false;
+    }
+    _n_read_index = read(fd, _buffer, length);
+    close(fd);
+    if (_n_read_index != length)
+    {
+        std::cerr << "Short partial read: " << _n_read_index << "/" << length << std::endl;
+        return false;
+    }
+    return true;
+}
+
+// build the 206 header HEREEE; Content-Length is the SLICE length; Content-Range's final number is the TOTAL file size
+std::string RequestHandler::buildPartialHeader(std::string const & type, ByteRange const & r, long fileSize)
+{
+    std::stringstream ss;
+    ss << "HTTP/1.1 206 Partial Content\r\n"
+       << "Content-Type: " << type << "\r\n"
+       << "Accept-Ranges: bytes\r\n"
+       << "Content-Range: bytes " << r.start << "-" << r.end << "/" << fileSize << "\r\n"
+       << "Content-Length: " << (r.end - r.start + 1) << "\r\n\r\n";
+    _header = ss.str();
+    return _header;
+}
+
+// 416 : set body empty and content-range shows size
+std::string RequestHandler::build416Header(long fileSize)
+{
+    std::stringstream ss;
+    ss << "HTTP/1.1 416 Range Not Satisfiable\r\n"
+       << "Content-Range: bytes */" << fileSize << "\r\n"
+       << "Content-Length: 0\r\n\r\n";
+    _header = ss.str();
+    _n_read_index = 0; // setting empty bod here
+    return _header;
 }

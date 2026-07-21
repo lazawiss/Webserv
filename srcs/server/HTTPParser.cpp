@@ -6,7 +6,7 @@
 /*   By: andikim <andikim@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/14 20:10:17 by andikim          ###   ########.fr       */
+/*   Updated: 2026/07/21 18:36:51 by andikim          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,13 +26,13 @@
 HTTPParser:: HTTPParser(  std::string const & request,  const ServerConfig &serverConfig) : _request(request),
     _serverConfig(serverConfig), _code(), _type(), _method(), _requesttarget(), _httpversion(),  _boundary(), 
     _fileLength(), _fileName(), _fileBuf(), _errors(false), _isCGI(false), _fullPath(), _query_string(), 
-    _scriptFilename(), _body(), _content_type(), _content_length(),  _content_int(0){}
+    _scriptFilename(), _body(), _content_type(), _content_length(),  _content_int(0), _autoindexOn(false), _rangeHeader(){}
 
 HTTPParser::HTTPParser( HTTPParser const & src ) : _request(src._request), _serverConfig(src._serverConfig),
 _code(src._code), _type(src._type), _method(src._method), _requesttarget(src._requesttarget),
  _httpversion(src._httpversion), _boundary(src._boundary), _fileLength(src._fileLength), _fileName(src._fileName), _fileBuf(src._fileBuf), _errors(src._errors), _isCGI(src._isCGI), 
  _fullPath(src._fullPath), _query_string(src._query_string), _scriptFilename(src._scriptFilename), 
- _body(src._body), _content_type(src._content_type), _content_length(src._content_length),  _content_int(src._content_int){}
+ _body(src._body), _content_type(src._content_type), _content_length(src._content_length),  _content_int(src._content_int), _autoindexOn(src._autoindexOn), _rangeHeader(src._rangeHeader){}
 
 
 HTTPParser::~HTTPParser(){
@@ -62,8 +62,10 @@ HTTPParser &    HTTPParser::operator=( HTTPParser const & other ){
         this->_content_type = other._content_type;
         this->_content_length = other._content_length;
         this->_content_int = other._content_int;
+        this->_autoindexOn = other._autoindexOn;
+        this->_rangeHeader = other._rangeHeader;
     }
-    
+
     return *this;
 }
 
@@ -321,6 +323,8 @@ bool    HTTPParser::isRequestValid( ListenerManager const & listen ){
     }
 
     // check for root because need full path
+    buildFullPath(); // resolve _fullPath + _autoindexOn from the matched location
+    extractRange();  // capture "Range:" header for 206 Partial Content, if present
     extractBody();
     parseCGI();
     
@@ -396,6 +400,70 @@ std::string     HTTPParser::getContentLength() const{
 }
 std::string     HTTPParser::getRequestTarget() const{
     return _requesttarget;
+}
+
+std::string     HTTPParser::getPath() const{
+    return _fullPath;
+}
+
+const LocationConfig*   HTTPParser::matchLocation() const{
+
+    const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
+    const LocationConfig *best = NULL;
+    size_t bestLen = 0;
+
+    for (size_t i = 0; i < locs.size(); ++i){
+        const std::string &path = locs[i].getPath();
+        if (_requesttarget.compare(0, path.size(), path) == 0 && path.size() >= bestLen){
+            bestLen = path.size();
+            best = &locs[i];
+        }
+    }
+    return best;
+}
+
+// root + full URI = for auto index
+void    HTTPParser::buildFullPath(){
+
+    const LocationConfig *loc = matchLocation();
+
+    std::string root = (loc && !loc->getRoot().empty()) ? loc->getRoot()
+                                                         : _serverConfig.getRoot();
+    _autoindexOn = (loc && loc->getAutoindex() == "on");
+
+    _fullPath = root;
+    if (!_fullPath.empty() && _fullPath[_fullPath.size() - 1] == '/'
+        && !_requesttarget.empty() && _requesttarget[0] == '/')
+        _fullPath.erase(_fullPath.size() - 1);
+    _fullPath += _requesttarget;
+
+    std::cout << "[HTTPParser] _fullPath: '" << _fullPath
+              << "' autoindex=" << (_autoindexOn ? "on" : "off") << std::endl;
+}
+
+// grab the raw value of the range headerrr  _rangeHeader empty when the header is absent
+void    HTTPParser::extractRange(){
+
+    size_t start = _request.find("Range:");
+    if (start == std::string::npos)
+        return;
+    start += 6;
+    size_t end = _request.find("\r\n", start);
+    if (end == std::string::npos)
+        end = _request.find("\n", start);
+    if (end == std::string::npos)
+        return;
+    _rangeHeader = _request.substr(start, end - start);
+    size_t nonSpace = _rangeHeader.find_first_not_of(" \t"); // unsure butttt
+    if (nonSpace == std::string::npos)
+        _rangeHeader.clear();
+    else
+        _rangeHeader = _rangeHeader.substr(nonSpace);
+    std::cout << "[HTTPParser] Range: '" << _rangeHeader << "'" << std::endl;
+}
+
+std::string     HTTPParser::getRange() const{
+    return _rangeHeader;
 }
 
 /* --------- CGI PARSING INCLUSION ------------*/
@@ -600,7 +668,7 @@ bool    HTTPParser::findMethods(){
                 _type = "text/html";
                 return true;
             }
-            if (_serverConfig.getAutoindex() == "on")
+            if (_autoindexOn)
             {
                 _code = "autoindex";
                 _type = "text/html";
