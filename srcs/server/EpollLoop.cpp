@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/15 13:52:36 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/21 19:37:34 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -103,11 +103,15 @@ bool    EpollLoop::do_use_fd( int fd, std::vector<ListenerManager*> const & list
     ssize_t n_read = read(fd, buf, BUF_SIZE); // read HTTP requests, need to handle TCP accidents
     if (n_read == 0)
     {
-        LOG_ERROR("Client closed connection: - " + std::string(strerror(errno)));
+        LOG_ERROR("Client closed connection");
         return (close(fd), false);
     }
     // n_Read = -1 means error, n_read == 0 means eof
-
+    if (n_read == -1)
+    {
+        LOG_ERROR("Error on reading fd:" + fd);
+        return (close(fd), false);
+    }
     std::string request = std::string(buf, n_read);
     // std::cout << request << std::endl;
     // Parse request
@@ -283,7 +287,7 @@ bool EpollLoop::readingSocket( std::vector<ListenerManager*> const & listeners, 
                 }
                 // add client fd to the kernel epoll table
                 // EPOLLET = notify only once when data arrives
-                ev.events = EPOLLIN | EPOLLET;
+                ev.events = EPOLLIN | EPOLLET | EPOLLOUT;
                 ev.data.fd = clientfd;
                 if (epoll_ctl(epollfd, EPOLL_CTL_ADD, clientfd, &ev) == -1)
                 {
