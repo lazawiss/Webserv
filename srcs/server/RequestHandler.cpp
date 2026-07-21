@@ -446,7 +446,7 @@ std::string RequestHandler::generateAutoindex(const std::string &fullPath, const
 {
     DIR *dir = opendir(fullPath.c_str());
     if (dir == NULL)
-        return (""); 
+        return ("");
     // and then after should be 403? or 500, is it an error unexpected though?
     std::string html;
     html += "<!DOCTYPE html>\n<html>\n<head><title>Index of ";
@@ -553,7 +553,7 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         // HTTPParser.getPath() is the resolved on-disk directory (root + URI).
         _body = generateAutoindex(HTTPParser.getPath(), HTTPParser.getRequestTarget());
         if (_body.empty())
-{        {
+       {
             HTTPParser.setError(true);
             HTTPParser.setCode("403"); // if real dir didn't open
             HTTPParser.setType("text/html");
