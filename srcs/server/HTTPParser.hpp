@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/20 17:59:50 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/21 15:51:02 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,6 +64,8 @@ private:
     std::string                 _fileBuf;
     std::string::iterator       _pos;
     bool                        _errors;
+    bool                        _upload;
+
     
 /* ADD INS FOR CGI------*/
     bool                        _isCGI;
@@ -91,6 +93,8 @@ public:
     std::string                 getFileName() const;
     std::string                 getFileBuf() const;
     bool                        getError() const;
+    bool                        getUpload() const;
+
 
     std::string                 setCode( std::string const & code );
     std::string                 setType( std::string const & type );

@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/20 19:09:46 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/21 15:52:56 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,14 +22,15 @@
 
 HTTPParser:: HTTPParser(  std::string const & request,  const ServerConfig &serverConfig) : _request(request),
     _serverConfig(serverConfig), _code(), _type(), _method(), _requesttarget(), _httpversion(),  _boundary(), 
-    _fileLength(), _fileName(), _fileBuf(), _errors(false), _isCGI(false), _fullPath(), _query_string(), 
+    _fileLength(), _fileName(), _fileBuf(), _errors(false), _upload(false), _isCGI(false), _fullPath(), _query_string(), 
     _scriptFilename(), _body(), _content_type(), _content_length(),  _content_int(0){}
 
 HTTPParser::HTTPParser( HTTPParser const & src ) : _request(src._request), _serverConfig(src._serverConfig),
 _code(src._code), _type(src._type), _method(src._method), _requesttarget(src._requesttarget),
- _httpversion(src._httpversion), _boundary(src._boundary), _fileLength(src._fileLength), _fileName(src._fileName), _fileBuf(src._fileBuf), _errors(src._errors), _isCGI(src._isCGI), 
- _fullPath(src._fullPath), _query_string(src._query_string), _scriptFilename(src._scriptFilename), 
- _body(src._body), _content_type(src._content_type), _content_length(src._content_length),  _content_int(src._content_int){}
+_httpversion(src._httpversion), _boundary(src._boundary), _fileLength(src._fileLength), _fileName(src._fileName), 
+_fileBuf(src._fileBuf), _errors(src._errors), _upload(src._upload), _isCGI(src._isCGI), _fullPath(src._fullPath), _query_string(src._query_string),
+_scriptFilename(src._scriptFilename), _body(src._body), _content_type(src._content_type), _content_length(src._content_length),
+_content_int(src._content_int){}
 
 
 HTTPParser::~HTTPParser(){
@@ -51,6 +52,7 @@ HTTPParser &    HTTPParser::operator=( HTTPParser const & other ){
         this->_fileName = other._fileName;
         this->_fileBuf = other._fileBuf;
         this->_errors = other._errors;
+        this->_upload = other._upload;
         this->_isCGI = other._isCGI;
         this->_fullPath = other._fullPath;
         this->_query_string = other._query_string;
@@ -97,6 +99,11 @@ std::string HTTPParser::getFileBuf() const{
 bool     HTTPParser::getError() const{
     
     return _errors;
+}
+
+bool     HTTPParser::getUpload() const{
+    
+    return _upload;
 }
 
 std::string HTTPParser::setCode( std::string const & code ){
@@ -534,7 +541,8 @@ bool    HTTPParser::gatherFile(){
 
     std::vector<std::string> subss = collectString(space_inter);
 
-    std::cout << "subss[1]: " << subss[1] << std::endl;
+    _type = subss[1];
+    std::cout << "Content-Type: " << _type << std::endl;
   
     _pos += 3;
     std::cout << "_pos: " << *_pos << std::endl;
@@ -661,11 +669,28 @@ bool    HTTPParser::findMethods(){
                 char const *lastSlash = strrchr(_requesttarget.c_str(), '/');
                 std::string name = std::string(lastSlash, strlen(lastSlash));
                 name.erase(name.begin());
-                
                 _code = name;
                 std::string suffix = std::string(lastPoint, strlen(lastPoint));
                 _type = addSuffix(suffix);
                 
+                return true;
+            }
+            if (_requesttarget.find("/data/upload") != std::string::npos){
+                
+                char const *lastSlash = strrchr(_requesttarget.c_str(), '/');
+                std::string name = std::string(lastSlash, strlen(lastSlash));
+                name.erase(name.begin());
+                _code = name;
+                char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
+                if (lastPoint){
+                    
+                    std::string suffix = std::string(lastPoint, strlen(lastPoint));
+                    _type = addSuffix(suffix);
+                }
+                else
+                    _type = "image/png";
+                
+                _upload = true;
                 return true;
             }
             if (_requesttarget == "/favicon.ico"){

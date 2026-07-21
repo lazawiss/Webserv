@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/20 20:06:07 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/21 15:53:21 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -485,6 +485,16 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
             }
         }
     }
+    else if (HTTPParser.getMethod() == "POST"){
+        
+        if (uploadFile(HTTPParser.getFileName(), HTTPParser.getFileBuf()) == false)
+            sendError(HTTPParser);
+        else{
+            
+            HTTPParser.setCode("201");
+            HTTPParser.getType();
+        }
+    }
     else if (HTTPParser.getType() == "text/html"){
         
         std::string file = getFile(HTTPParser.getCode(), HTTPParser.getError()); 
@@ -499,9 +509,16 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
     }
     else if (HTTPParser.getType() == "image/jpeg" || HTTPParser.getType() == "image/png" || HTTPParser.getType() == "image/gif" || HTTPParser.getType() == "image/webp"){
         
-        std::string file = getFileImage(HTTPParser.getCode()); 
-        if (answerFile(file) == false)
-            sendError(HTTPParser);
+        if (HTTPParser.getUpload() == true){
+            std::string file = getFileUpload(HTTPParser.getCode()); 
+            if (answerFile(file) == false)
+                sendError(HTTPParser);
+        }
+        else{
+            std::string file = getFileImage(HTTPParser.getCode()); 
+            if (answerFile(file) == false)
+                sendError(HTTPParser);
+        }
     }
     else if (HTTPParser.getType() == "image/x-icon"){
         
