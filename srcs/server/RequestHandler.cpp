@@ -386,12 +386,21 @@ bool    RequestHandler::uploadFile( std::string const & filename, std::string co
     
     std::cout << "_pathToFile: " << _pathToFile <<std::endl;
     
-
     std::ofstream outfile(_pathToFile.c_str(), std::ios::binary);
-    outfile << buf << std::endl; 
-    // outfile.write(buf.data(), buf.size());
+    if (!outfile){
+        std::cerr << "Error outfile couldn't open: " << strerror(errno) << std::endl;
+        return false;
+    } 
+    outfile.write(buf.data(), buf.size());
+
+    if (!outfile.good()){
+        std::cerr << "Error fail to write in file: " << strerror(errno) << std::endl;
+        return false;
+    }
     _n_read_index = buf.size();
     
+    outfile.close();
+
     
     struct stat sb;
     
@@ -407,7 +416,6 @@ bool    RequestHandler::uploadFile( std::string const & filename, std::string co
         return false;
     }
     
-    outfile.close();
     
     return true;
 }
@@ -534,8 +542,11 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
             HTTPParser.setCode("404");
             HTTPParser.setType("text/html");
         }
-        HTTPParser.setCode("204");
-        HTTPParser.setType("text/html");
+        else{
+            
+            HTTPParser.setCode("204");
+            HTTPParser.setType("text/html");
+        }
     }
     else if (HTTPParser.getCode() == "autoindex")
     {
@@ -578,7 +589,7 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
 
         std::string file = getFileImage(HTTPParser.getCode());
 
-        //  206 Partial Content path (only range snet) 
+        //  206 Partial Content path (only range set) 
         struct stat sb;
         std::string range = HTTPParser.getRange();
         if (!range.empty() && stat(file.c_str(), &sb) == 0)
@@ -618,8 +629,13 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
             HTTPParser.setCode("404");
             HTTPParser.setType("text/html");
         }
-        HTTPParser.setCode("201");
-        HTTPParser.setType("image/png");
+        else{
+            
+            HTTPParser.setCode("201");
+            char const *lastPoint = strrchr(HTTPParser.getFileName().c_str(), '.');
+            std::string suffix = std::string(lastPoint, strlen(lastPoint));
+            HTTPParser.setType(HTTPParser.addSuffix(suffix));
+        }
     }
 
     if (!rangeHandled) // a 206/416 header was already built by the range path

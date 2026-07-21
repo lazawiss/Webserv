@@ -109,7 +109,7 @@ bool    EpollLoop::do_use_fd( int fd, std::vector<ListenerManager*> const & list
     // n_Read = -1 means error, n_read == 0 means eof
 
     std::string request = std::string(buf, n_read);
-    std::cout << request << std::endl;
+    // std::cout << request << std::endl;
     // Parse request
     
 
