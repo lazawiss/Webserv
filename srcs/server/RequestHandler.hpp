@@ -6,7 +6,7 @@
 /*   By: andikim <andikim@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:00:06 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/20 22:31:41 by andikim          ###   ########.fr       */
+/*   Updated: 2026/07/23 09:21:44 by andikim          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -119,6 +119,9 @@ public:
     bool                removeFile( std::string const & filename );
 
     
+    void                sendError( HTTPParser & parser );
+
+
     bool                handleRequest(  ListenerManager const & listen );
     bool                getCGI() const;
 };
