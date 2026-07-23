@@ -6,7 +6,7 @@
 /*   By: andikim <andikim@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/23 09:26:54 by andikim          ###   ########.fr       */
+/*   Updated: 2026/07/23 09:30:22 by andikim          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -647,7 +647,8 @@ RequestHandler::ByteRange
 // Range : start - end
 // range : start - EOF
 // range : -N bytes
-RequestHandler::parseRangeHeader(std::string const& rangeValue, long fileSize)
+
+ByteRange RequestHandler::parseRangeHeader(std::string const& rangeValue, long fileSize)
 {
     ByteRange r;
     r.start = 0;
