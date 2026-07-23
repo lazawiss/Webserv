@@ -6,7 +6,7 @@
 /*   By: andikim <andikim@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/23 09:20:19 by andikim          ###   ########.fr       */
+/*   Updated: 2026/07/23 09:23:52 by andikim          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -281,7 +281,7 @@ bool    HTTPParser::checkRequestLine(){
 }
 
 // Check if the entry Host: correspond to the config file info
-// or if it exist at all
+//or if it exist at all
 bool    HTTPParser::checkHost( ListenerManager const & listener ){
 
     std::string hostname = listener.getNode();
@@ -452,7 +452,8 @@ void    HTTPParser::buildFullPath(){
               << "' autoindex=" << (_autoindexOn ? "on" : "off") << std::endl;
 }
 
-// grab the raw value of the range headerrr  _rangeHeader empty when the header is absent
+// grab the raw value of the range header! 
+// _rangeHeader reste empty when the header is absent
 void    HTTPParser::extractRange(){
 
     size_t start = _request.find("Range:");

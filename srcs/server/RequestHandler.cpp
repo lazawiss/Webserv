@@ -6,7 +6,7 @@
 /*   By: andikim <andikim@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/23 09:21:20 by andikim          ###   ########.fr       */
+/*   Updated: 2026/07/23 09:26:54 by andikim          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -455,6 +455,8 @@ std::string RequestHandler::generateAutoindex(const std::string &fullPath, const
 
     html += "</ul>\n<hr>\n</body>\n</html>\n";
     return html;
+}
+
 void    RequestHandler::sendError( HTTPParser & parser ){
     
     parser.setError(true);
@@ -736,7 +738,7 @@ bool RequestHandler::answerFilePartial(std::string const & file, ByteRange const
     return true;
 }
 
-// build the 206 header HEREEE; Content-Length is the SLICE length; Content-Range's final number is the TOTAL file size
+// build the 206 header HEREEE; Content-Length is the SLICED length; content range's final number is the TOTAL file size
 std::string RequestHandler::buildPartialHeader(std::string const & type, ByteRange const & r, long fileSize)
 {
     std::stringstream ss;
