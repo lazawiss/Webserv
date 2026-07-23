@@ -9,9 +9,9 @@ server {
     error_page 400 /errors/404.html;
 
     location / {
-        root        /var/www/internal;
+        root        data/www/html;
         index       index.html;
-        methods     GET;
+        methods     GET POST;
         autoindex   off;
     }
 
@@ -22,15 +22,15 @@ server {
 # ─────────────────────────────────────────
 server {
     listen       127.0.0.1:8081;     # même port, mais interface différente
-    listen       127.0.0.1:8082;
+    # listen       127.0.0.1:8082;
     server_name  internal.localhost;
 
     error_page 400 /errors/404.html;
 
     location / {
-        root        /var/www/internal;
+        root        data/www/html1;
         index       index.html;
-        methods     GET;
+        methods     GET POST;
         autoindex   off;
     }
 }

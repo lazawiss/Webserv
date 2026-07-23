@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/17 14:50:28 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/21 15:53:21 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -121,16 +121,19 @@ static std::string resolveRoot(const ServerConfig &cfg, const std::string &uri)
 // build path toward file
 std::string RequestHandler::getFile( std::string const & code, bool const & error ){
     std::string file;
-    if (error == true)
+    if (error == true){
+        
         file = "data/errors/";
+        file += code;
+        file += ".";
+        file += "html";
+    }
     else {
         
         file = _root;
         file += "/";
+        file += code;
     }
-    file += code;
-    file += ".";
-    file += "html";
  
     std::cout << "File:" << file << std::endl;
     return file;
@@ -316,37 +319,6 @@ bool    RequestHandler::answerFile( std::string const & file ){
     
 }
 
-// open file + stock it in buffer to send back to client
-// content = image
-bool    RequestHandler::answerFileImage( std::string const & file ){
-
-    struct stat sb;
-    
-    if (stat(file.c_str(), &sb) == -1){
-        std::cerr << "Error stat: " << strerror(errno) << std::endl;
-        return false;
-    }
-    std::cout << "File Size : " << sb.st_size <<std::endl;
-
-    int indexfd = open(file.c_str(), O_RDONLY);
-    if (indexfd == -1){
-        std::cerr << "Error file failed to open on indexfd:" << indexfd << std::endl;
-        return false;
-    }
-    
-    _n_read_index = read(indexfd, _buffer, BUF_SIZE);
-    close(indexfd);
-    std::cout << "n_read_index:" << _n_read_index << std::endl;
-    if (_n_read_index == -1)
-        return false;
-
-    if (_n_read_index > BUF_SIZE){
-        std::cerr << "Image size is too big." << std::endl;
-        return false;
-    }
-
-    return true;
-}
 
 // open file + stock it in buffer to send back to client
 // content = x-icon
@@ -442,6 +414,15 @@ bool    RequestHandler::removeFile( std::string const & filename ){
     return true;
 }
 
+void    RequestHandler::sendError( HTTPParser & parser ){
+    
+    parser.setError(true);
+    parser.setCode("404");
+    parser.setType("text/html");
+    std::string file = getFile(parser.getCode(), parser.getError()); 
+    answerFile(file);
+}
+
 // main function : 
 // instanciate HTTPParser 
 // checks if request valid
@@ -468,7 +449,7 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
                 std::cout << "CGI Request not validated" << std::endl;
                 return false;
             }
-            _scriptFilename = HTTPParser.getFilename();
+            _scriptFilename = HTTPParser.getScriptFilename();
             _fullPath = "data/" + _scriptFilename; // location.root + _scriptFilename
             _query_string = HTTPParser.getQueryString();
             _body = HTTPParser.getBody(); // need to parse still
@@ -478,10 +459,8 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
             _isCGI = true;
             return true;
         }
-    }
-
-    if (requestValid == true && HTTPParser.findMethods() == false){
-        std::cerr << "Error Method not implemented: " << strerror(errno) << std::endl;
+        else
+            std::cerr << "Error Method not implemented: " << strerror(errno) << std::endl;
     }
 
     if (_root.empty())
@@ -489,63 +468,67 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
 
     if (HTTPParser.getMethod() == "DELETE"){
         
-        std::string file = getFileUpload(HTTPParser.getCode()); 
-
-        if (removeFile(file) == false){
-            HTTPParser.setError(true);
-            HTTPParser.setCode("404");
-            HTTPParser.setType("text/html");
+        if (HTTPParser.getError() == true){
+            std::string file = getFile(HTTPParser.getCode(), HTTPParser.getError()); 
+            answerFile(file);
         }
         else{
             
-            HTTPParser.setCode("204");
-            HTTPParser.setType("text/html");
+            std::string file = getFileUpload(HTTPParser.getCode()); 
+            
+            if (removeFile(file) == false)
+                sendError(HTTPParser);
+            else{
+                
+                HTTPParser.setCode("204");
+                HTTPParser.setType("text/html");
+            }
+        }
+    }
+    else if (HTTPParser.getMethod() == "POST"){
+        
+        if (uploadFile(HTTPParser.getFileName(), HTTPParser.getFileBuf()) == false)
+            sendError(HTTPParser);
+        else{
+            
+            HTTPParser.setCode("201");
+            HTTPParser.getType();
         }
     }
     else if (HTTPParser.getType() == "text/html"){
         
         std::string file = getFile(HTTPParser.getCode(), HTTPParser.getError()); 
-        if (answerFile(file) == false){
-            HTTPParser.setError(true);
-            HTTPParser.setCode("404");
-            HTTPParser.setType("text/html");
-        }
+        if (answerFile(file) == false)
+            sendError(HTTPParser);
     }
     else if (HTTPParser.getType() == "text/plain"){
         
         std::string file = getFileUpload(HTTPParser.getCode()); 
-        if (answerFile(file) == false){
-            HTTPParser.setError(true);
-            HTTPParser.setCode("404");
-            HTTPParser.setType("text/html");
-        }
+        if (answerFile(file) == false)
+            sendError(HTTPParser);
     }
     else if (HTTPParser.getType() == "image/jpeg" || HTTPParser.getType() == "image/png" || HTTPParser.getType() == "image/gif" || HTTPParser.getType() == "image/webp"){
         
-        std::string file = getFileImage(HTTPParser.getCode()); 
-        // if (answerFileImage(file) == false){
-        if (answerFile(file) == false){
-            HTTPParser.setError(true);
-            HTTPParser.setCode("404");
-            HTTPParser.setType("text/html");
+        if (HTTPParser.getUpload() == true){
+            std::string file = getFileUpload(HTTPParser.getCode()); 
+            if (answerFile(file) == false)
+                sendError(HTTPParser);
+        }
+        else{
+            std::string file = getFileImage(HTTPParser.getCode()); 
+            if (answerFile(file) == false)
+                sendError(HTTPParser);
         }
     }
     else if (HTTPParser.getType() == "image/x-icon"){
         
-        if (answerFileIcon() == false){
-            HTTPParser.setError(true);
-            HTTPParser.setCode("404");
-            HTTPParser.setType("text/html");
-        }
+        if (answerFileIcon() == false)
+            sendError(HTTPParser);
     }
     else if (HTTPParser.getType() == "multipart/form-data"){
         
-        if (uploadFile(HTTPParser.getFileName(), HTTPParser.getFileBuf()) == false){
-         
-            HTTPParser.setError(true);
-            HTTPParser.setCode("404");
-            HTTPParser.setType("text/html");
-        }
+        if (uploadFile(HTTPParser.getFileName(), HTTPParser.getFileBuf()) == false)
+            sendError(HTTPParser);
         else{
             
             HTTPParser.setCode("201");
