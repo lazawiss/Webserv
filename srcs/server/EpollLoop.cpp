@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   EpollLoop.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: andikim <andikim@student.42.fr>            +#+  +:+       +#+        */
+/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/23 09:13:45 by andikim          ###   ########.fr       */
+/*   Updated: 2026/07/24 16:04:52 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -175,16 +175,21 @@ bool    EpollLoop::do_use_fd( int fd, std::vector<ListenerManager*> const & list
         }
 
         // stdin pipe: WE write the body into it -> watch for EPOLLOUT
-        ev.events = EPOLLOUT;
-        ev.data.fd = cgi->getStdinFd();
-        epoll_ctl(epollfd, EPOLL_CTL_ADD, cgi->getStdinFd(), &ev);
-        _fdToCGI[cgi->getStdinFd()] = cgi;
+        ev.events = EPOLLOUT | EPOLLIN;
+        if (ev.events == EPOLLOUT)
+        {
+            ev.data.fd = cgi->getStdinFd();
+            epoll_ctl(epollfd, EPOLL_CTL_ADD, cgi->getStdinFd(), &ev);
+            _fdToCGI[cgi->getStdinFd()] = cgi;
+        }
 
         // stdout pipe: WE read the script output -> watch for EPOLLIN
-        ev.events = EPOLLIN;
-        ev.data.fd = cgi->getStdoutFd();
-        epoll_ctl(epollfd, EPOLL_CTL_ADD, cgi->getStdoutFd(), &ev);
-        _fdToCGI[cgi->getStdoutFd()] = cgi;
+        if (ev.event == EPOLLIN)
+        {
+            ev.data.fd = cgi->getStdoutFd();
+            epoll_ctl(epollfd, EPOLL_CTL_ADD, cgi->getStdoutFd(), &ev);
+            _fdToCGI[cgi->getStdoutFd()] = cgi;
+        }
 
         // client fd stays OPEN and untouched: the response is sent later,
         // when the stdout pipe hits EOF (see readingSocket)

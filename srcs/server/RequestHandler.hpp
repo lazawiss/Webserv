@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:00:06 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/24 14:30:38 by ankim            ###   ########.fr       */
+/*   Updated: 2026/07/24 15:24:11 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -113,7 +113,7 @@ public:
     bool                answerFilePartial( std::string const & file, ByteRange const & r );
     std::string         buildPartialHeader( std::string const & type, ByteRange const & r, long fileSize );
     std::string         build416Header( long fileSize );
-///     
+///
     bool                answerFile( std::string const & file );
     bool                answerFileImage( std::string const & file );
     bool                answerFileIcon();
