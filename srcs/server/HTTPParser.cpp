@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/21 15:52:56 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/24 17:20:46 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -656,9 +656,7 @@ bool    HTTPParser::findMethods(){
                     else{
                         _code = "index.html";
                         std::cout << "_code: " << _code << std::endl;
-                        
                     }
-                    
                 }
                 _type = "text/html";
                 return true;
