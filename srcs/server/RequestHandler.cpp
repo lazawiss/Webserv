@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestHandler.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: andikim <andikim@student.42.fr>            +#+  +:+       +#+        */
+/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/23 09:30:22 by andikim          ###   ########.fr       */
+/*   Updated: 2026/07/24 14:34:53 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -598,7 +598,7 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
             HTTPParser.setError(true);
             HTTPParser.setCode("404");
             HTTPParser.setType("text/html");
-        
+        }
         if (HTTPParser.getUpload() == true){
             std::string file = getFileUpload(HTTPParser.getCode()); 
             if (answerFile(file) == false)
@@ -632,7 +632,6 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         buildAnswerHeader(HTTPParser.getCode(), HTTPParser.getType());
 
     return true;
-
 }
 
 // SO GIRLS: flow is set at the top of handleRequest()'s file branches:
@@ -643,18 +642,13 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
 //  single range only; multipart/multi-range (chec k with other teams but it would be such a pain uguys)
 // Parse a single "bytes=..." range against a known file size.
 // supported forms are the follw: "bytes=start-end", "bytes=start-" (to EOF), "bytes=-suffix".
-RequestHandler::ByteRange
 // Range : start - end
 // range : start - EOF
 // range : -N bytes
 
-ByteRange RequestHandler::parseRangeHeader(std::string const& rangeValue, long fileSize)
+RequestHandler::ByteRange RequestHandler::parseRangeHeader(std::string const& rangeValue, long fileSize)
 {
     ByteRange r;
-    r.start = 0;
-    r.end = fileSize > 0 ? fileSize - 1 : 0;
-    r.valid = false;
-    r.unsatisfiable = false;
 
     // only the bytes unit is ok; anything else considered no range (200).
     const std::string prefix = "bytes=";
