@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ListenerManager.cpp                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: leazannis <leazannis@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 14:31:24 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/24 19:35:53 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/25 18:42:04 by leazannis        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -123,8 +123,6 @@ bool   ListenerManager::loopBindingSocket(){
     
     for (_p = _res; _p != NULL; _p = _p->ai_next)
     {
-        std::cout << "binding socket..."<< std::endl;
-        
         _sockfd = socket(_p->ai_family, _p->ai_socktype, _p->ai_protocol);
         if (_sockfd == -1)
         {

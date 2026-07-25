@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   EpollLoop.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: leazannis <leazannis@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/24 20:34:04 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/25 20:08:11 by leazannis        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,6 @@
 #include "Server.hpp"
 #include "../lexer/Lexer.hpp"
 #include "ListenerManager.hpp"
-#include "ResponseSender.hpp"
 #include "../parser/Parser.hpp"
 #include "RequestHandler.hpp"
 #include "CGIHandler.hpp"
@@ -29,7 +28,7 @@
 
 EpollLoop:: EpollLoop() : _header(), _content(){}
 
-EpollLoop::EpollLoop( EpollLoop const & src ) : _clientToListener(src._clientToListener), _header(src._header), _content(src._content){
+EpollLoop::EpollLoop( EpollLoop const & src ) : _clientToListener(src._clientToListener), _clientResponseBuffer(src._clientResponseBuffer), _header(src._header), _content(src._content){
     
 }
 
@@ -40,6 +39,7 @@ EpollLoop & EpollLoop::operator=( EpollLoop const & other ){
     if ( this != &other)
     {
         _clientToListener = other._clientToListener;
+        _clientResponseBuffer = other._clientResponseBuffer;
         _header = other._header;
         _content = other._content;
     }
@@ -176,14 +176,13 @@ bool    EpollLoop::do_read_fd( int fd, std::vector<ListenerManager*> const & lis
             return (close(fd), false);
         }
 
+        ev.events = EPOLLOUT | EPOLLIN;
         // stdin pipe: WE write the body into it -> watch for EPOLLOUT
-        ev.events = EPOLLOUT;
         ev.data.fd = cgi->getStdinFd();
         epoll_ctl(epollfd, EPOLL_CTL_ADD, cgi->getStdinFd(), &ev);
         _fdToCGI[cgi->getStdinFd()] = cgi;
 
         // stdout pipe: WE read the script output -> watch for EPOLLIN
-        ev.events = EPOLLIN;
         ev.data.fd = cgi->getStdoutFd();
         epoll_ctl(epollfd, EPOLL_CTL_ADD, cgi->getStdoutFd(), &ev);
         _fdToCGI[cgi->getStdoutFd()] = cgi;
@@ -194,10 +193,15 @@ bool    EpollLoop::do_read_fd( int fd, std::vector<ListenerManager*> const & lis
     }
 
     std::cout << "header:" << requestHandler.getHeader() << std::endl;
-    _header = std::string(requestHandler.getHeader());
-    _content = std::string(requestHandler.getBuffer().c_str(), requestHandler.getNReadIndex());
+    //_header = std::string(requestHandler.getHeader());
+    //_content = std::string(requestHandler.getBuffer().c_str(), requestHandler.getNReadIndex());
+    _clientResponseBuffer[fd] += std::string(requestHandler.getHeader());
+    _clientResponseBuffer[fd] += std::string(requestHandler.getBuffer().c_str(), requestHandler.getNReadIndex());
 
-    ev.events = EPOLLIN | EPOLLOUT | EPOLLET;  // reset state of epoll struct 
+    
+    //ev.events = EPOLLIN | EPOLLOUT | EPOLLET;  // reset state of epoll struct 
+    ev.events = EPOLLIN | EPOLLOUT; // reset state of epoll struct 
+
     ev.data.fd = fd;
     epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &ev);
     
@@ -205,29 +209,46 @@ bool    EpollLoop::do_read_fd( int fd, std::vector<ListenerManager*> const & lis
 
 }
 
-bool    EpollLoop::do_write_fd( int fd ){
+bool    EpollLoop::do_write_fd( int fd, int epollfd, epoll_event &ev ){
      
-    // ResponseSender  responseSender( header, content, fd);
-    std::cout << "do_write: " << _header << std::endl;
-    
-    if (send(fd, _header.c_str(), _header.size(), 0) < 0){
+    std::string & response = _clientResponseBuffer[fd];
+    ssize_t headerSent = send(fd, response.c_str(), response.size(), 0);
+
+    if (headerSent == -1){
         
-        _clientToListener.erase(fd);  
+        LOG_ERROR("Send error on fd: " + fd);
         close(fd);
+        _clientResponseBuffer.erase(fd);
+        _clientToListener.erase(fd);  
         return false;
     }
-    if (send(fd, _content.c_str(), _content.size(), 0) < 0){
-        _clientToListener.erase(fd);  
+    if (headerSent == 0){
+        
+        LOG_ERROR("Connection closed during send");
         close(fd);
+        _clientResponseBuffer.erase(fd);
+        _clientToListener.erase(fd);  
         return false;
     }
-    // if (responseSender.sendResponse() == false){
-    //         std::cerr << "Error sending response: " << strerror(errno) << std::endl;
-    //         return (close(fd), false);
-    //     } 
-    
-    _clientToListener.erase(fd);  
-    return close(fd), true;
+    if (headerSent < static_cast<ssize_t>(response.size())){
+        
+        //_clientResponseBuffer[fd] = response.substr( headerSent );
+        response = response.substr( headerSent );
+        ev.events = EPOLLIN | EPOLLOUT; // reset state of epoll struct 
+
+        ev.data.fd = fd;
+        epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &ev);
+        return true;
+    }
+
+    LOG_INFO("Message completly sent.");
+
+    epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, NULL);
+    close(fd);
+    _clientResponseBuffer.erase(fd);
+    _clientToListener.erase(fd);
+    return true;
+
 }
 
 bool EpollLoop::readingSocket( std::vector<ListenerManager*> const & listeners, const GlobalConfig &config ){
@@ -275,6 +296,7 @@ bool EpollLoop::readingSocket( std::vector<ListenerManager*> const & listeners, 
 
         // process each active fd returned by epoll_wait
         for (int n = 0; n < nfds; ++n){
+            
             struct sockaddr_storage peer_addr;
             socklen_t               peer_addr_len = sizeof(peer_addr);
             
@@ -310,7 +332,9 @@ bool EpollLoop::readingSocket( std::vector<ListenerManager*> const & listeners, 
                 }
                 // add client fd to the kernel epoll table
                 // EPOLLET = notify only once when data arrives
-                ev.events = EPOLLIN | EPOLLET | EPOLLOUT;
+                //ev.events = EPOLLIN | EPOLLET | EPOLLOUT;
+                ev.events = EPOLLIN | EPOLLOUT;
+
                 ev.data.fd = clientfd;
                 if (epoll_ctl(epollfd, EPOLL_CTL_ADD, clientfd, &ev) == -1)
                 {
@@ -357,26 +381,27 @@ bool EpollLoop::readingSocket( std::vector<ListenerManager*> const & listeners, 
                             send(cgi->getClientFd(), response.c_str(),
                                  response.size(), 0);
 
-                            _clientToListener.erase(cgi->getClientFd());
-                            close(cgi->getClientFd());
+                            //_clientToListener.erase(cgi->getClientFd());
+                            //close(cgi->getClientFd());
+                            ev.events = EPOLLIN | EPOLLOUT;
+                            ev.data.fd = cgi->getClientFd();
+                            epoll_ctl(epollfd, EPOLL_CTL_MOD, cgi->getClientFd(), &ev);
                             delete cgi;
                         }
                     }
                 }
-                // else if (do_use_fd(events[n].data.fd, listeners, config, epollfd, ev) == false)
-                //     break;
-
-            
-                else if ( events[n].events && (events[n].events & EPOLLIN) ){
+                else{
                     
-                    if (do_read_fd(events[n].data.fd, listeners, config, epollfd, ev) == false)
-                        break;
-                }
-
-                else if ( events[n].events && (events[n].events & EPOLLOUT) ){
-                    
-                    if (do_write_fd(events[n].data.fd) == false)
-                        break;
+                    if ( events[n].events & EPOLLIN ){
+                        
+                        if (do_read_fd(events[n].data.fd, listeners, config, epollfd, ev) == false)
+                            break;
+                    }
+                    else if ( events[n].events & EPOLLOUT ){
+                        
+                        if (do_write_fd(events[n].data.fd, epollfd, ev) == false)
+                            break;
+                    }
                 }
             }
         }
