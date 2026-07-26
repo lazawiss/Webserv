@@ -11,7 +11,7 @@ server {
     location / {
         root        data/www/html;
         index       index.html;
-        methods     GET POST;
+        methods     GET POST DELETE;
         autoindex   off;
     }
 
@@ -30,7 +30,7 @@ server {
     location / {
         root        data/www/html1;
         index       index.html;
-        methods     GET POST;
+        methods     GET POST DELETE;
         autoindex   off;
     }
 }

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   SignalManager.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: leazannis <leazannis@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:27:06 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/04 15:23:54 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/25 20:11:39 by leazannis        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -81,6 +81,7 @@ static void sigHandlerFork(int _sig){
 void    SignalManager::setupSignalsFork(){
     
     signal(SIGINT, sigHandlerFork);
+    signal(SIGPIPE, SIG_IGN);
     signal(SIGQUIT, SIG_DFL);
 }
 

@@ -6,13 +6,16 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/21 15:52:56 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/26 14:02:46 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../lexer/Lexer.hpp"
 #include "../parser/config/ServerConfig.hpp"
 #include "HTTPParser.hpp"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 /*
 ** ============================================================================
@@ -61,8 +64,10 @@ HTTPParser &    HTTPParser::operator=( HTTPParser const & other ){
         this->_content_type = other._content_type;
         this->_content_length = other._content_length;
         this->_content_int = other._content_int;
+        this->_autoindexOn = other._autoindexOn;
+        this->_rangeHeader = other._rangeHeader;
     }
-    
+
     return *this;
 }
 
@@ -276,7 +281,7 @@ bool    HTTPParser::checkRequestLine(){
 }
 
 // Check if the entry Host: correspond to the config file info
-// or if it exist at all
+//or if it exist at all
 bool    HTTPParser::checkHost( ListenerManager const & listener ){
 
     std::string hostname = listener.getNode();
@@ -329,6 +334,8 @@ bool    HTTPParser::isRequestValid( ListenerManager const & listen ){
     }
 
     // check for root because need full path
+    buildFullPath(); // resolve _fullPath + _autoindexOn from the matched location
+    extractRange();  // capture "Range:" header for 206 Partial Content, if present
     extractBody();
     parseCGI();
     
@@ -404,6 +411,71 @@ std::string     HTTPParser::getContentLength() const{
 }
 std::string     HTTPParser::getRequestTarget() const{
     return _requesttarget;
+}
+
+std::string     HTTPParser::getPath() const{
+    return _fullPath;
+}
+
+const LocationConfig*   HTTPParser::matchLocation() const{
+
+    const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
+    const LocationConfig *best = NULL;
+    size_t bestLen = 0;
+
+    for (size_t i = 0; i < locs.size(); ++i){
+        const std::string &path = locs[i].getPath();
+        if (_requesttarget.compare(0, path.size(), path) == 0 && path.size() >= bestLen){
+            bestLen = path.size();
+            best = &locs[i];
+        }
+    }
+    return best;
+}
+
+// root + full URI = for auto index
+void    HTTPParser::buildFullPath(){
+
+    const LocationConfig *loc = matchLocation();
+
+    std::string root = (loc && !loc->getRoot().empty()) ? loc->getRoot()
+                                                         : _serverConfig.getRoot();
+    _autoindexOn = (loc && loc->getAutoindex() == "on");
+
+    _fullPath = root;
+    if (!_fullPath.empty() && _fullPath[_fullPath.size() - 1] == '/'
+        && !_requesttarget.empty() && _requesttarget[0] == '/')
+        _fullPath.erase(_fullPath.size() - 1);
+    _fullPath += _requesttarget;
+
+    std::cout << "[HTTPParser] _fullPath: '" << _fullPath
+              << "' autoindex=" << (_autoindexOn ? "on" : "off") << std::endl;
+}
+
+// grab the raw value of the range header! 
+// _rangeHeader reste empty when the header is absent
+void    HTTPParser::extractRange(){
+
+    size_t start = _request.find("Range:");
+    if (start == std::string::npos)
+        return;
+    start += 6;
+    size_t end = _request.find("\r\n", start);
+    if (end == std::string::npos)
+        end = _request.find("\n", start);
+    if (end == std::string::npos)
+        return;
+    _rangeHeader = _request.substr(start, end - start);
+    size_t nonSpace = _rangeHeader.find_first_not_of(" \t"); // unsure butttt
+    if (nonSpace == std::string::npos)
+        _rangeHeader.clear();
+    else
+        _rangeHeader = _rangeHeader.substr(nonSpace);
+    std::cout << "[HTTPParser] Range: '" << _rangeHeader << "'" << std::endl;
+}
+
+std::string     HTTPParser::getRange() const{
+    return _rangeHeader;
 }
 
 /* --------- CGI PARSING INCLUSION ------------*/
@@ -631,39 +703,73 @@ std::string     HTTPParser::addSuffix(std::string suffix){
 
 
 bool    HTTPParser::findMethods(){
-    
-    if (compareMethodWithConfigFile() == true){
-        
-        if (_method == "GET"){
+    if (compareMethodWithConfigFile() == true)
+    {
+        if (_method == "GET")
+        {
+            const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
             
-            if (_requesttarget == "/" || _requesttarget == "/api"){
-                
-                const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
-               
-                for (size_t i = 0;i < locs.size(); i++){
-                    const std::vector<std::string> &indexVector = locs[i].getIndex();
-                    std::cout << "indexVector.size(): " << indexVector.size() << std::endl;
-                    if (indexVector.size() > 0){
-                        for (size_t i = 0; i < indexVector.size() ; i++){
-                            struct stat sb;
-                            std::string index = "data/www/html/" + indexVector[i];
-                            if (stat(index.c_str(), &sb) == 0){
-                                _code = indexVector[i];
-                                break ;
-                            }
+            for (size_t i = 0;i < locs.size(); i++){
+                const std::vector<std::string> &indexVector = locs[i].getIndex();
+                std::cout << "indexVector.size(): " << indexVector.size() << std::endl;
+                if (indexVector.size() > 0){
+                    for (size_t i = 0; i < indexVector.size() ; i++){
+                        struct stat sb;
+                        std::string index = "data/www/html/" + indexVector[i];
+                        if (stat(index.c_str(), &sb) == 0){
+                            _code = indexVector[i];
+                            break ;
                         }
                     }
-                    else{
-                        _code = "index.html";
-                        std::cout << "_code: " << _code << std::endl;
-                        
-                    }
-                    
                 }
-                _type = "text/html";
-                return true;
+                else{
+                    _code = "index.html";
+                    std::cout << "_code: " << _code << std::endl;
+                }
             }
-            if (_requesttarget.find("/images") != std::string::npos){
+
+            if (_requesttarget == "/" || _requesttarget == "/api") {
+                    struct stat path_stat;
+                    if (stat(_fullPath.c_str(), &path_stat) == -1)
+                    {
+                        _errors = true;
+                    if (stat(_fullPath.c_str(), &path_stat) == -1)
+                    {
+                        std::cerr << "stat failed for " << _fullPath
+                                << ": " << std::strerror(errno) << std::endl;
+                    }
+                        _code = "404"; // assuming that we are just not existing
+                    _type = "text/html";
+                    return false;
+                    }
+                    if (S_ISDIR(path_stat.st_mode)) // file type and mode, is a directory?
+                    {
+                        std::string indexPath = _fullPath;
+                        if (indexPath[indexPath.size() - 1] != '/')
+                            indexPath += "/";
+                        indexPath += "index.html";
+                        struct stat index_stat;
+                        if (stat(indexPath.c_str(), &index_stat) == 0 && S_ISREG(index_stat.st_mode))
+                        {
+                            // this means that the index file exists and it is a file
+                            _code = "index.html";
+                            _type = "text/html";
+                            return true;
+                        }
+                        if (_autoindexOn)
+                        {
+                            _code = "autoindex";
+                            _type = "text/html";
+                            return true;
+                        }
+                        // case of autoindex == off and index doesn't exist
+                        _errors = true;
+                        _code = "403"; // because directory is and it exists but we are not going to show you. authorization code
+                        _type = "text/html";
+                        return false;
+                    }
+            }
+            if (_requesttarget.find("/images") != std::string::npos) {
                 
                 char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
                 char const *lastSlash = strrchr(_requesttarget.c_str(), '/');
@@ -675,8 +781,8 @@ bool    HTTPParser::findMethods(){
                 
                 return true;
             }
-            if (_requesttarget.find("/data/upload") != std::string::npos){
-                
+
+            if (_requesttarget.find("/data/upload") != std::string::npos) {
                 char const *lastSlash = strrchr(_requesttarget.c_str(), '/');
                 std::string name = std::string(lastSlash, strlen(lastSlash));
                 name.erase(name.begin());
@@ -693,13 +799,15 @@ bool    HTTPParser::findMethods(){
                 _upload = true;
                 return true;
             }
-            if (_requesttarget == "/favicon.ico"){
+
+            if (_requesttarget == "/favicon.ico"){           
                 
                 _code = "favicon.ico";
                 _type = "image/x-icon";
                 
                 return true;
             }
+
             else{
                 _code = _requesttarget;
                 _code.erase(_code.begin());
@@ -707,6 +815,7 @@ bool    HTTPParser::findMethods(){
                 return true;
             }
         }
+
         else if (_method == "POST"){
             if (_requesttarget.find("/upload") != std::string::npos){
                 
@@ -784,7 +893,6 @@ bool    HTTPParser::findMethods(){
     
 
 bool    HTTPParser::findPath(){
-    
     return true;
 }
 

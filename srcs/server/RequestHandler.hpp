@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestHandler.hpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:00:06 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/20 19:03:15 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/24 15:24:11 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -82,7 +82,7 @@ public:
     std::string         getSize() const;
     ssize_t             getNReadIndex() const;
 
-    
+    std::string         generateAutoindex(const std::string &fullPath, const std::string &requestTarget);
     std::string         buildAnswerHeader( std::string const & code, std::string const & type );
     
     std::string         getFile( std::string const & code, bool const & error );
@@ -95,7 +95,25 @@ public:
     std::string         getContentType() const;
     std::string         getContentLength() const;
     std::string         getMethod() const;
-    
+
+    // Partial resposnes: byte range responses
+    // valid - range is parsed and satisifable, 206
+    // invalid - range was given but out of bounds, 416
+    // if neither, then no usable range set, so 200 as per usuug
+
+    struct ByteRange {
+        long start;
+        long end;
+        bool valid;
+        bool unsatisfiable;
+        ByteRange() : start(0), end(0), valid(false), unsatisfiable(false) {}
+    };
+
+    ByteRange           parseRangeHeader( std::string const & rangeValue, long fileSize );
+    bool                answerFilePartial( std::string const & file, ByteRange const & r );
+    std::string         buildPartialHeader( std::string const & type, ByteRange const & r, long fileSize );
+    std::string         build416Header( long fileSize );
+///
     bool                answerFile( std::string const & file );
     bool                answerFileImage( std::string const & file );
     bool                answerFileIcon();
@@ -103,6 +121,7 @@ public:
     bool                uploadFile( std::string const & filename, std::string const & buf );
     bool                removeFile( std::string const & filename );
 
+    
     void                sendError( HTTPParser & parser );
 
 

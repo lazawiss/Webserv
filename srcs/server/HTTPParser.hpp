@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HTTPParser.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: andikim <andikim@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/21 15:51:02 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/23 09:20:51 by andikim          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,7 +77,8 @@ private:
     std::string                 _content_length;
     int                         _content_int;
 
-    
+    bool                _autoindexOn; 
+    std::string         _rangeHeader; // raw value of the "Range:" request header, "" if absent
 
 public:
 
@@ -110,6 +111,14 @@ public:
     std::string                 getContentLength() const;
     std::string                 getRequestTarget() const;
     bool                        isCGI() const;
+
+    const LocationConfig*       matchLocation() const;
+    void                        buildFullPath();
+
+    // 206 wiring: pull the raw "Range:" header from requete baby
+    void                        extractRange();
+    std::string                 getRange() const;
+
     void                        parseCGI();
     void                        extractBody();
     bool                        validateCGIRequest();
