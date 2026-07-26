@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HTTPParser.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: andikim <andikim@student.42.fr>            +#+  +:+       +#+        */
+/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/23 09:23:52 by andikim          ###   ########.fr       */
+/*   Updated: 2026/07/26 14:02:46 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -725,7 +725,6 @@ bool    HTTPParser::findMethods(){
                 else{
                     _code = "index.html";
                     std::cout << "_code: " << _code << std::endl;
-                    
                 }
             }
             _type = "text/html";

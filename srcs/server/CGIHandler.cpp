@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CGIHandler.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: andikim <andikim@student.42.fr>            +#+  +:+       +#+        */
+/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 18:29:42 by andikim           #+#    #+#             */
-/*   Updated: 2026/07/13 23:05:45 by andikim          ###   ########.fr       */
+/*   Updated: 2026/07/26 14:00:14 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -124,6 +124,7 @@ void CGI::buildEnv()
 
 bool CGI::start()
 {
+    signal(SIGPIPE, SIG_IGN);
     std::string interpreter = findInterpreter();
 
     if (interpreter.empty() || access(_fullPath.c_str(), R_OK) != 0
