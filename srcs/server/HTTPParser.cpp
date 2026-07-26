@@ -548,10 +548,11 @@ bool    HTTPParser::checkContentLength(){
                 return false;
             }
             _content_int = len;
+            _content_length = _fileLength;
             return true;
         }
 
-        size_t len; 
+        size_t len;
         ss >> len;
         std::cout << "Content-Length:" << _fileLength << std::endl;
         std::cout << "Content-Length:" << len << std::endl;
@@ -559,6 +560,7 @@ bool    HTTPParser::checkContentLength(){
             std::cerr << "File size is too big." << std::endl;
             return false;
         }
+        _content_length = _fileLength;
         return true;
      }
     _errors = true;
