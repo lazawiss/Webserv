@@ -12,6 +12,7 @@
 
 #include "../lexer/Lexer.hpp"
 #include "../parser/Parser.hpp"
+#include <sstream>
 
 #include "CGIHandler.hpp"
 #include "EpollLoop.hpp"
@@ -190,7 +191,10 @@ bool EpollLoop::do_read_fd(
         return true;
     }
 
-    LOG_DEBUG("Response header built for fd " + std::to_string(fd));
+    std::ostringstream dbg;
+    dbg << "Response header built for fd=" << fd;
+    LOG_DEBUG(dbg.str());
+
     _clientResponseBuffer[fd] += std::string(requestHandler.getHeader());
     _clientResponseBuffer[fd] += std::string(
         requestHandler.getBuffer().c_str(),
@@ -215,10 +219,14 @@ bool EpollLoop::do_write_fd( int fd, int epollfd, epoll_event &ev ) {
     ssize_t headerSent = send(fd, response.c_str(), response.size(), 0);
     if (headerSent == -1)
     {
-        LOG_ERROR("Send error on fd: " + std::to_string(fd));
+        std::ostringstream oss;
+        oss << "Send error on fd: " << fd;
+        LOG_ERROR(oss.str());
+    
         close(fd);
         _clientResponseBuffer.erase(fd);
-        _clientToListener.erase(fd);  
+        _clientToListener.erase(fd);
+ 
         return false;
     }
 
@@ -229,6 +237,7 @@ bool EpollLoop::do_write_fd( int fd, int epollfd, epoll_event &ev ) {
 
         ev.data.fd = fd;
         epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &ev);
+    
         return true;
     }
 
@@ -238,6 +247,7 @@ bool EpollLoop::do_write_fd( int fd, int epollfd, epoll_event &ev ) {
     close(fd);
     _clientResponseBuffer.erase(fd);
     _clientToListener.erase(fd);
+
     return true;
 
 }

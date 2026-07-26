@@ -13,6 +13,7 @@
 
 #include "../lexer/Lexer.hpp"
 #include "../parser/config/ServerConfig.hpp"
+#include <sstream>
 
 #include "ListenerManager.hpp"
 #include "HTTPParser.hpp"
@@ -324,11 +325,13 @@ bool    RequestHandler::answerFile( std::string const & file ){
 
     struct stat sb;
     
-    if (stat(file.c_str(), &sb) == -1){
+    if (stat(file.c_str(), &sb) == -1)
+    {
         LOG_ERROR("stat failed: " + file + " - " + strerror(errno));
         return false;
     }
-    LOG_DEBUG("File size: " + std::to_string(sb.st_size));
+    std::ostringstream dbg; dbg << "File size: " << sb.st_size;
+    LOG_DEBUG(dbg.str());
 
     int indexfd = open(file.c_str(), O_RDONLY);
     if (indexfd == -1)
@@ -398,7 +401,10 @@ bool    RequestHandler::uploadFile( std::string const & filename, std::string co
         LOG_ERROR("stat failed for uploaded file: " + std::string(strerror(errno)));
         return false;
     }
-    LOG_DEBUG("Uploaded file size: " + std::to_string(sb.st_size));
+
+    std::ostringstream dbg;
+    dbg << "Uploaded file size: " << sb.st_size;
+    LOG_DEBUG(dbg.str());
 
     return true;
 }
@@ -746,7 +752,10 @@ bool RequestHandler::answerFilePartial(std::string const & file, ByteRange const
     long length = r.end - r.start + 1;
     if (length <= 0 || length > BUF_SIZE)
     {
-        LOG_ERROR("Partial range out of bounds: " + std::to_string(length));
+        std::ostringstream oss;
+        oss << "Partial range out of bounds: " << length;
+        LOG_ERROR(oss.str());
+
         return false;
     }
 
