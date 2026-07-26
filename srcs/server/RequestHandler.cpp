@@ -227,7 +227,7 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
     
     LOG_DEBUG("Building response header, code: " + code);
 
-    std::string codeName[8] =
+    std::string codeName[10] =
     {
         "400",
         "404",
@@ -236,11 +236,13 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
         "414",
         "421",
         "201",
-        "204"
+        "204",
+        "500",
+        "502"
     };
     
     int index = -1;
-    for (int i = 0 ;i < 8; i++){
+    for (int i = 0 ;i < 10; i++){
         
         if (codeName[i] == code){
             index = i;
@@ -280,8 +282,16 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
         str = "201 CREATED\r\nLocation: " + _pathToFile;
         break;
         
-         case(7):
+        case(7):
         str = "204 NO CONTENT";
+        break;
+
+        case(8):
+        str = "500 INTERNAL SERVER ERROR";
+        break;
+
+        case(9):
+        str = "502 BADGATEWAY";
         break;
 
         default:
