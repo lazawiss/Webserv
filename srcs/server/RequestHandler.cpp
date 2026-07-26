@@ -497,13 +497,10 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     
     HTTPParser HTTPParser(_request, _serverConfig);
 
-    bool    requestValid = true;
-
     //  check request
     if (HTTPParser.isRequestValid(listen) == false) {
 
         LOG_DEBUG("Request invalid");
-        requestValid = false;
 
     } else if (HTTPParser.isCGI()) {
 
@@ -527,7 +524,7 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     } else if (HTTPParser.findMethods() == false) {
 
         LOG_ERROR("Method not implemented");
-        requestValid = false;
+
     }
 
 // need this for CGI no? so maybe before?
