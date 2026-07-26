@@ -26,11 +26,14 @@
 ** ============================================================================
 */
 
-
-RequestHandler::RequestHandler( std::string const & request, const ServerConfig &serverConfig ) :
+RequestHandler::RequestHandler(
+    std::string const & request,
+    const ServerConfig & serverConfig) :
     _request(request), _serverConfig(serverConfig),
-    _root(serverConfig.getRoot()), _header(), _size(), _pathToFile(), _n_read_index(0), _isCGI(false),
-    _fullPath(), _query_string(), _scriptFilename(), _body(), _content_type(), _content_length(),
+    _root(serverConfig.getRoot()), _header(), _size(),
+    _pathToFile(), _n_read_index(0), _isCGI(false),
+    _fullPath(), _query_string(), _scriptFilename(),
+    _body(), _content_type(), _content_length(),
     _method()
 {
     memset(_buffer, 0, BUF_SIZE);
@@ -39,12 +42,14 @@ RequestHandler::RequestHandler( std::string const & request, const ServerConfig 
 RequestHandler::RequestHandler( RequestHandler const & src ) :
     _request(src._request), _serverConfig(src._serverConfig),
     _root(src._root), _header(src._header),
-    _size(src._size), _pathToFile(src._pathToFile), _n_read_index(src._n_read_index), _isCGI(src._isCGI),
-    _fullPath(src._fullPath), _query_string(src._query_string), _scriptFilename(src._scriptFilename), 
-    _body(src._body), _content_type(src._content_type), _content_length(src._content_length),
+    _size(src._size), _pathToFile(src._pathToFile),
+    _n_read_index(src._n_read_index), _isCGI(src._isCGI),
+    _fullPath(src._fullPath), _query_string(src._query_string),
+    _scriptFilename(src._scriptFilename),
+    _body(src._body), _content_type(src._content_type),
+    _content_length(src._content_length),
     _method(src._method)
 {
-
     memcpy(_buffer, src._buffer, BUF_SIZE);
 }
 
@@ -124,6 +129,7 @@ std::string RequestHandler::getFilename() const
     return _scriptFilename;
 }
 
+// ── query string ────────────────────────────────────────────────────────────
 std::string RequestHandler::getQueryString() const
 {
     return _query_string;
@@ -135,16 +141,17 @@ std::string RequestHandler::getBody() const
     return _body;
 }
 // ── content type ────────────────────────────────────────────────────────────
-
 std::string RequestHandler::getContentType() const
 {
     return _content_type;
 }
+// ── content length ──────────────────────────────────────────────────────────
 std::string RequestHandler::getContentLength() const
 {
     return _content_length;
 }
 
+// ── method ──────────────────────────────────────────────────────────────────
 std::string RequestHandler::getMethod() const
 {
     return _method;
@@ -170,10 +177,12 @@ static std::string resolveRoot(const ServerConfig &cfg, const std::string &uri)
             root = locs[i].getRoot();
         }
     }
+
     return root;
 }
 
 std::string RequestHandler::getFile( std::string const & code, bool const & error ){
+
     std::string file;
     if (error == true){
         
@@ -190,10 +199,10 @@ std::string RequestHandler::getFile( std::string const & code, bool const & erro
     }
  
     LOG_DEBUG("Serving file: " + file);
+
     return file;
 }
 
-// build path toward file
 std::string RequestHandler::getFileImage( std::string const & code){
     
     std::string file = "data/www/images";
@@ -202,7 +211,7 @@ std::string RequestHandler::getFileImage( std::string const & code){
     LOG_DEBUG("Serving image: " + file);
     return file;
 }
-// build path toward file
+
 std::string RequestHandler::getFileUpload( std::string const & code){
 
     std::string file = "data/upload";
@@ -218,9 +227,8 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
     
     LOG_DEBUG("Building response header, code: " + code);
 
-    //cherche dans tableau >> code + reason
-    std::string codeName[8] = {
-    
+    std::string codeName[8] =
+    {
         "400",
         "404",
         "405",
@@ -281,7 +289,6 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
         break;
         
     }
-    // stocke dans string 
     
     _header = "HTTP/1.1 ";
     _header += str;
@@ -290,27 +297,12 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
     _header += type;
     _header += "\r\n";
     _header += "Content-Length: ";
-    // if ( type == "text/html"){
-        
-        std::stringstream ss;
-        ss << _n_read_index;
-        std::string size = ss.str();
-        _header += size;
-    // }
-    // if ( type == "image/jpeg" ||  type == "image/png" || type == "image/gif" || type == "image/x-icon"){
-        
-    //     _header += _size;
-    //     _header += "\r\n";
-    //     _header += "Connection: keep-alive";
-    //     // _header += "Connection: close";
-
-    // }
-    // if (atoi(str.c_str()) >= 400){
-        
-        // _header += "Cache-Control: no-store, no-cache, must-revalidate, max-age=0\r\n";
-        // _header += "Pragma: no-cache\r\n";
-        // _header += "Expires: 0\r\n";
-    // }
+    
+    std::stringstream ss;
+    ss << _n_read_index;
+    std::string size = ss.str();
+    _header += size;
+    
     _header += "\r\n\r\n";
     
     return _header;
@@ -338,13 +330,9 @@ bool    RequestHandler::answerFile( std::string const & file ){
     close(indexfd);
     if (_n_read_index == -1)
         return false;
-    if (_n_read_index > BUF_SIZE){
-        LOG_ERROR("File size exceeds buffer limit");
-        return false;
-    }
-    
+
     return true;
-    
+
 }
 
 
@@ -369,11 +357,6 @@ bool    RequestHandler::answerFileIcon(){
     if (_n_read_index == -1)
         return false;
 
-    if (_n_read_index > BUF_SIZE){
-        LOG_ERROR("Favicon size exceeds buffer limit");
-        return false;
-    }
-    
     return true;
 }
 
@@ -407,12 +390,6 @@ bool    RequestHandler::uploadFile( std::string const & filename, std::string co
     }
     LOG_DEBUG("Uploaded file size: " + std::to_string(sb.st_size));
 
-    if (_pathToFile.empty()){
-        LOG_ERROR("Upload path is empty");
-        return false;
-    }
-    
-    
     return true;
 }
 
@@ -450,7 +427,8 @@ std::string RequestHandler::generateAutoindex(const std::string &fullPath, const
     html += requestTarget;
     html += "</h1>\n<hr>\n<ul>\n";
 
-    struct dirent *entry; // format of directory entries, useful to grab all the files that are existing, girl
+    // format of directory entries, useful to grab all the files that are existing, girl
+    struct dirent *entry;
     while ((entry = readdir(dir)) != NULL)
     {
         std::string name = entry->d_name;
@@ -480,7 +458,7 @@ std::string RequestHandler::generateAutoindex(const std::string &fullPath, const
     return html;
 }
 
-void    RequestHandler::sendError( HTTPParser & parser ){
+void RequestHandler::sendError( HTTPParser & parser ) {
     
     parser.setError(true);
     parser.setCode("404");
@@ -489,112 +467,132 @@ void    RequestHandler::sendError( HTTPParser & parser ){
     answerFile(file);
 }
 
-// main function : 
-// instanciate HTTPParser 
-// checks if request valid
-// parse request
-// find proper file to send to client
-// build answer depending of content to sent
-bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
+/**
+** @brief Handles a full HTTP request from parsing to response.
+**
+** Instantiates HTTPParser, validates the request, dispatches to
+** the right handler (CGI, DELETE, POST, GET, autoindex, range…),
+** then builds the response header.
+**
+** @param listen  the listener that accepted this client
+** @return        true on success, false on unrecoverable error
+**/
+bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     
     HTTPParser HTTPParser(_request, _serverConfig);
 
     bool    requestValid = true;
 
     //  check request
-    if (HTTPParser.isRequestValid(listen) == false){
+    if (HTTPParser.isRequestValid(listen) == false) {
+
         LOG_DEBUG("Request invalid");
         requestValid = false;
-    }
-    else if (requestValid == true && HTTPParser.findMethods() == false)
-    {
-        if (requestValid == true && HTTPParser.isCGI())
+
+    } else if (HTTPParser.isCGI()) {
+
+        if (HTTPParser.validateCGIRequest() == false)
         {
-            if (HTTPParser.validateCGIRequest() == false){
-                LOG_ERROR("CGI request validation failed");
-                return false;
-            }
-            _scriptFilename = HTTPParser.getScriptFilename();
-            _fullPath = "data/" + _scriptFilename; // location.root + _scriptFilename
-            _query_string = HTTPParser.getQueryString();
-            _body = HTTPParser.getBody(); // need to parse still
-            _content_type = HTTPParser.getContentType();
-            _content_length = HTTPParser.getContentLength();
-            _method = HTTPParser.getMethod();      
-            _isCGI = true;
-            return true;
+            LOG_ERROR("CGI request validation failed");
+            return false;
         }
-        else
-            LOG_ERROR("Method not implemented");
+
+        _scriptFilename = HTTPParser.getScriptFilename();
+        _fullPath = "data/" + _scriptFilename;
+        _query_string = HTTPParser.getQueryString();
+        _body = HTTPParser.getBody();
+        _content_type = HTTPParser.getContentType();
+        _content_length = HTTPParser.getContentLength();
+        _method = HTTPParser.getMethod();
+        _isCGI = true;
+
+        return true;
+
+    } else if (HTTPParser.findMethods() == false) {
+
+        LOG_ERROR("Method not implemented");
+        requestValid = false;
     }
+
 // need this for CGI no? so maybe before?
     if (_root.empty())
         _root = resolveRoot(_serverConfig, HTTPParser.getRequestTarget());
 
-    // When a range branch builds its own 206/416 header for the partial guys heehee skip buildAnswerHeader.
+    // When a range branch builds its own 206/416 header for the
+    // partial guys heehee skip buildAnswerHeader.
     bool rangeHandled = false;
 
-    if (HTTPParser.getMethod() == "DELETE"){
+    if (HTTPParser.getMethod() == "DELETE")
+    {
         
-        if (HTTPParser.getError() == true){
-            std::string file = getFile(HTTPParser.getCode(), HTTPParser.getError()); 
+        if (HTTPParser.getError() == true) {
+
+            std::string file = getFile(HTTPParser.getCode(),
+                HTTPParser.getError()); 
             answerFile(file);
-        }
-        else{
+
+        } else {
             
             std::string file = getFileUpload(HTTPParser.getCode()); 
             
             if (removeFile(file) == false)
                 sendError(HTTPParser);
-            else{
+            else
+            {
                 
                 HTTPParser.setCode("204");
                 HTTPParser.setType("text/html");
             }
         }
-    }
-    else if (HTTPParser.getMethod() == "POST"){
+    
+    } else if (HTTPParser.getMethod() == "POST") {
         
-        if (uploadFile(HTTPParser.getFileName(), HTTPParser.getFileBuf()) == false)
+        if (uploadFile(HTTPParser.getFileName(),
+            HTTPParser.getFileBuf()) == false)
             sendError(HTTPParser);
-        else{
+        else {
             
             HTTPParser.setCode("201");
             HTTPParser.getType();
         }
-    }
-    else if (HTTPParser.getCode() == "autoindex")
-    {
+    
+    } else if (HTTPParser.getCode() == "autoindex") {
         // HTTPParser.getPath() is the resolved on-disk directory (root + URI).
-        _body = generateAutoindex(HTTPParser.getPath(), HTTPParser.getRequestTarget());
-        if (_body.empty())
-       {
+        _body = generateAutoindex(HTTPParser.getPath(),
+            HTTPParser.getRequestTarget());
+        if (_body.empty()) {
+
             HTTPParser.setError(true);
             HTTPParser.setCode("403"); // if real dir didn't open
             HTTPParser.setType("text/html");
-        }
-        else
-        {
-            // put the listing where epoll reads the response body (getBuffer()/getNReadIndex()) and let Content-Length mirror
+        
+        } else {
+
+            // put the listing where epoll reads the response body
+            // (getBuffer()/getNReadIndex()) and let Content-Length mirror
             if (_body.size() > (size_t)BUF_SIZE)
                 _body.resize(BUF_SIZE);
             memcpy(_buffer, _body.data(), _body.size());
             _n_read_index = (ssize_t)_body.size();
+
         }
-    }
-    else if (HTTPParser.getType() == "text/html"){
+    
+    } else if (HTTPParser.getType() == "text/html") {
         
         std::string file = getFile(HTTPParser.getCode(), HTTPParser.getError()); 
         if (answerFile(file) == false)
             sendError(HTTPParser);
-    }
-    else if (HTTPParser.getType() == "text/plain"){
+    
+    } else if (HTTPParser.getType() == "text/plain") {
         
         std::string file = getFileUpload(HTTPParser.getCode()); 
         if (answerFile(file) == false)
             sendError(HTTPParser);
-    }
-    else if (HTTPParser.getType() == "image/jpeg" || HTTPParser.getType() == "image/png" || HTTPParser.getType() == "image/gif" || HTTPParser.getType() == "image/webp"){
+
+    } else if (HTTPParser.getType() == "image/jpeg"
+        || HTTPParser.getType() == "image/png"
+        || HTTPParser.getType() == "image/gif"
+        || HTTPParser.getType() == "image/webp") {
 
         std::string file = getFileImage(HTTPParser.getCode());
 
@@ -622,31 +620,40 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         //     HTTPParser.setType("text/html");
         // }
         if (HTTPParser.getUpload() == true){
+
             std::string file = getFileUpload(HTTPParser.getCode()); 
             if (answerFile(file) == false)
                 sendError(HTTPParser);
-        }
-        else{
+
+        } else {
+
             std::string file = getFileImage(HTTPParser.getCode()); 
             if (answerFile(file) == false)
                 sendError(HTTPParser);
+
         }
-    }
-    else if (HTTPParser.getType() == "image/x-icon"){
+    
+    } else if (HTTPParser.getType() == "image/x-icon") {
         
         if (answerFileIcon() == false)
             sendError(HTTPParser);
-    }
-    else if (HTTPParser.getType() == "multipart/form-data"){
+    
+    } else if (HTTPParser.getType() == "multipart/form-data") {
         
-        if (uploadFile(HTTPParser.getFileName(), HTTPParser.getFileBuf()) == false)
+        if (uploadFile(HTTPParser.getFileName(),
+            HTTPParser.getFileBuf()) == false)
             sendError(HTTPParser);
-        else{
+        else
+        {
             
             HTTPParser.setCode("201");
-            char const *lastPoint = strrchr(HTTPParser.getFileName().c_str(), '.');
-            std::string suffix = std::string(lastPoint, strlen(lastPoint));
-            HTTPParser.setType(HTTPParser.addSuffix(suffix));
+            char const *lastPoint =
+                strrchr(HTTPParser.getFileName().c_str(), '.');
+            if (lastPoint)
+            {
+                std::string suffix(lastPoint, strlen(lastPoint));
+                HTTPParser.setType(HTTPParser.addSuffix(suffix));
+            }
         }
     }
 
@@ -687,8 +694,8 @@ RequestHandler::ByteRange RequestHandler::parseRangeHeader(std::string const& ra
 
     long start;
     long end;
-    if (startStr.empty())
-    {
+    if (startStr.empty()) {
+
         // suffix form "-N" - last N bytes
         if (endStr.empty())
             return r;
@@ -702,9 +709,8 @@ RequestHandler::ByteRange RequestHandler::parseRangeHeader(std::string const& ra
             suffix = fileSize;
         start = fileSize - suffix;
         end = fileSize - 1;
-    }
-    else
-    {
+
+    } else {
         start = atol(startStr.c_str());
         end = endStr.empty() ? fileSize - 1 : atol(endStr.c_str());
         if (end > fileSize - 1)
@@ -713,7 +719,8 @@ RequestHandler::ByteRange RequestHandler::parseRangeHeader(std::string const& ra
 
     if (start < 0 || start >= fileSize || start > end)
     {
-        r.unsatisfiable = true; // 416; if start > end or start >= fileSize → the range is unsatisfiable
+        // 416; if start > end or start >= fileSize → the range is unsatisfiable
+        r.unsatisfiable = true;
         return r;
     }
 
@@ -736,7 +743,8 @@ bool RequestHandler::answerFilePartial(std::string const & file, ByteRange const
     int fd = open(file.c_str(), O_RDONLY);
     if (fd == -1)
     {
-        LOG_ERROR("Failed to open file for partial read: " + std::string(strerror(errno)));
+        LOG_ERROR("Failed to open file for partial read: "
+            + std::string(strerror(errno)));
         return false;
     }
     if (lseek(fd, r.start, SEEK_SET) == (off_t)-1)
@@ -762,7 +770,8 @@ std::string RequestHandler::buildPartialHeader(std::string const & type, ByteRan
     ss << "HTTP/1.1 206 Partial Content\r\n"
        << "Content-Type: " << type << "\r\n"
        << "Accept-Ranges: bytes\r\n"
-       << "Content-Range: bytes " << r.start << "-" << r.end << "/" << fileSize << "\r\n"
+       << "Content-Range: bytes " << r.start << "-"
+       << r.end << "/" << fileSize << "\r\n"
        << "Content-Length: " << (r.end - r.start + 1) << "\r\n\r\n";
     _header = ss.str();
     return _header;
