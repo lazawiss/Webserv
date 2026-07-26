@@ -483,8 +483,7 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         std::cout << "Request Invalid." << std::endl;
         requestValid = false;
     }
-
-    else if (requestValid == true)
+    else if (requestValid == true && HTTPParser.findMethods() == false)
     {
         if (requestValid == true && HTTPParser.isCGI())
         {
