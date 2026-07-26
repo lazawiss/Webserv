@@ -12,16 +12,17 @@
 
 
 #include "../lexer/Lexer.hpp"
+#include "../parser/config/ServerConfig.hpp"
+
 #include "ListenerManager.hpp"
 #include "HTTPParser.hpp"
 #include "RequestHandler.hpp"
 #include "Server.hpp"
-#include "../parser/config/ServerConfig.hpp"
 #include <dirent.h> 
 
 /*
 ** ============================================================================
-** Constructors & Destructor & Getters
+** The Rule of Three
 ** ============================================================================
 */
 
@@ -47,53 +48,106 @@ RequestHandler::RequestHandler( RequestHandler const & src ) :
     memcpy(_buffer, src._buffer, BUF_SIZE);
 }
 
-RequestHandler::~RequestHandler(){}
+RequestHandler::~RequestHandler() {}
 
-RequestHandler & RequestHandler::operator=( RequestHandler const & other ){
-    
-    if ( this != &other){
-        this->_request = other._request;
-        this->_root = other._root;
-        this->_header = other._header;
-        this->_size = other._size;
-        this->_pathToFile = other._pathToFile;
-        memcpy(this->_buffer, other._buffer, BUF_SIZE);
-        this->_n_read_index = other._n_read_index;
-        this->_isCGI = other._isCGI;
-        this->_fullPath = other._fullPath;
-        this->_query_string = other._query_string;
-        this->_scriptFilename = other._scriptFilename;
-        this->_body = other._body;
-        this->_content_type = other._content_type;
-        this->_content_length = other._content_length;
-        this->_method = other._method;
+RequestHandler & RequestHandler::operator=( RequestHandler const & other )
+{
+    if ( this != &other)
+    {
+        _request        = other._request;
+        _root           = other._root;
+        _header         = other._header;
+        _size           = other._size;
+        _pathToFile     = other._pathToFile;
+
+        memcpy(_buffer, other._buffer, BUF_SIZE);
+
+        _n_read_index   = other._n_read_index;
+        _isCGI          = other._isCGI;
+        _fullPath       = other._fullPath;
+        _query_string   = other._query_string;
+        _scriptFilename = other._scriptFilename;
+        _body           = other._body;
+        _content_type   = other._content_type;
+        _content_length = other._content_length;
+        _method = other._method;
     }
 
     return *this;
 }
 
-std::string RequestHandler::getBuffer() const{
+/*
+** ============================================================================
+** Getters & Setters
+** ============================================================================
+*/
 
+// ── buffer ──────────────────────────────────────────────────────────────────
+std::string RequestHandler::getBuffer() const
+{
     return std::string(_buffer, _n_read_index);
 }
 
-std::string RequestHandler::getHeader() const{
-
+// ── header ──────────────────────────────────────────────────────────────────
+std::string RequestHandler::getHeader() const
+{
     return _header;
 }
 
-std::string RequestHandler::getSize() const{
-
+// ── size ────────────────────────────────────────────────────────────────────
+std::string RequestHandler::getSize() const
+{
     return _size;
 }
 
-ssize_t RequestHandler::getNReadIndex() const{
-    
+// ── read index ──────────────────────────────────────────────────────────────
+ssize_t RequestHandler::getNReadIndex() const
+{
     return _n_read_index;
 }
 
-bool RequestHandler::getCGI() const {
+// ── cgi ─────────────────────────────────────────────────────────────────────
+bool RequestHandler::getCGI() const
+{
     return _isCGI;
+}
+
+// ── path ─────────────────────────────────────────────────────────────────────
+std::string RequestHandler::getPath() const
+{
+    return _fullPath;
+}
+
+// ── filename ────────────────────────────────────────────────────────────────
+std::string RequestHandler::getFilename() const
+{
+    return _scriptFilename;
+}
+
+std::string RequestHandler::getQueryString() const
+{
+    return _query_string;
+}
+
+// ── body ────────────────────────────────────────────────────────────────────
+std::string RequestHandler::getBody() const
+{
+    return _body;
+}
+// ── content type ────────────────────────────────────────────────────────────
+
+std::string RequestHandler::getContentType() const
+{
+    return _content_type;
+}
+std::string RequestHandler::getContentLength() const
+{
+    return _content_length;
+}
+
+std::string RequestHandler::getMethod() const
+{
+    return _method;
 }
 
 /*
@@ -119,7 +173,6 @@ static std::string resolveRoot(const ServerConfig &cfg, const std::string &uri)
     return root;
 }
 
-// build path toward file
 std::string RequestHandler::getFile( std::string const & code, bool const & error ){
     std::string file;
     if (error == true){
@@ -158,30 +211,6 @@ std::string RequestHandler::getFileUpload( std::string const & code){
     LOG_DEBUG("Serving upload: " + file);
     return file;
 }
-
-std::string RequestHandler::getPath() const{
-        return _fullPath; // location root + script name, set in handleRequest
-    }
-
-std::string     RequestHandler::getFilename() const {
-        return _scriptFilename;
-    }
-
-std::string     RequestHandler::getQueryString() const {
-        return _query_string;
-    }
-std::string     RequestHandler::getBody() const{
-        return _body;
-    }
-std::string     RequestHandler::getContentType() const{
-        return _content_type;
-    }
-std::string     RequestHandler::getContentLength() const{
-        return _content_length;
-    }
-std::string     RequestHandler::getMethod() const {
-        return _method;
-    }
  
 // construct message to send back to client 
 //  header : code + Content-Type
@@ -305,7 +334,7 @@ bool    RequestHandler::answerFile( std::string const & file ){
         LOG_ERROR("Failed to open file: " + file + " - " + strerror(errno));
         return false;
     }
-    this->_n_read_index = read(indexfd, _buffer, BUF_SIZE);
+    _n_read_index = read(indexfd, _buffer, BUF_SIZE);
     close(indexfd);
     if (_n_read_index == -1)
         return false;
