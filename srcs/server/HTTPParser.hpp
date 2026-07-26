@@ -17,7 +17,6 @@
 #include "ListenerManager.hpp"
 #include "../parser/config/ServerConfig.hpp"
 
-
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -35,7 +34,6 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 
-// #include <sys/epoll.h>
 #include <csignal>
 #include <cerrno>
 #include <cstdlib>
@@ -46,8 +44,8 @@
 
 #define BUF_SIZE 800000
 
-
-class HTTPParser {
+class HTTPParser
+{
 
 private:
 
@@ -56,7 +54,7 @@ private:
     std::string                 _code;
     std::string                 _type;
     std::string                 _method;
-    std::string                 _requesttarget; // CGI 
+    std::string                 _requesttarget;
     std::string                 _httpversion;
     std::string                 _boundary;
     std::string                 _fileLength;
@@ -69,7 +67,7 @@ private:
     
 /* ADD INS FOR CGI------*/
     bool                        _isCGI;
-    std::string                 _fullPath; // location.root + _scriptFilename
+    std::string                 _fullPath;
     std::string                 _query_string;
     std::string                 _scriptFilename;
     std::string                 _body;
@@ -78,7 +76,7 @@ private:
     int                         _content_int;
 
     bool                _autoindexOn; 
-    std::string         _rangeHeader; // raw value of the "Range:" request header, "" if absent
+    std::string         _rangeHeader;
 
 public:
 
@@ -115,7 +113,6 @@ public:
     const LocationConfig*       matchLocation() const;
     void                        buildFullPath();
 
-    // 206 wiring: pull the raw "Range:" header from requete baby
     void                        extractRange();
     std::string                 getRange() const;
 
@@ -140,7 +137,6 @@ public:
     std::string                 addSuffix(std::string suffix);
     bool                        compareMethodWithConfigFile();
 
-                
     bool                        findMethods();
     bool                        findPath();
     bool                        findHeaders();
