@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   EpollLoop.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
+/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/24 16:04:52 by ankim            ###   ########.fr       */
+/*   Updated: 2026/07/26 13:59:52 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,6 @@
 #include "Server.hpp"
 #include "../lexer/Lexer.hpp"
 #include "ListenerManager.hpp"
-#include "ResponseSender.hpp"
 #include "../parser/Parser.hpp"
 #include "RequestHandler.hpp"
 #include "CGIHandler.hpp"
@@ -27,11 +26,10 @@
 ** ============================================================================
 */
 
-EpollLoop:: EpollLoop() {}
+EpollLoop:: EpollLoop() : _header(), _content(){}
 
-EpollLoop::EpollLoop( EpollLoop const & src ){
+EpollLoop::EpollLoop( EpollLoop const & src ) : _clientToListener(src._clientToListener), _clientResponseBuffer(src._clientResponseBuffer), _header(src._header), _content(src._content){
     
-    *this = src;
 }
 
 EpollLoop::~EpollLoop() {}
@@ -41,6 +39,9 @@ EpollLoop & EpollLoop::operator=( EpollLoop const & other ){
     if ( this != &other)
     {
         _clientToListener = other._clientToListener;
+        _clientResponseBuffer = other._clientResponseBuffer;
+        _header = other._header;
+        _content = other._content;
     }
 
     return *this;
@@ -86,7 +87,7 @@ int EpollLoop::setnonblocking( int fd ){
 // handle fds : no closing fds in other classes only in EpollLoop 
 // TO ENSURE NO HANGING FDS : if boolean == false > error caught fd closed in EPollLoop
 // then throw in Server >> quit program
-bool    EpollLoop::do_use_fd( int fd, std::vector<ListenerManager*> const & listeners, const GlobalConfig &config, int epollfd, epoll_event &ev){
+bool    EpollLoop::do_read_fd( int fd, std::vector<ListenerManager*> const & listeners, const GlobalConfig &config, int epollfd, epoll_event &ev){
 
     std::cout << "[global] root: " << config.getRoot() << std::endl;
     const std::vector<ServerConfig> &servers = config.getServers();
@@ -151,6 +152,7 @@ bool    EpollLoop::do_use_fd( int fd, std::vector<ListenerManager*> const & list
     if (serverConfig == NULL)
     {
         LOG_ERROR("No ServerConfig found for port " + listener->getService());
+        _clientToListener.erase(fd);  
         return (close(fd), false);
     }
 
@@ -175,21 +177,16 @@ bool    EpollLoop::do_use_fd( int fd, std::vector<ListenerManager*> const & list
         }
 
         // stdin pipe: WE write the body into it -> watch for EPOLLOUT
-        ev.events = EPOLLOUT | EPOLLIN;
-        if (ev.events == EPOLLOUT)
-        {
-            ev.data.fd = cgi->getStdinFd();
-            epoll_ctl(epollfd, EPOLL_CTL_ADD, cgi->getStdinFd(), &ev);
-            _fdToCGI[cgi->getStdinFd()] = cgi;
-        }
+        ev.events = EPOLLOUT;
+        ev.data.fd = cgi->getStdinFd();
+        epoll_ctl(epollfd, EPOLL_CTL_ADD, cgi->getStdinFd(), &ev);
+        _fdToCGI[cgi->getStdinFd()] = cgi;
 
         // stdout pipe: WE read the script output -> watch for EPOLLIN
-        if (ev.event == EPOLLIN)
-        {
-            ev.data.fd = cgi->getStdoutFd();
-            epoll_ctl(epollfd, EPOLL_CTL_ADD, cgi->getStdoutFd(), &ev);
-            _fdToCGI[cgi->getStdoutFd()] = cgi;
-        }
+        ev.events = EPOLLIN;
+        ev.data.fd = cgi->getStdoutFd();
+        epoll_ctl(epollfd, EPOLL_CTL_ADD, cgi->getStdoutFd(), &ev);
+        _fdToCGI[cgi->getStdoutFd()] = cgi;
 
         // client fd stays OPEN and untouched: the response is sent later,
         // when the stdout pipe hits EOF (see readingSocket)
@@ -197,18 +194,65 @@ bool    EpollLoop::do_use_fd( int fd, std::vector<ListenerManager*> const & list
     }
 
     std::cout << "header:" << requestHandler.getHeader() << std::endl;
-    std::string header = std::string(requestHandler.getHeader());
-    std::string content = std::string(requestHandler.getBuffer().c_str(), requestHandler.getNReadIndex());
+    //_header = std::string(requestHandler.getHeader());
+    //_content = std::string(requestHandler.getBuffer().c_str(), requestHandler.getNReadIndex());
+    _clientResponseBuffer[fd] += std::string(requestHandler.getHeader());
+    _clientResponseBuffer[fd] += std::string(requestHandler.getBuffer().c_str(), requestHandler.getNReadIndex());
+
+    
+    ev.events = EPOLLOUT; // only write
+
+    ev.data.fd = fd;
+    epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &ev);
+    
+    return true;
+
+}
+
+bool    EpollLoop::do_write_fd( int fd, int epollfd, epoll_event &ev ){
      
-    ResponseSender  responseSender( header, content, fd);
-    
-    if (responseSender.sendResponse() == false){
-            std::cerr << "Error sending response: " << strerror(errno) << std::endl;
-            return (close(fd), false);
-        } 
-    
-    _clientToListener.erase(fd);  
-    return close(fd), true;
+    std::string & response = _clientResponseBuffer[fd];
+    ssize_t headerSent = send(fd, response.c_str(), response.size(), 0);
+
+    if (response.empty()){
+        return false;
+    }
+
+    if (headerSent == -1){
+        
+        LOG_ERROR("Send error on fd: " + fd);
+        close(fd);
+        _clientResponseBuffer.erase(fd);
+        _clientToListener.erase(fd);  
+        return false;
+    }
+    // if (headerSent == 0){
+        
+    //     LOG_ERROR("Connection closed during send");
+    //     close(fd);
+    //     _clientResponseBuffer.erase(fd);
+    //     _clientToListener.erase(fd);  
+    //     return false;
+    // }
+    if (headerSent < static_cast<ssize_t>(response.size())){
+        
+        //_clientResponseBuffer[fd] = response.substr( headerSent );
+        response = response.substr( headerSent );
+        ev.events = EPOLLOUT;
+
+        ev.data.fd = fd;
+        epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &ev);
+        return true;
+    }
+
+    LOG_INFO("Message completly sent.");
+
+    epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, NULL);
+    close(fd);
+    _clientResponseBuffer.erase(fd);
+    _clientToListener.erase(fd);
+    return true;
+
 }
 
 bool EpollLoop::readingSocket( std::vector<ListenerManager*> const & listeners, const GlobalConfig &config ){
@@ -291,8 +335,8 @@ bool EpollLoop::readingSocket( std::vector<ListenerManager*> const & listeners, 
                     break;
                 }
                 // add client fd to the kernel epoll table
-                // EPOLLET = notify only once when data arrives
-                ev.events = EPOLLIN | EPOLLET | EPOLLOUT;
+                ev.events = EPOLLIN; //EPOLLIN only because new client have nothing to write yet
+
                 ev.data.fd = clientfd;
                 if (epoll_ctl(epollfd, EPOLL_CTL_ADD, clientfd, &ev) == -1)
                 {
@@ -305,6 +349,7 @@ bool EpollLoop::readingSocket( std::vector<ListenerManager*> const & listeners, 
             // active fd == client fd → client is sending its HTTP request
             else
             {
+                
                 std::map<int, CGI*>::iterator it = _fdToCGI.find(events[n].data.fd);
                 if (it != _fdToCGI.end())
                 {
@@ -330,18 +375,28 @@ bool EpollLoop::readingSocket( std::vector<ListenerManager*> const & listeners, 
                             _fdToCGI.erase(it);
                             cgi->closeStdout();
 
-                            std::string response = cgi->buildResponse();
-                            send(cgi->getClientFd(), response.c_str(),
-                                 response.size(), 0);
-
-                            _clientToListener.erase(cgi->getClientFd());
-                            close(cgi->getClientFd());
+                            int clientFd = cgi->getClientFd(); 
+                            _clientResponseBuffer[clientFd] += cgi->buildResponse();
+                            ev.events = EPOLLOUT;
+                            ev.data.fd = cgi->getClientFd();
+                            epoll_ctl(epollfd, EPOLL_CTL_MOD, cgi->getClientFd(), &ev);
                             delete cgi;
                         }
                     }
                 }
-                else if (do_use_fd(events[n].data.fd, listeners, config, epollfd, ev) == false)
-                    break;
+                else{
+                    
+                    if ( events[n].events & EPOLLIN ){
+                        
+                        if (do_read_fd(events[n].data.fd, listeners, config, epollfd, ev) == false)
+                            break;
+                    }
+                    else if ( events[n].events & EPOLLOUT ){
+                        
+                        if (do_write_fd(events[n].data.fd, epollfd, ev) == false)
+                            break;
+                    }
+                }
             }
         }
     }

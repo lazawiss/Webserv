@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ListenerManager.cpp                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: leazannis <leazannis@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 14:31:24 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/04 17:19:16 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/25 18:42:04 by leazannis        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -127,6 +127,14 @@ bool   ListenerManager::loopBindingSocket(){
         if (_sockfd == -1)
         {
             LOG_ERROR("socket() failed, trying next adress");
+            continue;
+        }
+        /* Allows immediate reuse of the port instead of waiting out TIME_WAIT */
+        int yes = 1;
+        if (setsockopt(_sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1)
+        {
+            LOG_ERROR("setsockopt(SO_REUSEADDR) failed, trying next adress");
+            close(_sockfd);
             continue;
         }
         if (bind(_sockfd, _p->ai_addr, _p->ai_addrlen) == 0)
