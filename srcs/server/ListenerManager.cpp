@@ -129,6 +129,14 @@ bool   ListenerManager::loopBindingSocket(){
             LOG_ERROR("socket() failed, trying next adress");
             continue;
         }
+        /* Allows immediate reuse of the port instead of waiting out TIME_WAIT */
+        int yes = 1;
+        if (setsockopt(_sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1)
+        {
+            LOG_ERROR("setsockopt(SO_REUSEADDR) failed, trying next adress");
+            close(_sockfd);
+            continue;
+        }
         if (bind(_sockfd, _p->ai_addr, _p->ai_addrlen) == 0)
         {
             LOG_SYSTEM("Socket successfully bound to port " + _service);

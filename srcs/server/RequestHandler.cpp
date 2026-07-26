@@ -592,12 +592,12 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
                 rangeHandled = true;
             }
         }
-        // OR just normal 200 full-file response
-        if (!rangeHandled && answerFile(file) == false){
-            HTTPParser.setError(true);
-            HTTPParser.setCode("404");
-            HTTPParser.setType("text/html");
-        }
+        // // OR just normal 200 full-file response
+        // if (!rangeHandled && answerFile(file) == false){
+        //     HTTPParser.setError(true);
+        //     HTTPParser.setCode("404");
+        //     HTTPParser.setType("text/html");
+        // }
         if (HTTPParser.getUpload() == true){
             std::string file = getFileUpload(HTTPParser.getCode()); 
             if (answerFile(file) == false)

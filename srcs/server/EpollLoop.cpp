@@ -176,31 +176,17 @@ bool    EpollLoop::do_read_fd( int fd, std::vector<ListenerManager*> const & lis
             return (close(fd), false);
         }
 
-        ev.events = EPOLLOUT | EPOLLIN;
         // stdin pipe: WE write the body into it -> watch for EPOLLOUT
-        ev.events = EPOLLOUT | EPOLLIN;
-        if (ev.events == EPOLLOUT)
-        {
-            ev.data.fd = cgi->getStdinFd();
-            epoll_ctl(epollfd, EPOLL_CTL_ADD, cgi->getStdinFd(), &ev);
-            _fdToCGI[cgi->getStdinFd()] = cgi;
-        }
+        ev.events = EPOLLOUT;
+        ev.data.fd = cgi->getStdinFd();
+        epoll_ctl(epollfd, EPOLL_CTL_ADD, cgi->getStdinFd(), &ev);
+        _fdToCGI[cgi->getStdinFd()] = cgi;
 
         // stdout pipe: WE read the script output -> watch for EPOLLIN
-        if (ev.events == EPOLLIN)
-        {
-            ev.data.fd = cgi->getStdoutFd();
-            epoll_ctl(epollfd, EPOLL_CTL_ADD, cgi->getStdoutFd(), &ev);
-            _fdToCGI[cgi->getStdoutFd()] = cgi;
-        }
-        // ev.data.fd = cgi->getStdinFd();
-        // epoll_ctl(epollfd, EPOLL_CTL_ADD, cgi->getStdinFd(), &ev);
-        // _fdToCGI[cgi->getStdinFd()] = cgi;
-
-        // // stdout pipe: WE read the script output -> watch for EPOLLIN
-        // ev.data.fd = cgi->getStdoutFd();
-        // epoll_ctl(epollfd, EPOLL_CTL_ADD, cgi->getStdoutFd(), &ev);
-        // _fdToCGI[cgi->getStdoutFd()] = cgi;
+        ev.events = EPOLLIN;
+        ev.data.fd = cgi->getStdoutFd();
+        epoll_ctl(epollfd, EPOLL_CTL_ADD, cgi->getStdoutFd(), &ev);
+        _fdToCGI[cgi->getStdoutFd()] = cgi;
 
         // client fd stays OPEN and untouched: the response is sent later,
         // when the stdout pipe hits EOF (see readingSocket)
@@ -214,36 +200,45 @@ bool    EpollLoop::do_read_fd( int fd, std::vector<ListenerManager*> const & lis
     _clientResponseBuffer[fd] += std::string(requestHandler.getBuffer().c_str(), requestHandler.getNReadIndex());
 
     
-    ev.events = EPOLLOUT; // response ready: watch for writability only
+    ev.events = EPOLLOUT; // only write
 
     ev.data.fd = fd;
     epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &ev);
-
+    
     return true;
 
 }
 
 bool    EpollLoop::do_write_fd( int fd, int epollfd, epoll_event &ev ){
-
+     
     std::string & response = _clientResponseBuffer[fd];
+    ssize_t headerSent = send(fd, response.c_str(), response.size(), 0);
+
     if (response.empty()){
         return false;
     }
-    ssize_t headerSent = send(fd, response.c_str(), response.size(), 0);
 
     if (headerSent == -1){
-
+        
         LOG_ERROR("Send error on fd: " + fd);
         close(fd);
         _clientResponseBuffer.erase(fd);
-        _clientToListener.erase(fd);
+        _clientToListener.erase(fd);  
         return false;
     }
+    // if (headerSent == 0){
+        
+    //     LOG_ERROR("Connection closed during send");
+    //     close(fd);
+    //     _clientResponseBuffer.erase(fd);
+    //     _clientToListener.erase(fd);  
+    //     return false;
+    // }
     if (headerSent < static_cast<ssize_t>(response.size())){
-
+        
         //_clientResponseBuffer[fd] = response.substr( headerSent );
         response = response.substr( headerSent );
-        ev.events = EPOLLOUT; // still writing: keep watching writability only
+        ev.events = EPOLLOUT;
 
         ev.data.fd = fd;
         epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &ev);
@@ -380,13 +375,9 @@ bool EpollLoop::readingSocket( std::vector<ListenerManager*> const & listeners, 
                             _fdToCGI.erase(it);
                             cgi->closeStdout();
 
-                            std::string response = cgi->buildResponse();
-                            send(cgi->getClientFd(), response.c_str(),
-                                 response.size(), 0);
-
-                            //_clientToListener.erase(cgi->getClientFd());
-                            //close(cgi->getClientFd());
-                            ev.events = EPOLLIN | EPOLLOUT;
+                            int clientFd = cgi->getClientFd(); 
+                            _clientResponseBuffer[clientFd] += cgi->buildResponse();
+                            ev.events = EPOLLOUT;
                             ev.data.fd = cgi->getClientFd();
                             epoll_ctl(epollfd, EPOLL_CTL_MOD, cgi->getClientFd(), &ev);
                             delete cgi;

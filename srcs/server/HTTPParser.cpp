@@ -548,10 +548,11 @@ bool    HTTPParser::checkContentLength(){
                 return false;
             }
             _content_int = len;
+            _content_length = _fileLength;
             return true;
         }
 
-        size_t len; 
+        size_t len;
         ss >> len;
         std::cout << "Content-Length:" << _fileLength << std::endl;
         std::cout << "Content-Length:" << len << std::endl;
@@ -559,6 +560,7 @@ bool    HTTPParser::checkContentLength(){
             std::cerr << "File size is too big." << std::endl;
             return false;
         }
+        _content_length = _fileLength;
         return true;
      }
     _errors = true;
@@ -769,7 +771,8 @@ bool    HTTPParser::findMethods(){
                         return false;
                     }
             }
-            if (_requesttarget.find("/images") != std::string::npos) {
+
+             if (_requesttarget.find("/images") == 0) {
                 
                 char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
                 char const *lastSlash = strrchr(_requesttarget.c_str(), '/');
@@ -781,6 +784,7 @@ bool    HTTPParser::findMethods(){
                 
                 return true;
             }
+
 
             if (_requesttarget.find("/data/upload") != std::string::npos) {
                 char const *lastSlash = strrchr(_requesttarget.c_str(), '/');
@@ -799,7 +803,7 @@ bool    HTTPParser::findMethods(){
                 _upload = true;
                 return true;
             }
-
+           
             if (_requesttarget == "/favicon.ico"){           
                 
                 _code = "favicon.ico";
