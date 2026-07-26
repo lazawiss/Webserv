@@ -6,7 +6,7 @@
 /*   By: andikim <andikim@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/23 09:30:22 by andikim          ###   ########.fr       */
+/*   Updated: 2026/07/23 09:32:19 by andikim          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -697,7 +697,7 @@ ByteRange RequestHandler::parseRangeHeader(std::string const& rangeValue, long f
 
     if (start < 0 || start >= fileSize || start > end)
     {
-        r.unsatisfiable = true; // 416;if start > end or start >= fileSize → the range is unsatisfiable: 
+        r.unsatisfiable = true; // 416;if start > end or start >= fileSize → the range is unsatisfiable
         return r;
     }
 
