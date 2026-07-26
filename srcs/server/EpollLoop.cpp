@@ -214,42 +214,36 @@ bool    EpollLoop::do_read_fd( int fd, std::vector<ListenerManager*> const & lis
     _clientResponseBuffer[fd] += std::string(requestHandler.getBuffer().c_str(), requestHandler.getNReadIndex());
 
     
-    //ev.events = EPOLLIN | EPOLLOUT | EPOLLET;  // reset state of epoll struct 
-    ev.events = EPOLLIN | EPOLLOUT; // reset state of epoll struct 
+    ev.events = EPOLLOUT; // response ready: watch for writability only
 
     ev.data.fd = fd;
     epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &ev);
-    
+
     return true;
 
 }
 
 bool    EpollLoop::do_write_fd( int fd, int epollfd, epoll_event &ev ){
-     
+
     std::string & response = _clientResponseBuffer[fd];
+    if (response.empty()){
+        return false;
+    }
     ssize_t headerSent = send(fd, response.c_str(), response.size(), 0);
 
     if (headerSent == -1){
-        
+
         LOG_ERROR("Send error on fd: " + fd);
         close(fd);
         _clientResponseBuffer.erase(fd);
-        _clientToListener.erase(fd);  
-        return false;
-    }
-    if (headerSent == 0){
-        
-        LOG_ERROR("Connection closed during send");
-        close(fd);
-        _clientResponseBuffer.erase(fd);
-        _clientToListener.erase(fd);  
+        _clientToListener.erase(fd);
         return false;
     }
     if (headerSent < static_cast<ssize_t>(response.size())){
-        
+
         //_clientResponseBuffer[fd] = response.substr( headerSent );
         response = response.substr( headerSent );
-        ev.events = EPOLLIN | EPOLLOUT; // reset state of epoll struct 
+        ev.events = EPOLLOUT; // still writing: keep watching writability only
 
         ev.data.fd = fd;
         epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &ev);
@@ -346,9 +340,7 @@ bool EpollLoop::readingSocket( std::vector<ListenerManager*> const & listeners, 
                     break;
                 }
                 // add client fd to the kernel epoll table
-                // EPOLLET = notify only once when data arrives
-                //ev.events = EPOLLIN | EPOLLET | EPOLLOUT;
-                ev.events = EPOLLIN | EPOLLOUT;
+                ev.events = EPOLLIN; //EPOLLIN only because new client have nothing to write yet
 
                 ev.data.fd = clientfd;
                 if (epoll_ctl(epollfd, EPOLL_CTL_ADD, clientfd, &ev) == -1)
