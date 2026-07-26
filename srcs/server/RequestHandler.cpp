@@ -15,6 +15,7 @@
 #include "ListenerManager.hpp"
 #include "HTTPParser.hpp"
 #include "RequestHandler.hpp"
+#include "Server.hpp"
 #include "../parser/config/ServerConfig.hpp"
 #include <dirent.h> 
 
@@ -31,7 +32,6 @@ RequestHandler::RequestHandler( std::string const & request, const ServerConfig 
     _fullPath(), _query_string(), _scriptFilename(), _body(), _content_type(), _content_length(),
     _method()
 {
-    std::cout << "[RequestHandler] _root: '" << _root << "'" << std::endl;
     memset(_buffer, 0, BUF_SIZE);
 }
 
@@ -136,7 +136,7 @@ std::string RequestHandler::getFile( std::string const & code, bool const & erro
         file += code;
     }
  
-    std::cout << "File:" << file << std::endl;
+    LOG_DEBUG("Serving file: " + file);
     return file;
 }
 
@@ -146,16 +146,16 @@ std::string RequestHandler::getFileImage( std::string const & code){
     std::string file = "data/www/images";
     file += "/";
     file += code;
-    std::cout << "FileImage:" << file << std::endl;
+    LOG_DEBUG("Serving image: " + file);
     return file;
 }
 // build path toward file
 std::string RequestHandler::getFileUpload( std::string const & code){
-    
+
     std::string file = "data/upload";
     file += "/";
     file += code;
-    std::cout << "FileImage:" << file << std::endl;
+    LOG_DEBUG("Serving upload: " + file);
     return file;
 }
 
@@ -187,8 +187,8 @@ std::string     RequestHandler::getMethod() const {
 //  header : code + Content-Type
 std::string RequestHandler::buildAnswerHeader( std::string const & code, std::string const & type ){
     
-    std::cout << "code:" << code << std::endl;
-    
+    LOG_DEBUG("Building response header, code: " + code);
+
     //cherche dans tableau >> code + reason
     std::string codeName[8] = {
     
@@ -294,24 +294,23 @@ bool    RequestHandler::answerFile( std::string const & file ){
     struct stat sb;
     
     if (stat(file.c_str(), &sb) == -1){
-        std::cerr << "Error stat: " << strerror(errno) << std::endl;
+        LOG_ERROR("stat failed: " + file + " - " + strerror(errno));
         return false;
     }
-    std::cout << "File Size : " << sb.st_size <<std::endl;
-    
+    LOG_DEBUG("File size: " + std::to_string(sb.st_size));
+
     int indexfd = open(file.c_str(), O_RDONLY);
     if (indexfd == -1)
     {
-        std::cerr << "Error file failed to open on indexfd:" << indexfd << std::endl;
+        LOG_ERROR("Failed to open file: " + file + " - " + strerror(errno));
         return false;
     }
     this->_n_read_index = read(indexfd, _buffer, BUF_SIZE);
     close(indexfd);
-    std::cout << "n_read_index:" << _n_read_index << std::endl;
     if (_n_read_index == -1)
         return false;
     if (_n_read_index > BUF_SIZE){
-        std::cerr << "File size is too big." << std::endl;
+        LOG_ERROR("File size exceeds buffer limit");
         return false;
     }
     
@@ -327,24 +326,22 @@ bool    RequestHandler::answerFileIcon(){
     struct stat sb;
     
     if (stat("data/www/favicon.ico/favicon-16x16.png", &sb) == -1){
-        std::cerr << "Error stat: " << strerror(errno) << std::endl;
+        LOG_ERROR("stat failed for favicon: " + std::string(strerror(errno)));
         return false;
     }
-    std::cout << "File Size : " << sb.st_size <<std::endl;
 
     int indexfd = open("data/www/favicon.ico/favicon-16x16.png", O_RDONLY);
     if (indexfd == -1){
-        std::cerr << "Error file failed to open on indexfd:" << indexfd << std::endl;
+        LOG_ERROR("Failed to open favicon: " + std::string(strerror(errno)));
         return false;
     }
     _n_read_index = read(indexfd, _buffer, BUF_SIZE);
     close(indexfd);
-    std::cout << "n_read_index:" << _n_read_index << std::endl;
     if (_n_read_index == -1)
         return false;
 
     if (_n_read_index > BUF_SIZE){
-        std::cerr << "Image size is too big." << std::endl;
+        LOG_ERROR("Favicon size exceeds buffer limit");
         return false;
     }
     
@@ -356,35 +353,33 @@ bool    RequestHandler::uploadFile( std::string const & filename, std::string co
     
     _pathToFile = "data/upload/" + filename;
     
-    std::cout << "_pathToFile: " << _pathToFile <<std::endl;
-    
+    LOG_INFO("Uploading file to: " + _pathToFile);
+
     std::ofstream outfile(_pathToFile.c_str(), std::ios::binary);
     if (!outfile){
-        std::cerr << "Error outfile couldn't open: " << strerror(errno) << std::endl;
+        LOG_ERROR("Failed to open upload file: " + std::string(strerror(errno)));
         return false;
-    } 
+    }
     outfile.write(buf.data(), buf.size());
 
     if (!outfile.good()){
-        std::cerr << "Error fail to write in file: " << strerror(errno) << std::endl;
+        LOG_ERROR("Failed to write upload file: " + std::string(strerror(errno)));
         return false;
     }
     _n_read_index = buf.size();
-    
+
     outfile.close();
 
-    
     struct stat sb;
-    
+
     if (stat(_pathToFile.c_str(), &sb) == -1){
-        std::cerr << "Error stat outfile: " << strerror(errno) << std::endl;
+        LOG_ERROR("stat failed for uploaded file: " + std::string(strerror(errno)));
         return false;
     }
-    std::cout << "File Size OUtfile: " << sb.st_size <<std::endl;
-    
+    LOG_DEBUG("Uploaded file size: " + std::to_string(sb.st_size));
 
     if (_pathToFile.empty()){
-        std::cerr << "Error outfile is empty: " << strerror(errno) << std::endl;
+        LOG_ERROR("Upload path is empty");
         return false;
     }
     
@@ -396,18 +391,17 @@ bool    RequestHandler::removeFile( std::string const & filename ){
     
     _pathToFile = filename;
     
-    std::cout << "_pathToFile: " << _pathToFile <<std::endl;
-    
+    LOG_INFO("Removing file: " + _pathToFile);
+
     struct stat sb;
-    
+
     if (stat(_pathToFile.c_str(), &sb) == -1){
-        std::cerr << "Error stat outfile: " << strerror(errno) << std::endl;
+        LOG_ERROR("stat failed for file to delete: " + std::string(strerror(errno)));
         return false;
     }
-    std::cout << "File Size OUtfile: " << sb.st_size <<std::endl;
 
     if (remove(_pathToFile.c_str()) < 0 ){
-        std::cerr << "Error file could not get deleted: " << strerror(errno) << std::endl;
+        LOG_ERROR("Failed to delete file: " + std::string(strerror(errno)));
         return false;
     }
     
@@ -480,7 +474,7 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
 
     //  check request
     if (HTTPParser.isRequestValid(listen) == false){
-        std::cout << "Request Invalid." << std::endl;
+        LOG_DEBUG("Request invalid");
         requestValid = false;
     }
     else if (requestValid == true && HTTPParser.findMethods() == false)
@@ -488,7 +482,7 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         if (requestValid == true && HTTPParser.isCGI())
         {
             if (HTTPParser.validateCGIRequest() == false){
-                std::cout << "CGI Request not validated" << std::endl;
+                LOG_ERROR("CGI request validation failed");
                 return false;
             }
             _scriptFilename = HTTPParser.getScriptFilename();
@@ -502,7 +496,7 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
             return true;
         }
         else
-            std::cerr << "Error Method not implemented: " << strerror(errno) << std::endl;
+            LOG_ERROR("Method not implemented");
     }
 // need this for CGI no? so maybe before?
     if (_root.empty())
@@ -706,19 +700,19 @@ bool RequestHandler::answerFilePartial(std::string const & file, ByteRange const
     long length = r.end - r.start + 1;
     if (length <= 0 || length > BUF_SIZE)
     {
-        std::cerr << "Partial length out of range: " << length << std::endl;
+        LOG_ERROR("Partial range out of bounds: " + std::to_string(length));
         return false;
     }
 
     int fd = open(file.c_str(), O_RDONLY);
     if (fd == -1)
     {
-        std::cerr << "Error opening file for partial read: " << strerror(errno) << std::endl;
+        LOG_ERROR("Failed to open file for partial read: " + std::string(strerror(errno)));
         return false;
     }
     if (lseek(fd, r.start, SEEK_SET) == (off_t)-1)
     {
-        std::cerr << "lseek failed: " << strerror(errno) << std::endl;
+        LOG_ERROR("lseek failed: " + std::string(strerror(errno)));
         close(fd);
         return false;
     }
@@ -726,7 +720,7 @@ bool RequestHandler::answerFilePartial(std::string const & file, ByteRange const
     close(fd);
     if (_n_read_index != length)
     {
-        std::cerr << "Short partial read: " << _n_read_index << "/" << length << std::endl;
+        LOG_ERROR("Short partial read");
         return false;
     }
     return true;

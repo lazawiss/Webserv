@@ -89,16 +89,6 @@ int EpollLoop::setnonblocking( int fd ){
 // then throw in Server >> quit program
 bool    EpollLoop::do_read_fd( int fd, std::vector<ListenerManager*> const & listeners, const GlobalConfig &config, int epollfd, epoll_event &ev){
 
-    std::cout << "[global] root: " << config.getRoot() << std::endl;
-    const std::vector<ServerConfig> &servers = config.getServers();
-    for (size_t i = 0; i < servers.size(); i++)
-    {
-        std::cout << "[server " << i << "] root: " << servers[i].getRoot() << std::endl;
-        const std::vector<LocationConfig> &locations = servers[i].getLocations();
-        for (size_t j = 0; j < locations.size(); j++)
-            std::cout << "[server " << i << "][location " << j << "] root: " << locations[j].getRoot() << std::endl;
-    }
-
     char    buf[BUF_SIZE];
 
     ssize_t n_read = read(fd, buf, BUF_SIZE); // read HTTP requests, need to handle TCP accidents
@@ -107,16 +97,13 @@ bool    EpollLoop::do_read_fd( int fd, std::vector<ListenerManager*> const & lis
         LOG_ERROR("Client closed connection");
         return (close(fd), false);
     }
-    // n_Read = -1 means error, n_read == 0 means eof
     if (n_read == -1)
     {
-        LOG_ERROR("Error on reading fd:" + fd);
+        LOG_ERROR("Error reading from client fd");
         return (close(fd), false);
     }
+
     std::string request = std::string(buf, n_read);
-    // std::cout << request << std::endl;
-    // Parse request
-    
 
     // find which listener accepted this client
     int listenerSockfd = _clientToListener[fd];
@@ -137,7 +124,7 @@ bool    EpollLoop::do_read_fd( int fd, std::vector<ListenerManager*> const & lis
 
     // match the ServerConfig whose port matches this listener
     const ServerConfig *serverConfig = NULL;
-    // const std::vector<ServerConfig> &servers = config.getServers();
+    const std::vector<ServerConfig> &servers = config.getServers();
     for (size_t i = 0; i < servers.size(); i++)
     {
         const std::string &listenVal = servers[i].getListen();
@@ -160,7 +147,7 @@ bool    EpollLoop::do_read_fd( int fd, std::vector<ListenerManager*> const & lis
 
     if (requestHandler.handleRequest(*listener) == false)
     {
-        std::cerr << "Reading of html file failed: " << strerror(errno) << std::endl;
+        LOG_ERROR("Reading of html file failed: " + std::string(strerror(errno)));
         return (close(fd), false);
     }
     if (requestHandler.getCGI())
@@ -207,9 +194,7 @@ bool    EpollLoop::do_read_fd( int fd, std::vector<ListenerManager*> const & lis
         return true;
     }
 
-    std::cout << "header:" << requestHandler.getHeader() << std::endl;
-    //_header = std::string(requestHandler.getHeader());
-    //_content = std::string(requestHandler.getBuffer().c_str(), requestHandler.getNReadIndex());
+    LOG_DEBUG("Response header built for fd " + std::to_string(fd));
     _clientResponseBuffer[fd] += std::string(requestHandler.getHeader());
     _clientResponseBuffer[fd] += std::string(requestHandler.getBuffer().c_str(), requestHandler.getNReadIndex());
 
@@ -233,7 +218,7 @@ bool    EpollLoop::do_write_fd( int fd, int epollfd, epoll_event &ev ){
 
     if (headerSent == -1){
 
-        LOG_ERROR("Send error on fd: " + fd);
+        LOG_ERROR("Send error on fd: " + std::to_string(fd));
         close(fd);
         _clientResponseBuffer.erase(fd);
         _clientToListener.erase(fd);

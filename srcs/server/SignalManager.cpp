@@ -50,12 +50,10 @@ SignalManager & SignalManager::operator=( SignalManager const & other ){
 
 static void  sigintHandler(int _sig){
 
-    write(STDERR_FILENO, "Signal received\n", 16);
     if (_sig == SIGTERM || _sig == SIGINT){
         Server::_quit = 1;
+        write(STDERR_FILENO, "[System]   Server stopping\n", 27);
     }
-    fprintf(stderr, "sigintHANdler _quit: %d \n", Server::_quit);
-    // exit(_sig);
 }
 
 void    SignalManager::setupSignals(){

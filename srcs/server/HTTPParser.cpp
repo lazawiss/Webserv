@@ -13,6 +13,7 @@
 #include "../lexer/Lexer.hpp"
 #include "../parser/config/ServerConfig.hpp"
 #include "HTTPParser.hpp"
+#include "Server.hpp"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -251,7 +252,7 @@ bool    HTTPParser::checkRequestLine(){
         _method = subss[0];
         
         if (isMethod(_method))
-        std::cout << "Method:" << _method << std::endl;
+            LOG_DEBUG("Method: " + _method);
         else{
             
             _errors = true;
@@ -265,11 +266,11 @@ bool    HTTPParser::checkRequestLine(){
         
         char const *slash = strrchr( _requesttarget.c_str(), '/');
         if (slash)
-        std::cout << "RequestTarget: " << _requesttarget << std::endl;
-        
+            LOG_DEBUG("RequestTarget: " + _requesttarget);
+
         _httpversion = subss[2];
         if ( _httpversion == "HTTP/1.1")
-        std::cout << "HTTP version: " << _httpversion << std::endl;
+            LOG_DEBUG("HTTP version: " + _httpversion);
      
         return true;
     }
@@ -288,7 +289,7 @@ bool    HTTPParser::checkHost( ListenerManager const & listener ){
     hostname += ":";
     hostname += listener.getService();
 
-    std::cout << "hostname:" << hostname << std::endl;
+    LOG_DEBUG("Expected hostname: " + hostname);
 
     _pos++;
    
@@ -306,7 +307,7 @@ bool    HTTPParser::checkHost( ListenerManager const & listener ){
             
             return true;
         }
-        std::cout << "found->value:" << subss[1] << std::endl;
+        LOG_DEBUG("Host mismatch, got: " + subss[1]);
         _errors = true;
         _code = "421";
         _type = "text/html";
@@ -324,12 +325,12 @@ bool    HTTPParser::checkHost( ListenerManager const & listener ){
 bool    HTTPParser::isRequestValid( ListenerManager const & listen ){
     
     if (checkSize() == false){
-        std::cerr << "Error Size too big: " << strerror(errno) << std::endl;
+        LOG_ERROR("Request size exceeds limit");
         return false;
     }
-    
+
     if (checkRequestLine() == false){
-        std::cerr << "Error Request Line wrong: " << strerror(errno) << std::endl;
+        LOG_ERROR("Invalid request line");
         return false;
     }
 
@@ -340,7 +341,7 @@ bool    HTTPParser::isRequestValid( ListenerManager const & listen ){
     parseCGI();
     
     if (checkHost(listen) == false){
-        std::cerr << "Error Host not found: " << strerror(errno) << std::endl;
+        LOG_ERROR("Host header invalid or missing");
         return false;
     }
     
@@ -378,16 +379,15 @@ bool    HTTPParser::isCGI() const{
 
 bool HTTPParser::validateCGIRequest()
 {
-    if (_method != "GET" && _method != "POST" &&
-        _method != "DELETE")
+    if (_method != "GET" && _method != "POST" && _method != "DELETE")
     {
         _code = "405";
         return false;
     }
     if (_method == "POST")
     {
-        if (!checkContentType())  { std::cerr << "no Content-Type" << std::endl; return false; }
-        if (!checkContentLength()){ std::cerr << "no Content-Length" << std::endl; return false; }
+        if (!checkContentType())  { LOG_ERROR("CGI POST: missing Content-Type"); return false; }
+        if (!checkContentLength()){ LOG_ERROR("CGI POST: missing Content-Length"); return false; }
     }
     _code = "cgi";
     return true;
@@ -448,8 +448,7 @@ void    HTTPParser::buildFullPath(){
         _fullPath.erase(_fullPath.size() - 1);
     _fullPath += _requesttarget;
 
-    std::cout << "[HTTPParser] _fullPath: '" << _fullPath
-              << "' autoindex=" << (_autoindexOn ? "on" : "off") << std::endl;
+    LOG_DEBUG(std::string("[HTTPParser] _fullPath: '") + _fullPath + "' autoindex=" + (_autoindexOn ? "on" : "off"));
 }
 
 // grab the raw value of the range header! 
@@ -471,7 +470,7 @@ void    HTTPParser::extractRange(){
         _rangeHeader.clear();
     else
         _rangeHeader = _rangeHeader.substr(nonSpace);
-    std::cout << "[HTTPParser] Range: '" << _rangeHeader << "'" << std::endl;
+    LOG_DEBUG("[HTTPParser] Range: '" + _rangeHeader + "'");
 }
 
 std::string     HTTPParser::getRange() const{
@@ -508,12 +507,12 @@ bool    HTTPParser::checkContentType(){
         
         _type = subss[1];
         _type.erase(_type.end() - 1);
-        std::cout << "Content-Type:" << _type << std::endl;
+        LOG_DEBUG("Content-Type: " + _type);
         _boundary = subss[2];
         if (_isCGI)
             return true;
         _boundary.erase(_boundary.begin(),_boundary.begin() + 9);
-        std::cout << "boundary:" << _boundary << std::endl;
+        LOG_DEBUG("boundary: " + _boundary);
         
         return true;
     }
@@ -541,22 +540,20 @@ bool    HTTPParser::checkContentLength(){
         {
             int len;
             ss >> len;
-            std::cout << "Content-Length:" << _fileLength << std::endl;
-            std::cout << "Content-Length:" << len << std::endl;
+            LOG_DEBUG("Content-Length: " + _fileLength);
             if (len > BUF_SIZE){
-                std::cerr << "File size is too big." << std::endl;
+                LOG_ERROR("File size exceeds limit");
                 return false;
             }
             _content_int = len;
             return true;
         }
 
-        size_t len; 
+        size_t len;
         ss >> len;
-        std::cout << "Content-Length:" << _fileLength << std::endl;
-        std::cout << "Content-Length:" << len << std::endl;
+        LOG_DEBUG("Content-Length: " + _fileLength);
         if (len > BUF_SIZE){
-            std::cerr << "File size is too big." << std::endl;
+            LOG_ERROR("File size exceeds limit");
             return false;
         }
         return true;
@@ -592,9 +589,9 @@ bool    HTTPParser::checkContentDisposition(){
             _fileName = subss[3];
             _fileName.erase(_fileName.end() - 1);
             _fileName.erase(_fileName.begin(), _fileName.begin() + 10 );
-            std::cout << "type: " << checktype << std::endl; //recuperer ??
-            std::cout << "name " << name << std::endl;
-            std::cout << "_fileName: " << _fileName << std::endl;
+            LOG_DEBUG("Disposition type: " + checktype);
+            LOG_DEBUG("Disposition name: " + name);
+            LOG_DEBUG("Upload filename: " + _fileName);
 
             return true;
      }
@@ -614,35 +611,18 @@ bool    HTTPParser::gatherFile(){
     std::vector<std::string> subss = collectString(space_inter);
 
     _type = subss[1];
-    std::cout << "Content-Type: " << _type << std::endl;
-  
-    _pos += 3;
-    std::cout << "_pos: " << *_pos << std::endl;
-    
-    std::string endOfFile = _boundary + "--";
-    std::cout << "endOfFile: " << endOfFile << std::endl;
-    std::cout << "Derniers 100 octets de _request : '" <<
-    std::string(_request.end() - 100, _request.end()) << "'" << std::endl;
+    LOG_DEBUG("File Content-Type: " + _type);
 
-    // size_t len =  endOfFile.size();
+    _pos += 3;
+
+    std::string endOfFile = _boundary + "--";
     size_t end_pos = _request.find(endOfFile);
-    std::cout << "end_pos: " << end_pos << std::endl;
-    
+
     if (end_pos == std::string::npos){
-        
-        std::cerr << "Error last boundary not found: " << strerror(errno) << std::endl;
+        LOG_ERROR("End boundary not found in request");
         return false;
     }
-    _fileBuf.assign(_pos, _request.begin() + end_pos -4);
-    std::cout << "Firsts 100 octets de _fileBuf : '" <<
-    std::string(_fileBuf.begin(), _fileBuf.begin() + 100) << "'" << std::endl;
-    std::cout << "Derniers 100 octets de _fileBuf : '" <<
-    std::string(_fileBuf.end() - 100, _fileBuf.end()) << "'" << std::endl;
-    std::cout << "20 derniers octets de _fileBuf : ";
-for (size_t i = _fileBuf.size() - 20; i < _fileBuf.size(); ++i) {
-    printf("%02X ", static_cast<unsigned char>(_fileBuf[i]));
-}
-std::cout << std::endl;
+    _fileBuf.assign(_pos, _request.begin() + end_pos - 4);
     return true;
 }
 
@@ -711,7 +691,6 @@ bool    HTTPParser::findMethods(){
             
             for (size_t i = 0;i < locs.size(); i++){
                 const std::vector<std::string> &indexVector = locs[i].getIndex();
-                std::cout << "indexVector.size(): " << indexVector.size() << std::endl;
                 if (indexVector.size() > 0){
                     for (size_t i = 0; i < indexVector.size() ; i++){
                         struct stat sb;
@@ -724,7 +703,6 @@ bool    HTTPParser::findMethods(){
                 }
                 else{
                     _code = "index.html";
-                    std::cout << "_code: " << _code << std::endl;
                 }
             }
 
@@ -735,8 +713,7 @@ bool    HTTPParser::findMethods(){
                         _errors = true;
                     if (stat(_fullPath.c_str(), &path_stat) == -1)
                     {
-                        std::cerr << "stat failed for " << _fullPath
-                                << ": " << std::strerror(errno) << std::endl;
+                        LOG_ERROR("stat failed for: " + _fullPath);
                     }
                         _code = "404"; // assuming that we are just not existing
                     _type = "text/html";
@@ -822,19 +799,19 @@ bool    HTTPParser::findMethods(){
                 if (_requesttarget == "/upload"){
                     
                     if (checkContentType() == false){
-                        std::cerr << "Error Content-Type not found: " << strerror(errno) << std::endl;
+                        LOG_ERROR("POST upload: missing Content-Type");
                         return false;
                     }
                     if (checkContentLength() == false){
-                        std::cerr << "Error Content-Length not found: " << strerror(errno) << std::endl;
+                        LOG_ERROR("POST upload: missing Content-Length");
                         return false;
                     }
                     if (checkContentDisposition() == false){
-                        std::cerr << "Error Content-Disposition not found: " << strerror(errno) << std::endl;
+                        LOG_ERROR("POST upload: missing Content-Disposition");
                         return false;
                     }
                     if (gatherFile() == false){
-                        std::cerr << "Error Content not found: " << strerror(errno) << std::endl;
+                        LOG_ERROR("POST upload: failed to gather file content");
                         return false;
                     }
                     return true;
@@ -842,14 +819,10 @@ bool    HTTPParser::findMethods(){
                 else{
                     
                     char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
-                    if (lastPoint)
-                    std::cout <<  "lastPoint:" << lastPoint << std::endl;
-                    
                     char const *lastSlash = strrchr(_requesttarget.c_str(), '/');
                     std::string name = std::string(lastSlash, strlen(lastSlash));
                     name.erase(name.begin());
-                    
-                    std::cout <<  "name:" << name << std::endl;
+                    LOG_DEBUG("POST upload target: " + name);
                     
                     _code = name; //? fichier specifique 
                     std::string suffix = std::string(lastPoint, strlen(lastPoint));
@@ -865,14 +838,10 @@ bool    HTTPParser::findMethods(){
             if (_requesttarget.find("/upload") != std::string::npos){
                 
                 char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
-                if (lastPoint)
-                std::cout <<  "lastPoint:" << lastPoint << std::endl;
-                
                 char const *lastSlash = strrchr(_requesttarget.c_str(), '/');
                 std::string name = std::string(lastSlash, strlen(lastSlash));
                 name.erase(name.begin());
-                
-                std::cout <<  "name:" << name << std::endl;
+                LOG_DEBUG("DELETE target: " + name);
                 
                 _code = name; //? fichier specifique 
                 std::string suffix = std::string(lastPoint, strlen(lastPoint));
