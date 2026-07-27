@@ -1,8 +1,0 @@
-EXEC notes : 
-- 403, 502, 500 create error pages
-- function auto index - clair
-- write / read for CGI
-    epollin/epollet
-    // re-write the function onwritable, on readable
-    // send check 
-- check with Lea's branch to see if compiles, then move into dev, and merge to mine dev

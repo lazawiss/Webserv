@@ -17,6 +17,23 @@
 #include "ListenerManager.hpp"
 #include "../parser/config/ServerConfig.hpp"
 
+enum HttpCode
+{
+    HTTP_400,
+    HTTP_403,
+    HTTP_404,
+    HTTP_405,
+    HTTP_413,
+    HTTP_421,
+    HTTP_201,
+    HTTP_204,
+    HTTP_500,
+    HTTP_CGI,
+    HTTP_INDEX,
+    HTTP_AUTOINDEX,
+    HTTP_FAVICON,
+    HTTP_FILE
+};
 
 #include <iostream>
 #include <fstream>
@@ -35,7 +52,6 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 
-// #include <sys/epoll.h>
 #include <csignal>
 #include <cerrno>
 #include <cstdlib>
@@ -46,17 +62,17 @@
 
 #define BUF_SIZE 800000
 
-
-class HTTPParser {
+class HTTPParser
+{
 
 private:
 
     std::string                 _request;
     const ServerConfig          &_serverConfig;
-    std::string                 _code;
+    HttpCode                    _code;
     std::string                 _type;
     std::string                 _method;
-    std::string                 _requesttarget; // CGI 
+    std::string                 _requesttarget;
     std::string                 _httpversion;
     std::string                 _boundary;
     std::string                 _fileLength;
@@ -69,7 +85,7 @@ private:
     
 /* ADD INS FOR CGI------*/
     bool                        _isCGI;
-    std::string                 _fullPath; // location.root + _scriptFilename
+    std::string                 _fullPath;
     std::string                 _query_string;
     std::string                 _scriptFilename;
     std::string                 _body;
@@ -78,7 +94,7 @@ private:
     int                         _content_int;
 
     bool                _autoindexOn; 
-    std::string         _rangeHeader; // raw value of the "Range:" request header, "" if absent
+    std::string         _rangeHeader;
 
 public:
 
@@ -87,7 +103,7 @@ public:
                                 ~HTTPParser();    
     HTTPParser &                operator=( HTTPParser const & other );
             
-    std::string                 getCode() const;
+    HttpCode                    getCode() const;
     std::string                 getType() const;
     std::string                 getMethod() const;
     std::string                 getBoundary() const;
@@ -97,7 +113,7 @@ public:
     bool                        getUpload() const;
 
 
-    std::string                 setCode( std::string const & code );
+    HttpCode                    setCode( HttpCode code );
     std::string                 setType( std::string const & type );
     bool                        setError( bool error );    
 
@@ -115,7 +131,6 @@ public:
     const LocationConfig*       matchLocation() const;
     void                        buildFullPath();
 
-    // 206 wiring: pull the raw "Range:" header from requete baby
     void                        extractRange();
     std::string                 getRange() const;
 
@@ -140,8 +155,9 @@ public:
     std::string                 addSuffix(std::string suffix);
     bool                        compareMethodWithConfigFile();
 
-                
     bool                        findMethods();
     bool                        findPath();
     bool                        findHeaders();
+
+    static std::string          httpCodeToString( HttpCode code );
 };

@@ -432,12 +432,12 @@ void Parser::parseDirectiveErrorPage(AConfig &ref)
     int code = parseCode(next().value);
 
     if (code != 400 && code != 404 && code != 405 && code != 413 && code != 414
-        && code != 421 && code != 500)
+        && code != 421 && code != 500 && code != 502)
     {
         std::ostringstream oss;
         oss << code;
         throw std::runtime_error("Invalid HTTP error code '" + oss.str()
-            + "', accepted values: 400, 404, 405, 413, 414, 421, 500");
+            + "', accepted values: 400, 404, 405, 413, 414, 421, 500, 502");
     }
 
     if (current().type != Word)
@@ -595,12 +595,12 @@ void Parser::parseDirectiveReturn(LocationConfig &ref)
     int code = parseCode(next().value);
 
     if (code != 400 && code != 404 && code != 405 && code != 413 && code != 414
-        && code != 421 && code != 500)
+        && code != 421 && code != 500 && code != 502)
     {
         std::ostringstream oss;
         oss << code;
         throw std::runtime_error("Invalid HTTP error code '" + oss.str()
-            + "', accepted values: 400, 404, 405, 413, 414, 421, 500");
+            + "', accepted values: 400, 404, 405, 413, 414, 421, 500, 502");
     }
 
     if (current().type != Word)
@@ -631,7 +631,9 @@ void Parser::parseDirectiveCGI(LocationConfig &ref)
             "expected .py or .php");
 
     std::string key = current().value;
+
     next();
+
     std::string value = current().value;
     ref.addMap(key, value);
 

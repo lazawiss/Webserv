@@ -3,7 +3,6 @@
 
 # include "./config/GlobalConfig.hpp"
 # include "./config/AConfig.hpp"
-# include "../errors/Errors.hpp"
 # include "../lexer/Lexer.hpp"
 
 # include <algorithm>

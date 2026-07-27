@@ -122,7 +122,7 @@ public:
     bool                removeFile( std::string const & filename );
 
     
-    void                sendError( HTTPParser & parser );
+    void                sendError( HTTPParser & parser, HttpCode code = HTTP_404 );
 
 
     bool                handleRequest(  ListenerManager const & listen );
