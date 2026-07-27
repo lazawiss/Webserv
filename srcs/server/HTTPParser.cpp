@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HTTPParser.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: leazannis <leazannis@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/26 14:02:46 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/27 21:23:12 by leazannis        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -229,6 +229,7 @@ static bool isMethod( std::string const & str ) {
 static bool isSimpleSpace( int found ){
     
     return std::isspace(static_cast<unsigned char>(found));
+ 
 }
 
 void HTTPParser::extractBody() {
@@ -254,11 +255,12 @@ std::vector<size_t> HTTPParser::collectSpace( std::string::iterator pos ) {
         pos = find_if(pos, _request.end(), isSimpleSpace);
         if (pos == _request.end())
             break;
-            
+        
         space_inter.push_back(distance(_request.begin(), pos));
-        if (*pos == '\n')
-            break;
-
+         
+        if (*pos == '\r' || *pos == '\n')
+                break;
+        
         pos++;
     }
     
@@ -288,6 +290,7 @@ bool HTTPParser::checkRequestLine() {
     std::string::iterator space = _request.begin();
     
     std::vector<size_t> space_inter = collectSpace(space);
+    std::cout << "checkRequestLine space_intersize: " << space_inter.size() << std::endl;
 
     std::vector<std::string> subss = collectString(space_inter);
  
@@ -335,12 +338,17 @@ bool HTTPParser::checkHost( ListenerManager const & listener ) {
     LOG_DEBUG("Expected hostname: " + hostname);
 
     _pos++;
-   
+    _pos++;
+
     std::vector<size_t> space_inter = collectSpace(_pos);
+    std::cout << "checkHost space_intersize: " << space_inter.size() << std::endl;
 
     std::vector<std::string> subss = collectString(space_inter);
-
-    if (subss.size() > 1) {
+    std::cout << "checkHost subss size: " << subss.size() << std::endl;
+    std::cout << "checkHost subss[0]: " << subss[0] << std::endl;
+    std::cout << "checkHost subss[1]: " << subss[1] << std::endl;
+    
+    if (subss.size() == 2) {
 
         char const *doublePoint = strrchr(subss[1].c_str(), ':');
         if (doublePoint == NULL)
@@ -353,10 +361,12 @@ bool HTTPParser::checkHost( ListenerManager const & listener ) {
         std::string service = std::string(doublePoint, strlen(doublePoint));
         service.erase(service.begin());
 
-        if (subss[1] == hostname
-            || (listener.getNode() == "0.0.0.0"
-                && listener.getService() == service))
-        {
+        std::cout << "service: " << service << std::endl;
+
+
+        if (subss[1] == hostname || (listener.getNode() == "0.0.0.0" &&
+         listener.getService() == service)){
+            
             return true;
         }
         LOG_DEBUG("Host mismatch, got: " + subss[1]);

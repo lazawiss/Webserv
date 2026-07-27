@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestHandler.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
+/*   By: leazannis <leazannis@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/24 15:28:35 by ankim            ###   ########.fr       */
+/*   Updated: 2026/07/26 22:54:35 by leazannis        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -497,13 +497,13 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     
     HTTPParser HTTPParser(_request, _serverConfig);
 
-    bool    requestValid = true;
+    //bool    requestValid = true;
 
     //  check request
     if (HTTPParser.isRequestValid(listen) == false) {
 
         LOG_DEBUG("Request invalid");
-        requestValid = false;
+        //requestValid = false;
 
     } else if (HTTPParser.isCGI()) {
 
@@ -527,7 +527,7 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     } else if (HTTPParser.findMethods() == false) {
 
         LOG_ERROR("Method not implemented");
-        requestValid = false;
+        //requestValid = false;
     }
 
 // need this for CGI no? so maybe before?
@@ -641,7 +641,8 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
             if (answerFile(file) == false)
                 sendError(HTTPParser);
 
-        } else {
+        }
+        else {
 
             std::string file = getFileImage(HTTPParser.getCode()); 
             if (answerFile(file) == false)
