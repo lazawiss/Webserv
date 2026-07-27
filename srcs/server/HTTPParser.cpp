@@ -291,7 +291,7 @@ bool HTTPParser::checkRequestLine() {
 
     std::vector<std::string> subss = collectString(space_inter);
  
-    if (subss.size() == 3) {
+    if (subss.size() == 4) {
 
         _method = subss[0];
         
