@@ -474,12 +474,12 @@ std::string RequestHandler::generateAutoindex(const std::string &fullPath, const
     return html;
 }
 
-void RequestHandler::sendError( HTTPParser & parser ) {
-    
+void RequestHandler::sendError( HTTPParser & parser, HttpCode code ) {
+
     parser.setError(true);
-    parser.setCode("404");
+    parser.setCode(code);
     parser.setType("text/html");
-    std::string file = getFile(parser.getCode(), parser.getError()); 
+    std::string file = getFile(HTTPParser::httpCodeToString(parser.getCode()), parser.getError());
     answerFile(file);
 }
 
@@ -497,17 +497,21 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     
     HTTPParser HTTPParser(_request, _serverConfig);
 
-    //  check request
     if (HTTPParser.isRequestValid(listen) == false) {
 
         LOG_DEBUG("Request invalid");
+        sendError(HTTPParser, HTTPParser.getCode());
+        buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");
+        return true;
 
     } else if (HTTPParser.isCGI()) {
 
         if (HTTPParser.validateCGIRequest() == false)
         {
             LOG_ERROR("CGI request validation failed");
-            return false;
+            sendError(HTTPParser, HTTP_500);
+            buildAnswerHeader("500", "text/html");
+            return true;
         }
 
         _scriptFilename = HTTPParser.getScriptFilename();
@@ -524,6 +528,9 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     } else if (HTTPParser.findMethods() == false) {
 
         LOG_ERROR("Method not implemented");
+        sendError(HTTPParser, HTTPParser.getCode());
+        buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");
+        return true;
 
     }
 
@@ -540,43 +547,42 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         
         if (HTTPParser.getError() == true) {
 
-            std::string file = getFile(HTTPParser.getCode(),
-                HTTPParser.getError()); 
+            std::string file = getFile(HTTPParser::httpCodeToString(HTTPParser.getCode()),
+                HTTPParser.getError());
             answerFile(file);
 
         } else {
-            
-            std::string file = getFileUpload(HTTPParser.getCode()); 
-            
+
+            std::string file = getFileUpload(HTTPParser.getFileName());
+
             if (removeFile(file) == false)
-                sendError(HTTPParser);
+                sendError(HTTPParser, errno == ENOENT ? HTTP_404 : HTTP_500);
             else
             {
-                
-                HTTPParser.setCode("204");
+                HTTPParser.setCode(HTTP_204);
                 HTTPParser.setType("text/html");
             }
         }
-    
+
     } else if (HTTPParser.getMethod() == "POST") {
-        
+
         if (uploadFile(HTTPParser.getFileName(),
             HTTPParser.getFileBuf()) == false)
-            sendError(HTTPParser);
+            sendError(HTTPParser, HTTP_500);
         else {
-            
-            HTTPParser.setCode("201");
-            HTTPParser.getType();
+
+            HTTPParser.setCode(HTTP_201);
+            // TODO: set _content_type from HTTPParser.getType() if needed
         }
-    
-    } else if (HTTPParser.getCode() == "autoindex") {
+
+    } else if (HTTPParser.getCode() == HTTP_AUTOINDEX) {
         // HTTPParser.getPath() is the resolved on-disk directory (root + URI).
         _body = generateAutoindex(HTTPParser.getPath(),
             HTTPParser.getRequestTarget());
         if (_body.empty()) {
 
             HTTPParser.setError(true);
-            HTTPParser.setCode("403"); // if real dir didn't open
+            HTTPParser.setCode(HTTP_403); // if real dir didn't open
             HTTPParser.setType("text/html");
         
         } else {
@@ -591,25 +597,27 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         }
     
     } else if (HTTPParser.getType() == "text/html") {
-        
-        std::string file = getFile(HTTPParser.getCode(), HTTPParser.getError()); 
+
+        std::string file = HTTPParser.getError()
+            ? getFile(HTTPParser::httpCodeToString(HTTPParser.getCode()), true)
+            : getFile(HTTPParser.getFileName(), false);
         if (answerFile(file) == false)
             sendError(HTTPParser);
-    
+
     } else if (HTTPParser.getType() == "text/plain") {
-        
-        std::string file = getFileUpload(HTTPParser.getCode()); 
+
+        std::string file = getFileUpload(HTTPParser.getFileName());
         if (answerFile(file) == false)
-            sendError(HTTPParser);
+            sendError(HTTPParser, HTTP_500);
 
     } else if (HTTPParser.getType() == "image/jpeg"
         || HTTPParser.getType() == "image/png"
         || HTTPParser.getType() == "image/gif"
         || HTTPParser.getType() == "image/webp") {
 
-        std::string file = getFileImage(HTTPParser.getCode());
+        std::string file = getFileImage(HTTPParser.getFileName());
 
-        //  206 Partial Content path (only range set) 
+        //  206 Partial Content path (only range set)
         struct stat sb;
         std::string range = HTTPParser.getRange();
         if (!range.empty() && stat(file.c_str(), &sb) == 0)
@@ -626,40 +634,33 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
                 rangeHandled = true;
             }
         }
-        // // OR just normal 200 full-file response
-        // if (!rangeHandled && answerFile(file) == false){
-        //     HTTPParser.setError(true);
-        //     HTTPParser.setCode("404");
-        //     HTTPParser.setType("text/html");
-        // }
-        if (HTTPParser.getUpload() == true){
+        if (HTTPParser.getUpload() == true) {
 
-            std::string file = getFileUpload(HTTPParser.getCode()); 
-            if (answerFile(file) == false)
-                sendError(HTTPParser);
+            std::string uploadFile = getFileUpload(HTTPParser.getFileName());
+            if (answerFile(uploadFile) == false)
+                sendError(HTTPParser, HTTP_500);
 
         } else {
 
-            std::string file = getFileImage(HTTPParser.getCode()); 
-            if (answerFile(file) == false)
-                sendError(HTTPParser);
+            std::string imgFile = getFileImage(HTTPParser.getFileName());
+            if (answerFile(imgFile) == false)
+                sendError(HTTPParser, HTTP_500);
 
         }
-    
+
     } else if (HTTPParser.getType() == "image/x-icon") {
-        
+
         if (answerFileIcon() == false)
-            sendError(HTTPParser);
-    
+            sendError(HTTPParser, HTTP_500);
+
     } else if (HTTPParser.getType() == "multipart/form-data") {
-        
+
         if (uploadFile(HTTPParser.getFileName(),
             HTTPParser.getFileBuf()) == false)
-            sendError(HTTPParser);
+            sendError(HTTPParser, HTTP_500);
         else
         {
-            
-            HTTPParser.setCode("201");
+            HTTPParser.setCode(HTTP_201);
             char const *lastPoint =
                 strrchr(HTTPParser.getFileName().c_str(), '.');
             if (lastPoint)
@@ -671,7 +672,7 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     }
 
     if (!rangeHandled) // a 206/416 header was already built by the range path
-        buildAnswerHeader(HTTPParser.getCode(), HTTPParser.getType());
+        buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), HTTPParser.getType());
 
     return true;
 }
