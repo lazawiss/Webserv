@@ -297,9 +297,16 @@ bool    HTTPParser::checkHost( ListenerManager const & listener ){
     std::vector<std::string> subss = collectString(space_inter);
 
     if (subss.size() > 1){
-            
+// gotta ask here dont get ; got from webserv : 
         char const *doublePoint = strrchr(subss[1] .c_str(), ':');
-        std::string service = std::string(doublePoint , strlen(doublePoint));
+        if (doublePoint == NULL)
+        {
+            _errors = true;
+            _code = "400";
+            _type = "text/html";
+            return false;
+        }
+        std::string service = std::string(doublePoint, strlen(doublePoint));
         service.erase(service.begin());
 
         if (subss[1] == hostname || (listener.getNode() == "0.0.0.0" && listener.getService() == service) ){
@@ -526,9 +533,16 @@ bool    HTTPParser::checkContentType(){
 
 bool    HTTPParser::checkContentLength(){
 
-    _pos++;
-    std::string::iterator space = _pos;
-    
+    size_t start = _request.find("Content-Length:");
+    if (start == std::string::npos)
+    {
+        _errors = true;
+        _code = "400";
+        _type = "text/html";
+        return false;
+    }
+    std::string::iterator space = _request.begin() + start;
+
     std::vector<size_t> space_inter = collectSpace(space);
 
     std::vector<std::string> subss = collectString(space_inter);

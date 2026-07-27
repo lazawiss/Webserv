@@ -119,6 +119,37 @@ static std::string resolveRoot(const ServerConfig &cfg, const std::string &uri)
     return root;
 }
 
+// push for a real CGI location : loc root + path detailled in loc
+// If no CGI location matches,
+// fall back to the "data/" prefix so the other /cgi-bin/...  so requests keeps working
+static std::string resolveCGIPath(const ServerConfig &cfg, const std::string &scriptName)
+{
+    const std::vector<LocationConfig> &locs = cfg.getLocations();
+    size_t bestLen = 0;
+    std::string root;
+    std::string matchedPath;
+    for (size_t i = 0; i < locs.size(); ++i)
+    {
+        if (locs[i].getMap().empty())
+            continue;
+        const std::string &path = locs[i].getPath();
+        if (scriptName.find(path) == 0 && path.size() > bestLen)
+        {
+            bestLen = path.size();
+            root = locs[i].getRoot();
+            matchedPath = path;
+        }
+    }
+    // Ask girls if too aggressive, considered hardcoding? Don't think so
+    if (root.empty())
+        return "data/" + scriptName;
+
+    std::string remainder = scriptName.substr(matchedPath.size());
+    if (remainder.empty() || remainder[0] != '/')
+        remainder = "/" + remainder;
+    return root + remainder;
+}
+
 // build path toward file
 std::string RequestHandler::getFile( std::string const & code, bool const & error ){
     std::string file;
@@ -483,26 +514,34 @@ bool    RequestHandler::handleRequest(  ListenerManager const & listen ){
         std::cout << "Request Invalid." << std::endl;
         requestValid = false;
     }
-    else if (requestValid == true && HTTPParser.findMethods() == false)
+    else if (requestValid && HTTPParser.isCGI())
     {
-        if (requestValid == true && HTTPParser.isCGI())
+        if (HTTPParser.validateCGIRequest() == false)
         {
-            if (HTTPParser.validateCGIRequest() == false){
-                std::cout << "CGI Request not validated" << std::endl;
-                return false;
-            }
-            _scriptFilename = HTTPParser.getScriptFilename();
-            _fullPath = "data/" + _scriptFilename; // location.root + _scriptFilename
-            _query_string = HTTPParser.getQueryString();
-            _body = HTTPParser.getBody(); // need to parse still
-            _content_type = HTTPParser.getContentType();
-            _content_length = HTTPParser.getContentLength();
-            _method = HTTPParser.getMethod();      
-            _isCGI = true;
-            return true;
+            std::cout << "CGI Request not validated" << std::endl;
+            if (HTTPParser.getCode() != "405")
+                HTTPParser.setCode("400"); // if we missing cont type or cont len
+            HTTPParser.setError(true);
+            HTTPParser.setType("text/html");
+            std::string file = getFile(HTTPParser.getCode(), true);
+            if (answerFile(file) == false)
+                sendError(HTTPParser);
+            buildAnswerHeader(HTTPParser.getCode(), HTTPParser.getType());
+            return true; // response is built; let epoll send it so not send from my end
         }
-        else
-            std::cerr << "Error Method not implemented: " << strerror(errno) << std::endl;
+        _scriptFilename = HTTPParser.getScriptFilename();
+        _fullPath = resolveCGIPath(_serverConfig, _scriptFilename);
+        _query_string = HTTPParser.getQueryString();
+        _body = HTTPParser.getBody(); // need to parse still
+        _content_type = HTTPParser.getContentType();
+        _content_length = HTTPParser.getContentLength();
+        _method = HTTPParser.getMethod();      
+        _isCGI = true;
+        return true;
+    }
+    else if (requestValid && HTTPParser.findMethods() == false)
+    {
+        std::cerr << "Error Method not implemented: " << strerror(errno) << std::endl;
     }
 // need this for CGI no? so maybe before?
     if (_root.empty())

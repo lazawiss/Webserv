@@ -117,6 +117,7 @@ bool    EpollLoop::do_read_fd( int fd, std::vector<ListenerManager*> const & lis
     // std::cout << request << std::endl;
     // Parse request
     
+    // std::cout << " RAW REQUEST \n" << request << "\nEND OF REQUEST" << std::endl;
 
     // find which listener accepted this client
     int listenerSockfd = _clientToListener[fd];
@@ -175,14 +176,11 @@ bool    EpollLoop::do_read_fd( int fd, std::vector<ListenerManager*> const & lis
             _clientToListener.erase(fd);
             return (close(fd), false);
         }
-
-        // stdin pipe: WE write the body into it -> watch for EPOLLOUT
         ev.events = EPOLLOUT;
         ev.data.fd = cgi->getStdinFd();
         epoll_ctl(epollfd, EPOLL_CTL_ADD, cgi->getStdinFd(), &ev);
         _fdToCGI[cgi->getStdinFd()] = cgi;
 
-        // stdout pipe: WE read the script output -> watch for EPOLLIN
         ev.events = EPOLLIN;
         ev.data.fd = cgi->getStdoutFd();
         epoll_ctl(epollfd, EPOLL_CTL_ADD, cgi->getStdoutFd(), &ev);
