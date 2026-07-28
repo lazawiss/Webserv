@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HTTPParser.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: leazannis <leazannis@student.42.fr>        +#+  +:+       +#+        */
+/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/27 21:23:12 by leazannis        ###   ########.fr       */
+/*   Updated: 2026/07/28 14:33:24 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,7 @@ HTTPParser::HTTPParser( std::string const & request,
     const ServerConfig & serverConfig) :
     _request(request),
     _serverConfig(serverConfig),
-    _code(), _type(), _method(),
+    _code(HTTP_INDEX), _type(), _method(),
     _requesttarget(), _httpversion(), _boundary(),
     _fileLength(), _fileName(), _fileBuf(),
     _errors(false), _upload(false), _isCGI(false),
@@ -89,12 +89,12 @@ HTTPParser &    HTTPParser::operator=( HTTPParser const & other )
 */
 
 // ── code ────────────────────────────────────────────────────────────────────
-std::string HTTPParser::getCode() const
-{    
+HttpCode HTTPParser::getCode() const
+{
     return _code;
 }
 
-std::string HTTPParser::setCode( std::string const & code )
+HttpCode HTTPParser::setCode( HttpCode code )
 {
     _code = code;
     return _code;
@@ -212,7 +212,7 @@ bool HTTPParser::checkSize() {
     if (_request.size() > BUF_SIZE){
         
         _errors = true;
-        _code = "413";
+        _code = HTTP_413;
         _type = "text/html";
 
         return false;
@@ -229,7 +229,6 @@ static bool isMethod( std::string const & str ) {
 static bool isSimpleSpace( int found ){
     
     return std::isspace(static_cast<unsigned char>(found));
- 
 }
 
 void HTTPParser::extractBody() {
@@ -303,9 +302,9 @@ bool HTTPParser::checkRequestLine() {
         else{
             
             _errors = true;
-            _code = "405";
+            _code = HTTP_405;
             _type = "text/html";
-            
+
             return false;
         }
         
@@ -323,9 +322,9 @@ bool HTTPParser::checkRequestLine() {
     }
 
     _errors = true;
-    _code = "400";
+    _code = HTTP_400;
     _type = "text/html";
-            
+
     return false;
 }
 
@@ -354,7 +353,7 @@ bool HTTPParser::checkHost( ListenerManager const & listener ) {
         if (doublePoint == NULL)
         {
             _errors = true;
-            _code = "400";
+            _code = HTTP_400;
             _type = "text/html";
             return false;
         }
@@ -371,7 +370,7 @@ bool HTTPParser::checkHost( ListenerManager const & listener ) {
         }
         LOG_DEBUG("Host mismatch, got: " + subss[1]);
         _errors = true;
-        _code = "421";
+        _code = HTTP_421;
         _type = "text/html";
 
         return false;
@@ -379,9 +378,9 @@ bool HTTPParser::checkHost( ListenerManager const & listener ) {
     }
 
     _errors = true;
-    _code = "400";
+    _code = HTTP_400;
     _type = "text/html";
-    
+
     return false;
 }
 
@@ -445,7 +444,7 @@ bool HTTPParser::validateCGIRequest()
 {
     if (_method != "GET" && _method != "POST" && _method != "DELETE")
     {
-        _code = "405";
+        _code = HTTP_405;
         return false;
     }
     if (_method == "POST")
@@ -461,7 +460,7 @@ bool HTTPParser::validateCGIRequest()
         }
     }
 
-    _code = "cgi";
+    _code = HTTP_CGI;
 
     return true;
 }
@@ -536,14 +535,14 @@ bool HTTPParser::checkContentType() {
     if (start == std::string::npos)
     {
         _errors = true;
-        _code = "400";
+        _code = HTTP_400;
         _type = "text/html";
 
         return false;
     }
 
     std::string::iterator space = _request.begin() + start;
-    
+
     std::vector<size_t> space_inter = collectSpace(space);
 
     std::vector<std::string> subss = collectString(space_inter);
@@ -558,7 +557,7 @@ bool HTTPParser::checkContentType() {
         if (subss.size() < 3)
         {
             _errors = true;
-            _code = "400";
+            _code = HTTP_400;
             _type = "text/html";
 
             return false;
@@ -572,9 +571,9 @@ bool HTTPParser::checkContentType() {
     }
 
     _errors = true;
-    _code = "400";
+    _code = HTTP_400;
     _type = "text/html";
-    
+
     return false;
 }
 
@@ -587,8 +586,8 @@ bool HTTPParser::checkContentLength() {
 
     std::vector<std::string> subss = collectString(space_inter);
  
-     if (!subss.empty()) {
-        
+     if (subss.size() >= 2) {
+
         _fileLength = subss[1];
         std::stringstream ss(_fileLength);
         if (_isCGI)
@@ -620,9 +619,9 @@ bool HTTPParser::checkContentLength() {
     }
 
     _errors = true;
-    _code = "400";
+    _code = HTTP_400;
     _type = "text/html";
-    
+
     return false;
 }
 
@@ -632,7 +631,7 @@ bool HTTPParser::checkContentDisposition() {
     if (pos == std::string::npos)
     {
         _errors = true;
-        _code = "400";
+        _code = HTTP_400;
         _type = "text/html";
 
         return false;
@@ -644,14 +643,14 @@ bool HTTPParser::checkContentDisposition() {
 
     std::vector<std::string> subss = collectString(space_inter);
      
-     if (!subss.empty()) {
-        
+     if (subss.size() >= 4) {
+
         std::string type = subss[1];
         char const *slash = strchr(_type.c_str(), '/');
         if (slash == NULL)
         {
             _errors = true;
-            _code = "400";
+            _code = HTTP_400;
             _type = "text/html";
 
             return false;
@@ -673,12 +672,11 @@ bool HTTPParser::checkContentDisposition() {
     }
 
     _errors = true;
-    _code = "400";
+    _code = HTTP_400;
     _type = "text/html";
-    
+
     return false;
 }
-
 
 bool HTTPParser::gatherFile() {
     
@@ -690,7 +688,7 @@ bool HTTPParser::gatherFile() {
     if (subss.size() < 2)
     {
         _errors = true;
-        _code = "400";
+        _code = HTTP_400;
         _type = "text/html";
 
         return false;
@@ -730,7 +728,7 @@ bool HTTPParser::compareMethodWithConfigFile() {
     
     const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
     if (locs.size() == 0) {
-        _code = "index.html";
+        _code = HTTP_INDEX;
         _type = "text/html";
         return true;
     }
@@ -747,9 +745,9 @@ bool HTTPParser::compareMethodWithConfigFile() {
     }
 
     _errors = true;
-    _code = "405";
+    _code = HTTP_405;
     _type = "text/html";
-    
+
     return false;
 }
 
@@ -789,13 +787,14 @@ bool HTTPParser::findMethods() {
                         struct stat sb;
                         std::string index = "data/www/html/" + indexVector[i];
                         if (stat(index.c_str(), &sb) == 0){
-                            _code = indexVector[i];
+                            _fileName = indexVector[i];
+                            _code = HTTP_FILE;
                             break ;
                         }
                     }
                 }
                 else{
-                    _code = "index.html";
+                    _code = HTTP_INDEX;
                 }
             }
 
@@ -807,7 +806,7 @@ bool HTTPParser::findMethods() {
                     LOG_ERROR("stat failed for: " + _fullPath);
 
                     _errors = true;
-                    _code = "404";
+                    _code = HTTP_404;
                     _type = "text/html";
 
                     return false;
@@ -823,21 +822,21 @@ bool HTTPParser::findMethods() {
                     if (stat(indexPath.c_str(), &index_stat) == 0
                         && S_ISREG(index_stat.st_mode))
                     {
-                        _code = "index.html";
+                        _code = HTTP_INDEX;
                         _type = "text/html";
 
                         return true;
                     }
                     if (_autoindexOn)
                     {
-                        _code = "autoindex";
+                        _code = HTTP_AUTOINDEX;
                         _type = "text/html";
 
                         return true;
                     }
                     // case of autoindex == off and index doesn't exist
                     _errors = true;
-                    _code = "403";
+                    _code = HTTP_403;
                     _type = "text/html";
 
                     return false;
@@ -851,27 +850,28 @@ bool HTTPParser::findMethods() {
                 if (!lastSlash || !lastPoint)
                 {
                     _errors = true;
-                    _code = "400";
+                    _code = HTTP_400;
                     _type = "text/html";
 
                     return false;
                 }
                 std::string name = std::string(lastSlash, strlen(lastSlash));
                 name.erase(name.begin());
-                _code = name;
+                _fileName = name;
+                _code = HTTP_FILE;
                 std::string suffix = std::string(lastPoint, strlen(lastPoint));
                 _type = addSuffix(suffix);
 
                 return true;
             }
 
-
             if (_requesttarget.find("/data/upload") != std::string::npos)
             {
                 char const *lastSlash = strrchr(_requesttarget.c_str(), '/');
                 std::string name = std::string(lastSlash, strlen(lastSlash));
                 name.erase(name.begin());
-                _code = name;
+                _fileName = name;
+                _code = HTTP_FILE;
                 char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
                 if (lastPoint) {
 
@@ -883,22 +883,23 @@ bool HTTPParser::findMethods() {
 
                     _type = "image/png";
                 }
-                
+
                 _upload = true;
 
                 return true;
             }
            
-            if (_requesttarget == "/favicon.ico"){           
-                
-                _code = "favicon.ico";
+            if (_requesttarget == "/favicon.ico"){
+
+                _code = HTTP_FAVICON;
                 _type = "image/x-icon";
-                
+
                 return true;
 
             } else {
-                _code = _requesttarget;
-                _code.erase(_code.begin());
+                _fileName = _requesttarget;
+                _fileName.erase(_fileName.begin());
+                _code = HTTP_FILE;
                 _type = "text/html";
 
                 return true;
@@ -938,7 +939,7 @@ bool HTTPParser::findMethods() {
                     if (!lastSlash || !lastPoint)
                     {
                         _errors = true;
-                        _code = "400";
+                        _code = HTTP_400;
                         _type = "text/html";
 
                         return false;
@@ -949,7 +950,8 @@ bool HTTPParser::findMethods() {
 
                     LOG_DEBUG("POST upload target: " + name);
 
-                    _code = name;
+                    _fileName = name;
+                    _code = HTTP_FILE;
                     std::string suffix =
                         std::string(lastPoint, strlen(lastPoint));
                     _type = addSuffix(suffix);
@@ -969,7 +971,7 @@ bool HTTPParser::findMethods() {
                 if (!lastSlash || !lastPoint)
                 {
                     _errors = true;
-                    _code = "400";
+                    _code = HTTP_400;
                     _type = "text/html";
 
                     return false;
@@ -978,7 +980,8 @@ bool HTTPParser::findMethods() {
                 name.erase(name.begin());
                 LOG_DEBUG("DELETE target: " + name);
 
-                _code = name;
+                _fileName = name;
+                _code = HTTP_FILE;
                 std::string suffix = std::string(lastPoint, strlen(lastPoint));
                 _type = addSuffix(suffix);
 
@@ -987,7 +990,7 @@ bool HTTPParser::findMethods() {
         }
 
         _errors = true;
-        _code = "404";
+        _code = HTTP_404;
         _type = "text/html";
 
         return false;
@@ -995,7 +998,28 @@ bool HTTPParser::findMethods() {
 
     return false;
 }
-    
+
+std::string HTTPParser::httpCodeToString( HttpCode code )
+{
+    switch (code)
+    {
+        case HTTP_400: return "400";
+        case HTTP_403: return "403";
+        case HTTP_404: return "404";
+        case HTTP_405: return "405";
+        case HTTP_413: return "413";
+        case HTTP_421: return "421";
+        case HTTP_201:      return "201";
+        case HTTP_204:      return "204";
+        case HTTP_500:      return "500";
+        case HTTP_CGI:      return "200";
+        case HTTP_INDEX:    return "200";
+        case HTTP_AUTOINDEX:return "200";
+        case HTTP_FAVICON:  return "200";
+        case HTTP_FILE:     return "200";
+        default:            return "200";
+    }
+}
 
 bool HTTPParser::findPath()
 {

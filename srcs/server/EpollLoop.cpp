@@ -155,8 +155,12 @@ bool EpollLoop::do_read_fd(
 
     if (requestHandler.handleRequest(*listener) == false)
     {
-        LOG_ERROR("Reading of html file failed: "
-            + std::string(strerror(errno)));
+        LOG_ERROR("handleRequest failed, sending 500");
+        std::string err500 =
+            "HTTP/1.1 500 Internal Server Error\r\n"
+            "Content-Type: text/html\r\n"
+            "Content-Length: 0\r\n\r\n";
+        send(fd, err500.c_str(), err500.size(), 0);
         return (close(fd), false);
     }
     if (requestHandler.getCGI())

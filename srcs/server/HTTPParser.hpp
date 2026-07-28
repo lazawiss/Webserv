@@ -17,6 +17,24 @@
 #include "ListenerManager.hpp"
 #include "../parser/config/ServerConfig.hpp"
 
+enum HttpCode
+{
+    HTTP_400,
+    HTTP_403,
+    HTTP_404,
+    HTTP_405,
+    HTTP_413,
+    HTTP_421,
+    HTTP_201,
+    HTTP_204,
+    HTTP_500,
+    HTTP_CGI,
+    HTTP_INDEX,
+    HTTP_AUTOINDEX,
+    HTTP_FAVICON,
+    HTTP_FILE
+};
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -51,7 +69,7 @@ private:
 
     std::string                 _request;
     const ServerConfig          &_serverConfig;
-    std::string                 _code;
+    HttpCode                    _code;
     std::string                 _type;
     std::string                 _method;
     std::string                 _requesttarget;
@@ -85,7 +103,7 @@ public:
                                 ~HTTPParser();    
     HTTPParser &                operator=( HTTPParser const & other );
             
-    std::string                 getCode() const;
+    HttpCode                    getCode() const;
     std::string                 getType() const;
     std::string                 getMethod() const;
     std::string                 getBoundary() const;
@@ -95,7 +113,7 @@ public:
     bool                        getUpload() const;
 
 
-    std::string                 setCode( std::string const & code );
+    HttpCode                    setCode( HttpCode code );
     std::string                 setType( std::string const & type );
     bool                        setError( bool error );    
 
@@ -140,4 +158,6 @@ public:
     bool                        findMethods();
     bool                        findPath();
     bool                        findHeaders();
+
+    static std::string          httpCodeToString( HttpCode code );
 };
