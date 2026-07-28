@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/28 16:23:40 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/28 22:43:45 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -228,7 +228,9 @@ static bool isMethod( std::string const & str ) {
 
 static bool isSimpleSpace( int found ){
     
-    return std::isspace(static_cast<unsigned char>(found));
+    // return std::isspace(static_cast<unsigned char>(found));
+    // return static_cast<unsigned char>(found) == ' ';
+    return found == ' ';
 }
 
 void HTTPParser::extractBody() {
@@ -236,26 +238,26 @@ void HTTPParser::extractBody() {
     size_t headerEnd = _request.find("\r\n\r\n");
     size_t sepLen = 4;
 
-    if (headerEnd == std::string::npos)
-    {
-        headerEnd = _request.find("\n\n");
-        sepLen = 2;
-    }
+    // if (headerEnd == std::string::npos)
+    // {
+    //     headerEnd = _request.find("\n\n");
+    //     sepLen = 2;
+    // }
     if (headerEnd != std::string::npos)
         _body = _request.substr(headerEnd + sepLen);
 }
 
-std::vector<size_t> HTTPParser::collectSpace( std::string::iterator pos ) {
+std::vector<size_t> HTTPParser::collectSpace( std::string::iterator start, std::string::iterator end ) {
     
     std::vector<size_t> space_inter;
-    
-    while(pos != _request.end()){
+    std::string::iterator pos = start;
+    while(pos != end){
         
-        pos = find_if(pos, _request.end(), isSimpleSpace);
-        if (pos == _request.end())
+        pos = find_if(pos, end, isSimpleSpace);
+        if (pos == end)
             break;
         
-        space_inter.push_back(distance(_request.begin(), pos));
+        space_inter.push_back(distance(start, pos));
          
         if (*pos == '\r' || *pos == '\n')
                 break;
@@ -268,8 +270,22 @@ std::vector<size_t> HTTPParser::collectSpace( std::string::iterator pos ) {
     return space_inter;
 }
 
-std::vector<std::string> HTTPParser::collectString(
-    std::vector<size_t> space_inter ) {
+bool HTTPParser::checkForSimpleSpacenEndOfLine( std::vector<size_t> space_inter ) {
+    
+    for ( size_t i = 0; i < space_inter.size(); i++ ){
+        char c = _request[space_inter[i]];
+        if (c != ' '){
+            LOG_ERROR("Space isn't SIMPLE");
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+
+std::vector<std::string> HTTPParser::collectString(std::string & line,
+    std::vector<size_t> & space_inter ) {
 
     std::vector<std::string> subss;
     
@@ -280,18 +296,41 @@ std::vector<std::string> HTTPParser::collectString(
 
         subss.push_back(_request.substr(start, end - start));
     }
+    
+    if (!space_inter.empty()){
+        size_t separator = space_inter.back();
+        if (separator < line.size())
+            subss.push_back(line.substr(separator + 1));
+    }
 
     return subss;
 }
 
 bool HTTPParser::checkRequestLine() {
     
-    std::string::iterator space = _request.begin();
+    size_t requestLineEnd = _request.find("\r\n");
+    if (requestLineEnd == std::string::npos) {      
+        LOG_ERROR("Request line does not end with CRLF");
+        _errors = true;
+        _code = HTTP_400;
+        _type = "text/html";
+        return false;
+    }
     
-    std::vector<size_t> space_inter = collectSpace(space);
-    std::cout << "checkRequestLine space_intersize: " << space_inter.size() << std::endl;
+    std::string::iterator space = _request.begin();
+    std::string::iterator end = _request.begin() + requestLineEnd;
 
-    std::vector<std::string> subss = collectString(space_inter);
+    std::vector<size_t> space_inter = collectSpace(space, end);
+    std::cout << "checkRequestLine space_intersize: " << space_inter.size() << std::endl;
+    if (checkForSimpleSpacenEndOfLine(space_inter) == false){
+        _errors = true;
+        _code = HTTP_400;
+        _type = "text/html";
+        return false;
+    }
+ 
+    std::string line = _request.substr(0, requestLineEnd);
+    std::vector<std::string> subss = collectString(line, space_inter);
  
     if (subss.size() == 3) {
 
@@ -336,13 +375,19 @@ bool HTTPParser::checkHost( ListenerManager const & listener ) {
 
     LOG_DEBUG("Expected hostname: " + hostname);
 
-    _pos++;
-    _pos++;
+    size_t host = _request.find("Host:"); 
 
-    std::vector<size_t> space_inter = collectSpace(_pos);
+    size_t requestLineEnd = _request.find("\r\n", host);
+    std::string line = _request.substr(host, requestLineEnd - host);
+    std::cout << "line: "<< line <<std::endl;
+    
+    std::string::iterator start = line.begin();
+    std::string::iterator end = line.end();
+
+    std::vector<size_t> space_inter = collectSpace(start, end);
     std::cout << "checkHost space_intersize: " << space_inter.size() << std::endl;
-
-    std::vector<std::string> subss = collectString(space_inter);
+    
+    std::vector<std::string> subss = collectString(line,space_inter);
     std::cout << "checkHost subss size: " << subss.size() << std::endl;
     std::cout << "checkHost subss[0]: " << subss[0] << std::endl;
     std::cout << "checkHost subss[1]: " << subss[1] << std::endl;
@@ -541,12 +586,15 @@ bool HTTPParser::checkContentType() {
 
         return false;
     }
+    size_t requestLineEnd = _request.find("\r\n");
 
     std::string::iterator space = _request.begin() + start;
+    std::string::iterator end = _request.begin() + requestLineEnd;
 
-    std::vector<size_t> space_inter = collectSpace(space);
-
-    std::vector<std::string> subss = collectString(space_inter);
+    std::vector<size_t> space_inter = collectSpace(space, end);
+    
+    std::string line = _request.substr(start, requestLineEnd);
+    std::vector<std::string> subss = collectString(line, space_inter);
 
     if (subss.size() >= 2) {
 
@@ -583,13 +631,18 @@ bool HTTPParser::checkContentLength() {
     _pos++;
     _pos++;
     _pos++;
+    
+    size_t requestLineEnd = _request.find("\r\n");
 
     std::string::iterator space = _pos;
+    std::string::iterator end = _pos + requestLineEnd;
     
-    std::vector<size_t> space_inter = collectSpace(space);
+    std::vector<size_t> space_inter = collectSpace(space, end);
     std::cout << "checkContentLength space_intersize: " << space_inter.size() << std::endl;
-
-    std::vector<std::string> subss = collectString(space_inter);
+    
+    size_t begin = distance(_request.begin(),_pos);
+    std::string line = _request.substr(begin, requestLineEnd);
+    std::vector<std::string> subss = collectString(line, space_inter);
     std::cout << "checkContentLength subsssize: " << subss.size() << std::endl;
     std::cout << "checkContentLength subss[0]: " << subss[0] << std::endl;
 
@@ -644,13 +697,25 @@ bool HTTPParser::checkContentDisposition() {
 
         return false;
     }
+    
+    size_t requestLineEnd = _request.find("\r\n");
+    if (requestLineEnd == std::string::npos) {      
+        LOG_ERROR("Request line does not end with CRLF");
+        _errors = true;
+        _code = HTTP_400;
+        _type = "text/html";
+        return false;
+    }
+    
 
     std::string::iterator newpos = _request.begin() + pos;
+    std::string::iterator end = _request.begin() + requestLineEnd;
 
-    std::vector<size_t> space_inter = collectSpace(newpos);
+    std::vector<size_t> space_inter = collectSpace(newpos, end);
     std::cout << "checkContentDisposition space_intersize: " << space_inter.size() << std::endl;
 
-    std::vector<std::string> subss = collectString(space_inter);
+    std::string line = _request.substr(pos, requestLineEnd);
+    std::vector<std::string> subss = collectString(line,space_inter);
     std::cout << "checkContentDisposition subsssize: " << subss.size() << std::endl;
     std::cout << "checkContentDisposition subss[0]: " << subss[0] << std::endl;
      
@@ -696,10 +761,24 @@ bool HTTPParser::gatherFile() {
     _pos++;
     _pos++;
 
-    std::vector<size_t> space_inter = collectSpace(_pos);
+    size_t requestLineEnd = _request.find("\r\n");
+    if (requestLineEnd == std::string::npos) {      
+        LOG_ERROR("Request line does not end with CRLF");
+        _errors = true;
+        _code = HTTP_400;
+        _type = "text/html";
+        return false;
+    }
+    
+    std::string::iterator start = _pos;
+    std::string::iterator end = _pos + requestLineEnd;
+    
+    std::vector<size_t> space_inter = collectSpace(start, end);
     std::cout << "gatherFile space_intersize: " << space_inter.size() << std::endl;
 
-    std::vector<std::string> subss = collectString(space_inter);
+    size_t begin = distance(_request.begin(),_pos);
+    std::string line = _request.substr(begin, requestLineEnd);
+    std::vector<std::string> subss = collectString(line,space_inter);
     std::cout << "gatherFile subsssize: " << subss.size() << std::endl;
     std::cout << "gatherFile subss[0]: " << subss[0] << std::endl;
      

@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/28 14:31:32 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/28 22:36:40 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -500,6 +500,7 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     if (HTTPParser.isRequestValid(listen) == false) {
 
         LOG_DEBUG("Request invalid");
+
         sendError(HTTPParser, HTTPParser.getCode());
         buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");
         return true;
