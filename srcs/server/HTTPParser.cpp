@@ -723,9 +723,6 @@ bool    HTTPParser::findMethods(){
     {
         if (_method == "GET")
         {
-            // --- specific file routes FIRST ---
-            // (their files live in their own dirs, so the directory
-            //  stat below must not get a chance to 404 them)
             if (_requesttarget.find("/images") == 0) {
                 char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
                 char const *lastSlash = strrchr(_requesttarget.c_str(), '/');
@@ -759,7 +756,6 @@ bool    HTTPParser::findMethods(){
                 return true;
             }
 
-            // --- generic path: what is _fullPath on disk? ---
             struct stat path_stat;
             if (stat(_fullPath.c_str(), &path_stat) == -1)
             {
@@ -771,7 +767,6 @@ bool    HTTPParser::findMethods(){
                 return false;
             }
 
-            // directory: try configured index files, else autoindex, else 403
             if (S_ISDIR(path_stat.st_mode))
             {
                 std::string base = _fullPath;
@@ -781,7 +776,7 @@ bool    HTTPParser::findMethods(){
                 std::vector<std::string> indexNames;
                 const LocationConfig *loc = matchLocation();
                 if (loc && !loc->getIndex().empty())
-                    indexNames = loc->getIndex();   // honor `index` directive
+                    indexNames = loc->getIndex();
                 else
                     indexNames.push_back("index.html"); // default
 
@@ -805,14 +800,12 @@ bool    HTTPParser::findMethods(){
                     return true;
                 }
 
-                // directory, no index, autoindex off
                 _errors = true;
                 _code = "403";
                 _type = "text/html";
                 return false;
             }
 
-            // not a directory: a regular file named by the URL
             _code = _requesttarget;
             _code.erase(_code.begin());
             _type = "text/html";
