@@ -95,27 +95,27 @@ static RequestState analyzeRequest(const std::string &acc, std::string &ready)
     size_t headerEnd = acc.find("\r\n\r\n");
     if (headerEnd == std::string::npos)
         return REQ_INCOMPLETE;
-    size_t bodyStart = headerEnd + 4;
+    // size_t bodyStart = headerEnd + 4;
 
-    std::string te;
-    if // (chunked defined by Transfer-encoding in header block)
-    {
-        std::string decoded;
-        RequestState st = dechunkBody(acc.substr(bodyStart), decoded);
-        if (st != REQ_READY)
-            return st;  // still arriving, or malformed
-        ready = rebuildWithContentLength(acc, headerEnd, decoded);
-        return REQ_READY;
-    }
+    // std::string te;
+//     if // (chunked defined by Transfer-encoding in header block)
+//     {
+//         std::string decoded;
+//         RequestState st = dechunkBody(acc.substr(bodyStart), decoded);
+//         if (st != REQ_READY)
+//             return st;  // still arriving, or malformed
+//         ready = rebuildWithContentLength(acc, headerEnd, decoded);
+//         return REQ_READY;
+//     }
 
-// if (content length then, have we go everything)
-    {
-        size_t expected = (size_t)strtoul(cl.c_str(), NULL, 10);
-        if (acc.size() - bodyStart < expected)
-            return REQ_INCOMPLETE;
-    }
+// // if (content length then, have we go everything)
+//     {
+//         size_t expected = (size_t)strtoul(cl.c_str(), NULL, 10);
+//         if (acc.size() - bodyStart < expected)
+//             return REQ_INCOMPLETE;
+//     }
 
-//etiehr no body or is complet
+// //etiehr no body or is complet
     ready = acc;
     return REQ_READY;
 }

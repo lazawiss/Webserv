@@ -723,71 +723,10 @@ bool    HTTPParser::findMethods(){
     {
         if (_method == "GET")
         {
-            const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
-            
-            for (size_t i = 0;i < locs.size(); i++){
-                const std::vector<std::string> &indexVector = locs[i].getIndex();
-                std::cout << "indexVector.size(): " << indexVector.size() << std::endl;
-                if (indexVector.size() > 0){
-                    for (size_t i = 0; i < indexVector.size() ; i++){
-                        struct stat sb;
-                        std::string index = "data/www/html/" + indexVector[i];
-                        if (stat(index.c_str(), &sb) == 0){
-                            _code = indexVector[i];
-                            break ;
-                        }
-                    }
-                }
-                else{
-                    _code = "index.html";
-                    std::cout << "_code: " << _code << std::endl;
-                }
-            }
-
-            if (_requesttarget == "/" || _requesttarget == "/api") {
-                    struct stat path_stat;
-                    if (stat(_fullPath.c_str(), &path_stat) == -1)
-                    {
-                        _errors = true;
-                    if (stat(_fullPath.c_str(), &path_stat) == -1)
-                    {
-                        std::cerr << "stat failed for " << _fullPath
-                                << ": " << std::strerror(errno) << std::endl;
-                    }
-                        _code = "404"; // assuming that we are just not existing
-                    _type = "text/html";
-                    return false;
-                    }
-                    if (S_ISDIR(path_stat.st_mode)) // file type and mode, is a directory?
-                    {
-                        std::string indexPath = _fullPath;
-                        if (indexPath[indexPath.size() - 1] != '/')
-                            indexPath += "/";
-                        indexPath += "index.html";
-                        struct stat index_stat;
-                        if (stat(indexPath.c_str(), &index_stat) == 0 && S_ISREG(index_stat.st_mode))
-                        {
-                            // this means that the index file exists and it is a file
-                            _code = "index.html";
-                            _type = "text/html";
-                            return true;
-                        }
-                        if (_autoindexOn)
-                        {
-                            _code = "autoindex";
-                            _type = "text/html";
-                            return true;
-                        }
-                        // case of autoindex == off and index doesn't exist
-                        _errors = true;
-                        _code = "403"; // because directory is and it exists but we are not going to show you. authorization code
-                        _type = "text/html";
-                        return false;
-                    }
-            }
-
-             if (_requesttarget.find("/images") == 0) {
-                
+            // --- specific file routes FIRST ---
+            // (their files live in their own dirs, so the directory
+            //  stat below must not get a chance to 404 them)
+            if (_requesttarget.find("/images") == 0) {
                 char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
                 char const *lastSlash = strrchr(_requesttarget.c_str(), '/');
                 std::string name = std::string(lastSlash, strlen(lastSlash));
@@ -795,10 +734,8 @@ bool    HTTPParser::findMethods(){
                 _code = name;
                 std::string suffix = std::string(lastPoint, strlen(lastPoint));
                 _type = addSuffix(suffix);
-                
                 return true;
             }
-
 
             if (_requesttarget.find("/data/upload") != std::string::npos) {
                 char const *lastSlash = strrchr(_requesttarget.c_str(), '/');
@@ -807,38 +744,86 @@ bool    HTTPParser::findMethods(){
                 _code = name;
                 char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
                 if (lastPoint){
-                    
                     std::string suffix = std::string(lastPoint, strlen(lastPoint));
                     _type = addSuffix(suffix);
                 }
                 else
                     _type = "image/png";
-                
                 _upload = true;
                 return true;
             }
-           
-            if (_requesttarget == "/favicon.ico"){           
-                
+
+            if (_requesttarget == "/favicon.ico"){
                 _code = "favicon.ico";
                 _type = "image/x-icon";
-                
                 return true;
             }
 
-            else{
-                _code = _requesttarget;
-                _code.erase(_code.begin());
+            // --- generic path: what is _fullPath on disk? ---
+            struct stat path_stat;
+            if (stat(_fullPath.c_str(), &path_stat) == -1)
+            {
+                std::cerr << "stat failed for " << _fullPath
+                          << ": " << std::strerror(errno) << std::endl;
+                _errors = true;
+                _code = "404";
                 _type = "text/html";
-                return true;
+                return false;
             }
+
+            // directory: try configured index files, else autoindex, else 403
+            if (S_ISDIR(path_stat.st_mode))
+            {
+                std::string base = _fullPath;
+                if (base[base.size() - 1] != '/')
+                    base += "/";
+
+                std::vector<std::string> indexNames;
+                const LocationConfig *loc = matchLocation();
+                if (loc && !loc->getIndex().empty())
+                    indexNames = loc->getIndex();   // honor `index` directive
+                else
+                    indexNames.push_back("index.html"); // default
+
+                for (size_t i = 0; i < indexNames.size(); i++)
+                {
+                    struct stat index_stat;
+                    std::string indexPath = base + indexNames[i];
+                    if (stat(indexPath.c_str(), &index_stat) == 0
+                        && S_ISREG(index_stat.st_mode))
+                    {
+                        _code = indexNames[i];
+                        _type = "text/html";
+                        return true;
+                    }
+                }
+
+                if (_autoindexOn)
+                {
+                    _code = "autoindex";
+                    _type = "text/html";
+                    return true;
+                }
+
+                // directory, no index, autoindex off
+                _errors = true;
+                _code = "403";
+                _type = "text/html";
+                return false;
+            }
+
+            // not a directory: a regular file named by the URL
+            _code = _requesttarget;
+            _code.erase(_code.begin());
+            _type = "text/html";
+            return true;
         }
 
         else if (_method == "POST"){
             if (_requesttarget.find("/upload") != std::string::npos){
-                
+
                 if (_requesttarget == "/upload"){
-                    
+
                     if (checkContentType() == false){
                         std::cerr << "Error Content-Type not found: " << strerror(errno) << std::endl;
                         return false;
@@ -858,44 +843,39 @@ bool    HTTPParser::findMethods(){
                     return true;
                 }
                 else{
-                    
                     char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
                     if (lastPoint)
                     std::cout <<  "lastPoint:" << lastPoint << std::endl;
-                    
+
                     char const *lastSlash = strrchr(_requesttarget.c_str(), '/');
                     std::string name = std::string(lastSlash, strlen(lastSlash));
                     name.erase(name.begin());
-                    
+
                     std::cout <<  "name:" << name << std::endl;
-                    
-                    _code = name; //? fichier specifique 
+
+                    _code = name; //? fichier specifique
                     std::string suffix = std::string(lastPoint, strlen(lastPoint));
                     _type = addSuffix(suffix);
                     return true;
                 }
-                //on success send 201 CREATED + Location: path to ressource
-                // return true;
             }
         }
         else if (_method == "DELETE"){
-            
+
             if (_requesttarget.find("/upload") != std::string::npos){
-                
+
                 char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
                 if (lastPoint)
                 std::cout <<  "lastPoint:" << lastPoint << std::endl;
-                
+
                 char const *lastSlash = strrchr(_requesttarget.c_str(), '/');
                 std::string name = std::string(lastSlash, strlen(lastSlash));
                 name.erase(name.begin());
-                
+
                 std::cout <<  "name:" << name << std::endl;
-                
-                _code = name; //? fichier specifique 
+
+                _code = name; //? fichier specifique
                 std::string suffix = std::string(lastPoint, strlen(lastPoint));
-                // _code = "200"; //? fichier specifique 
-                // 204 No Content
                 _type = addSuffix(suffix);
                 return true;
             }
@@ -908,7 +888,6 @@ bool    HTTPParser::findMethods(){
 
     return false;
 }
-    
 
 bool    HTTPParser::findPath(){
     return true;
