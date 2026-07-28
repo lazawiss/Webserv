@@ -18,6 +18,9 @@
 #include "../parser/Parser.hpp"
 #include "RequestHandler.hpp"
 #include "CGIHandler.hpp"
+#include <sstream>    // std::ostringstream, to stringify the decoded body length
+#include <strings.h>  // strncasecmp, for case-insensitive header-name matching
+
 
 
 /*
@@ -28,8 +31,8 @@
 
 EpollLoop:: EpollLoop() : _header(), _content(){}
 
-EpollLoop::EpollLoop( EpollLoop const & src ) : _clientToListener(src._clientToListener), _clientResponseBuffer(src._clientResponseBuffer), _header(src._header), _content(src._content){
-    
+EpollLoop::EpollLoop( EpollLoop const & src ) : _clientToListener(src._clientToListener), _clientResponseBuffer(src._clientResponseBuffer), _clientRequestBuffer(src._clientRequestBuffer), _header(src._header), _content(src._content){
+
 }
 
 EpollLoop::~EpollLoop() {}
@@ -40,6 +43,7 @@ EpollLoop & EpollLoop::operator=( EpollLoop const & other ){
     {
         _clientToListener = other._clientToListener;
         _clientResponseBuffer = other._clientResponseBuffer;
+        _clientRequestBuffer = other._clientRequestBuffer;
         _header = other._header;
         _content = other._content;
     }
@@ -79,12 +83,58 @@ int EpollLoop::setnonblocking( int fd ){
     return result;
 }
 
+
+enum RequestState {
+    REQ_INCOMPLETE, // valid but more need
+    REQ_READY,
+    REQ_BAD  // 400 rep?
+};
+
+static RequestState analyzeRequest(const std::string &acc, std::string &ready)
+{
+    size_t headerEnd = acc.find("\r\n\r\n");
+    if (headerEnd == std::string::npos)
+        return REQ_INCOMPLETE;
+    size_t bodyStart = headerEnd + 4;
+
+    std::string te;
+    if // (chunked defined by Transfer-encoding in header block)
+    {
+        std::string decoded;
+        RequestState st = dechunkBody(acc.substr(bodyStart), decoded);
+        if (st != REQ_READY)
+            return st;  // still arriving, or malformed
+        ready = rebuildWithContentLength(acc, headerEnd, decoded);
+        return REQ_READY;
+    }
+
+// if (content length then, have we go everything)
+    {
+        size_t expected = (size_t)strtoul(cl.c_str(), NULL, 10);
+        if (acc.size() - bodyStart < expected)
+            return REQ_INCOMPLETE;
+    }
+
+//etiehr no body or is complet
+    ready = acc;
+    return REQ_READY;
+}
+
+void    EpollLoop::cleanupClient( int fd, int epollfd ){
+
+    epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, NULL);
+    close(fd);
+    _clientRequestBuffer.erase(fd);
+    // _clientResponseBuffer.erase(fd);
+    // _clientToListener.erase(fd);
+}
+
 // open dialogue with client:
 // read request
 // parse request
 // answer : send response
-// CGI >> fork 
-// handle fds : no closing fds in other classes only in EpollLoop 
+// CGI >> fork
+// handle fds : no closing fds in other classes only in EpollLoop
 // TO ENSURE NO HANGING FDS : if boolean == false > error caught fd closed in EPollLoop
 // then throw in Server >> quit program
 bool    EpollLoop::do_read_fd( int fd, std::vector<ListenerManager*> const & listeners, const GlobalConfig &config, int epollfd, epoll_event &ev){
@@ -99,25 +149,40 @@ bool    EpollLoop::do_read_fd( int fd, std::vector<ListenerManager*> const & lis
             std::cout << "[server " << i << "][location " << j << "] root: " << locations[j].getRoot() << std::endl;
     }
 
+    //can we read chunk?
     char    buf[BUF_SIZE];
+    ssize_t n_read = read(fd, buf, BUF_SIZE);
 
-    ssize_t n_read = read(fd, buf, BUF_SIZE); // read HTTP requests, need to handle TCP accidents
-    if (n_read == 0)
+    if (n_read <= 0)
     {
-        LOG_ERROR("Client closed connection");
-        return (close(fd), false);
+        LOG_ERROR("Client closed connection or read error");
+        cleanupClient(fd, epollfd);
+        return false;
     }
-    // n_Read = -1 means error, n_read == 0 means eof
-    if (n_read == -1)
+
+    std::string &acc = _clientRequestBuffer[fd]; // like response - new entry in map creates if not found
+    acc.append(buf, n_read);
+
+    if (acc.size() > (size_t)BUF_SIZE) // check but maybe then buffer before should be smoller?
     {
-        LOG_ERROR("Error on reading fd:" + fd);
-        return (close(fd), false);
+        // gonna be 413 and then send () 0 check request handler here
+        cleanupClient(fd, epollfd);
+        return false;
     }
-    std::string request = std::string(buf, n_read);
-    // std::cout << request << std::endl;
-    // Parse request
-    
-    // std::cout << " RAW REQUEST \n" << request << "\nEND OF REQUEST" << std::endl;
+    std::string ready;
+    RequestState state = analyzeRequest(acc, ready);
+    if (state == REQ_INCOMPLETE)
+        return true; // to wait for more bytes
+    if (state == REQ_BAD)
+    {
+        // error 400 and then send from request hanlder her
+        cleanupClient(fd, epollfd);
+        return false;
+    }
+
+    _clientRequestBuffer.erase(fd); // bc noramlly. I sent all request, so need to clean this one up 
+
+    // std::cout << " RAW REQUEST \n" << normalized << "\nEND OF REQUEST" << std::endl;
 
     // find which listener accepted this client
     int listenerSockfd = _clientToListener[fd];
@@ -133,7 +198,8 @@ bool    EpollLoop::do_read_fd( int fd, std::vector<ListenerManager*> const & lis
     if (listener == NULL)
     {
         LOG_ERROR("No listener found for fd " + std::string(strerror(errno)));
-        return (close(fd), false);
+        cleanupClient(fd, epollfd);
+        return false;
     }
 
     // match the ServerConfig whose port matches this listener
@@ -153,11 +219,11 @@ bool    EpollLoop::do_read_fd( int fd, std::vector<ListenerManager*> const & lis
     if (serverConfig == NULL)
     {
         LOG_ERROR("No ServerConfig found for port " + listener->getService());
-        _clientToListener.erase(fd);  
-        return (close(fd), false);
+        cleanupClient(fd, epollfd);
+        return false;
     }
 
-    RequestHandler requestHandler(request, *serverConfig);
+    RequestHandler requestHandler(ready, *serverConfig);
 
     if (requestHandler.handleRequest(*listener) == false)
     {
@@ -170,9 +236,7 @@ bool    EpollLoop::do_read_fd( int fd, std::vector<ListenerManager*> const & lis
         if (!cgi->start())
         {
             delete cgi;
-            std::string err = "HTTP/1.1 500 Internal Server Error\r\n" // Pass par Lea pour voir
-                              "Content-Length: 0\r\n\r\n";
-            send(fd, err.c_str(), err.size(), 0);
+            // error 500 needed - request handler here
             _clientToListener.erase(fd);
             return (close(fd), false);
         }
