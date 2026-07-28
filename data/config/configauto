@@ -8,13 +8,13 @@ server {
     error_page 400 /errors/404.html;
 
     location / {
-        root        data/www/html;
+        root        data/www;
         methods     GET;
-        autoindex   on;
+        autoindex   off;
     }
 
     location /api {
-        root        data/www/html1;
+        root        data/www;
         methods     GET;
         autoindex   off;
     }

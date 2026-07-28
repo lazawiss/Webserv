@@ -440,7 +440,6 @@ const LocationConfig*   HTTPParser::matchLocation() const{
     return best;
 }
 
-// root + full URI = for auto index
 void    HTTPParser::buildFullPath(){
 
     const LocationConfig *loc = matchLocation();
