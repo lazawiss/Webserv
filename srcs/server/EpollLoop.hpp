@@ -74,8 +74,6 @@ public:
     bool        do_read_fd( int fd, std::vector<ListenerManager*> const & listeners, const GlobalConfig &config, int epollfd , epoll_event& ev);
     bool        do_write_fd( int fd, int epollfd, epoll_event &ev );
 
-    // Close a client fd and erase EVERY per-fd map entry for it in one place,
-    // so a disconnected client can never leave stale state behind.
     void        cleanupClient( int fd, int epollfd );
     
     // bool        do_use_fd( int fd, std::vector<ListenerManager*> const & listeners, const GlobalConfig &config, int epollfd , epoll_event& ev);
