@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/28 14:33:24 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/28 16:23:40 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -396,15 +396,15 @@ bool HTTPParser::isRequestValid( ListenerManager const & listen ) {
         return false;
     }
 
-    buildFullPath();
-    extractRange();
-    extractBody();
-    parseCGI();
-    
     if (checkHost(listen) == false) {
         LOG_ERROR("Host header invalid or missing");
         return false;
     }
+    
+    buildFullPath();
+    extractRange();
+    extractBody();
+    parseCGI();
     
     return true;
 }
@@ -444,6 +444,7 @@ bool HTTPParser::validateCGIRequest()
 {
     if (_method != "GET" && _method != "POST" && _method != "DELETE")
     {
+        _errors = true;
         _code = HTTP_405;
         return false;
     }
@@ -580,13 +581,20 @@ bool HTTPParser::checkContentType() {
 bool HTTPParser::checkContentLength() {
 
     _pos++;
+    _pos++;
+    _pos++;
+
     std::string::iterator space = _pos;
     
     std::vector<size_t> space_inter = collectSpace(space);
+    std::cout << "checkContentLength space_intersize: " << space_inter.size() << std::endl;
 
     std::vector<std::string> subss = collectString(space_inter);
- 
-     if (subss.size() >= 2) {
+    std::cout << "checkContentLength subsssize: " << subss.size() << std::endl;
+    std::cout << "checkContentLength subss[0]: " << subss[0] << std::endl;
+
+
+    if (subss.size() == 2) {
 
         _fileLength = subss[1];
         std::stringstream ss(_fileLength);
@@ -640,8 +648,11 @@ bool HTTPParser::checkContentDisposition() {
     std::string::iterator newpos = _request.begin() + pos;
 
     std::vector<size_t> space_inter = collectSpace(newpos);
+    std::cout << "checkContentDisposition space_intersize: " << space_inter.size() << std::endl;
 
     std::vector<std::string> subss = collectString(space_inter);
+    std::cout << "checkContentDisposition subsssize: " << subss.size() << std::endl;
+    std::cout << "checkContentDisposition subss[0]: " << subss[0] << std::endl;
      
      if (subss.size() >= 4) {
 
@@ -659,7 +670,7 @@ bool HTTPParser::checkContentDisposition() {
         checktype.erase(checktype.begin());
         checktype.erase(checktype.end() - 1);
         std::string name = subss[2];
-        name.erase(name.end() - 1);
+        name.erase(name.end() - 2);
         name.erase(name.begin(), name.begin() + 6);
         _fileName = subss[3];
         _fileName.erase(_fileName.end() - 1);
@@ -681,9 +692,17 @@ bool HTTPParser::checkContentDisposition() {
 bool HTTPParser::gatherFile() {
     
     _pos++;
+    _pos++;
+    _pos++;
+    _pos++;
+
     std::vector<size_t> space_inter = collectSpace(_pos);
+    std::cout << "gatherFile space_intersize: " << space_inter.size() << std::endl;
 
     std::vector<std::string> subss = collectString(space_inter);
+    std::cout << "gatherFile subsssize: " << subss.size() << std::endl;
+    std::cout << "gatherFile subss[0]: " << subss[0] << std::endl;
+     
 
     if (subss.size() < 2)
     {
@@ -697,7 +716,7 @@ bool HTTPParser::gatherFile() {
     _type = subss[1];
     LOG_DEBUG("File Content-Type: " + _type);
 
-    _pos += 3;
+    _pos += 4;
 
     std::string endOfFile = _boundary + "--";
     size_t end_pos = _request.find(endOfFile);
@@ -707,6 +726,15 @@ bool HTTPParser::gatherFile() {
         return false;
     }
     _fileBuf.assign(_pos, _request.begin() + end_pos - 4);
+       std::cout << "Firsts 100 octets de _fileBuf : '" <<
+    std::string(_fileBuf.begin(), _fileBuf.begin() + 100) << "'" << std::endl;
+    std::cout << "Derniers 100 octets de _fileBuf : '" <<
+    std::string(_fileBuf.end() - 100, _fileBuf.end()) << "'" << std::endl;
+    std::cout << "20 derniers octets de _fileBuf : ";
+    for (size_t i = _fileBuf.size() - 20; i < _fileBuf.size(); ++i) {
+        printf("%02X ", static_cast<unsigned char>(_fileBuf[i]));
+    }
+    std::cout << std::endl;
 
     return true;
 }
