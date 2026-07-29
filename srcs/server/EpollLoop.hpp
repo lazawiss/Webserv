@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:27:21 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/29 22:42:20 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/29 22:49:27 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,7 +55,8 @@ private:
     std::map<int, CGI*>         _fdToCGI;  // pipe fd, CGI value
     std::map<int, std::string>  _clientResponseBuffer;  // int clientfd, std::string response 
     
-    std::string                 _totalrequest;
+    std::string                 _header;
+    std::string                 _content;
 
     
 protected:
