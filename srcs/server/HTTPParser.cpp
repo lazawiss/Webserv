@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/28 22:43:45 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/29 17:13:07 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -207,6 +207,44 @@ std::string     HTTPParser::getRange() const
 ** ============================================================================
 */
 
+bool HTTPParser::isVarInRequest400 ( size_t var ){
+    
+    if (var == std::string::npos)
+    {
+        _errors = true;
+        _code = HTTP_400;
+        _type = "text/html";
+        
+        return false;
+    }
+    
+    return true;
+}
+
+bool  HTTPParser::doesCharCExist400 ( char const *str ){
+    
+    if (!str){
+        
+        _errors = true;
+        _code = HTTP_400;
+        _type = "text/html";
+        
+        return false;
+    }
+    
+    return true;
+}
+
+static bool isMethod( std::string const & str ) {
+    
+    return str == "GET" || str == "POST" || str == "DELETE";
+}
+
+static bool isSimpleSpace( int found ){
+    
+    return found == ' ';
+}
+
 bool HTTPParser::checkSize() {
     
     if (_request.size() > BUF_SIZE){
@@ -219,18 +257,6 @@ bool HTTPParser::checkSize() {
     }
 
     return true;
-}
-
-static bool isMethod( std::string const & str ) {
-    
-    return str == "GET" || str == "POST" || str == "DELETE";
-}
-
-static bool isSimpleSpace( int found ){
-    
-    // return std::isspace(static_cast<unsigned char>(found));
-    // return static_cast<unsigned char>(found) == ' ';
-    return found == ' ';
 }
 
 void HTTPParser::extractBody() {
@@ -270,20 +296,6 @@ std::vector<size_t> HTTPParser::collectSpace( std::string::iterator start, std::
     return space_inter;
 }
 
-bool HTTPParser::checkForSimpleSpacenEndOfLine( std::vector<size_t> space_inter ) {
-    
-    for ( size_t i = 0; i < space_inter.size(); i++ ){
-        char c = _request[space_inter[i]];
-        if (c != ' '){
-            LOG_ERROR("Space isn't SIMPLE");
-            return false;
-        }
-    }
-    
-    return true;
-}
-
-
 std::vector<std::string> HTTPParser::collectString(std::string & line,
     std::vector<size_t> & space_inter ) {
 
@@ -309,27 +321,17 @@ std::vector<std::string> HTTPParser::collectString(std::string & line,
 bool HTTPParser::checkRequestLine() {
     
     size_t requestLineEnd = _request.find("\r\n");
-    if (requestLineEnd == std::string::npos) {      
-        LOG_ERROR("Request line does not end with CRLF");
-        _errors = true;
-        _code = HTTP_400;
-        _type = "text/html";
+    if (isVarInRequest400(requestLineEnd) == false)
         return false;
-    }
+        
+    std::string line = _request.substr(0, requestLineEnd);
     
-    std::string::iterator space = _request.begin();
-    std::string::iterator end = _request.begin() + requestLineEnd;
+    std::string::iterator space = line.begin();
+    std::string::iterator end = line.end();
 
     std::vector<size_t> space_inter = collectSpace(space, end);
     std::cout << "checkRequestLine space_intersize: " << space_inter.size() << std::endl;
-    if (checkForSimpleSpacenEndOfLine(space_inter) == false){
-        _errors = true;
-        _code = HTTP_400;
-        _type = "text/html";
-        return false;
-    }
  
-    std::string line = _request.substr(0, requestLineEnd);
     std::vector<std::string> subss = collectString(line, space_inter);
  
     if (subss.size() == 3) {
@@ -375,9 +377,12 @@ bool HTTPParser::checkHost( ListenerManager const & listener ) {
 
     LOG_DEBUG("Expected hostname: " + hostname);
 
-    size_t host = _request.find("Host:"); 
-
+    size_t host = _request.find("Host:");
+    if (isVarInRequest400(host) == false)
+        return false;
     size_t requestLineEnd = _request.find("\r\n", host);
+    if (isVarInRequest400(requestLineEnd) == false)
+        return false;
     std::string line = _request.substr(host, requestLineEnd - host);
     std::cout << "line: "<< line <<std::endl;
     
@@ -395,18 +400,12 @@ bool HTTPParser::checkHost( ListenerManager const & listener ) {
     if (subss.size() == 2) {
 
         char const *doublePoint = strrchr(subss[1].c_str(), ':');
-        if (doublePoint == NULL)
-        {
-            _errors = true;
-            _code = HTTP_400;
-            _type = "text/html";
+        if (doesCharCExist400(doublePoint) == false)
             return false;
-        }
         std::string service = std::string(doublePoint, strlen(doublePoint));
         service.erase(service.begin());
 
         std::cout << "service: " << service << std::endl;
-
 
         if (subss[1] == hostname || (listener.getNode() == "0.0.0.0" &&
          listener.getService() == service)){
@@ -578,22 +577,19 @@ void HTTPParser::extractRange() {
 bool HTTPParser::checkContentType() {
 
     size_t start = _request.find("Content-Type:");
-    if (start == std::string::npos)
-    {
-        _errors = true;
-        _code = HTTP_400;
-        _type = "text/html";
-
+    if (isVarInRequest400(start) == false)
         return false;
-    }
-    size_t requestLineEnd = _request.find("\r\n");
+        
+    size_t requestLineEnd = _request.find("\r\n", start);
+    if (isVarInRequest400(requestLineEnd) == false)
+        return false;
+    std::string line = _request.substr(start, requestLineEnd - start);
 
-    std::string::iterator space = _request.begin() + start;
-    std::string::iterator end = _request.begin() + requestLineEnd;
+    std::string::iterator space = line.begin();
+    std::string::iterator end = line.end();
 
     std::vector<size_t> space_inter = collectSpace(space, end);
     
-    std::string line = _request.substr(start, requestLineEnd);
     std::vector<std::string> subss = collectString(line, space_inter);
 
     if (subss.size() >= 2) {
@@ -628,23 +624,28 @@ bool HTTPParser::checkContentType() {
 
 bool HTTPParser::checkContentLength() {
 
-    _pos++;
-    _pos++;
-    _pos++;
+    size_t start = _request.find("Content-Length:");
+    std::cout << "start: " << start << std::endl;
+    if (isVarInRequest400(start) == false){
+        LOG_ERROR("No COntent-Length");
+        return false;
+    }
     
-    size_t requestLineEnd = _request.find("\r\n");
-
-    std::string::iterator space = _pos;
-    std::string::iterator end = _pos + requestLineEnd;
+    size_t requestLineEnd = _request.find("\r\n", start);
+    if (isVarInRequest400(requestLineEnd) == false)
+        return false;
+    std::string line = _request.substr(start, requestLineEnd - start);
+    std::cout << "checkContentLength line: "<< line << std::endl;
+    std::string::iterator space = line.begin();
+    std::string::iterator end = line.end();
     
     std::vector<size_t> space_inter = collectSpace(space, end);
     std::cout << "checkContentLength space_intersize: " << space_inter.size() << std::endl;
     
-    size_t begin = distance(_request.begin(),_pos);
-    std::string line = _request.substr(begin, requestLineEnd);
     std::vector<std::string> subss = collectString(line, space_inter);
     std::cout << "checkContentLength subsssize: " << subss.size() << std::endl;
     std::cout << "checkContentLength subss[0]: " << subss[0] << std::endl;
+    std::cout << "checkContentLength subss[1]: " << subss[1] << std::endl;
 
 
     if (subss.size() == 2) {
@@ -689,48 +690,31 @@ bool HTTPParser::checkContentLength() {
 bool HTTPParser::checkContentDisposition() {
     
     size_t pos = _request.find("Content-Disposition:");
-    if (pos == std::string::npos)
-    {
-        _errors = true;
-        _code = HTTP_400;
-        _type = "text/html";
-
+    if (isVarInRequest400(pos) == false)
         return false;
-    }
     
-    size_t requestLineEnd = _request.find("\r\n");
-    if (requestLineEnd == std::string::npos) {      
-        LOG_ERROR("Request line does not end with CRLF");
-        _errors = true;
-        _code = HTTP_400;
-        _type = "text/html";
+    size_t requestLineEnd = _request.find("\r\n", pos);
+     if (isVarInRequest400(requestLineEnd) == false)
         return false;
-    }
-    
-
-    std::string::iterator newpos = _request.begin() + pos;
-    std::string::iterator end = _request.begin() + requestLineEnd;
+        
+    std::string line = _request.substr(pos, requestLineEnd - pos);
+    std::string::iterator newpos = line.begin();
+    std::string::iterator end = line.end();
 
     std::vector<size_t> space_inter = collectSpace(newpos, end);
     std::cout << "checkContentDisposition space_intersize: " << space_inter.size() << std::endl;
 
-    std::string line = _request.substr(pos, requestLineEnd);
     std::vector<std::string> subss = collectString(line,space_inter);
     std::cout << "checkContentDisposition subsssize: " << subss.size() << std::endl;
     std::cout << "checkContentDisposition subss[0]: " << subss[0] << std::endl;
      
-     if (subss.size() >= 4) {
+     if (subss.size() == 4) {
 
         std::string type = subss[1];
         char const *slash = strchr(_type.c_str(), '/');
-        if (slash == NULL)
-        {
-            _errors = true;
-            _code = HTTP_400;
-            _type = "text/html";
-
+        if (doesCharCExist400(slash) == false)
             return false;
-        }
+
         std::string checktype = std::string(slash, strlen(slash));
         checktype.erase(checktype.begin());
         checktype.erase(checktype.end() - 1);
@@ -760,29 +744,23 @@ bool HTTPParser::gatherFile() {
     _pos++;
     _pos++;
     _pos++;
-
-    size_t requestLineEnd = _request.find("\r\n");
-    if (requestLineEnd == std::string::npos) {      
-        LOG_ERROR("Request line does not end with CRLF");
-        _errors = true;
-        _code = HTTP_400;
-        _type = "text/html";
-        return false;
-    }
     
-    std::string::iterator start = _pos;
-    std::string::iterator end = _pos + requestLineEnd;
+    size_t begin = distance(_request.begin(),_pos);
+    size_t requestLineEnd = _request.find("\r\n", begin);
+    if (isVarInRequest400(requestLineEnd) == false)
+        return false;
+    
+    std::string line = _request.substr(begin, requestLineEnd - begin);
+    std::string::iterator start = line.begin();
+    std::string::iterator end = line.end();
     
     std::vector<size_t> space_inter = collectSpace(start, end);
     std::cout << "gatherFile space_intersize: " << space_inter.size() << std::endl;
 
-    size_t begin = distance(_request.begin(),_pos);
-    std::string line = _request.substr(begin, requestLineEnd);
     std::vector<std::string> subss = collectString(line,space_inter);
     std::cout << "gatherFile subsssize: " << subss.size() << std::endl;
     std::cout << "gatherFile subss[0]: " << subss[0] << std::endl;
      
-
     if (subss.size() < 2)
     {
         _errors = true;
@@ -799,13 +777,13 @@ bool HTTPParser::gatherFile() {
 
     std::string endOfFile = _boundary + "--";
     size_t end_pos = _request.find(endOfFile);
-
-    if (end_pos == std::string::npos) {
+    if (isVarInRequest400(requestLineEnd) == false){
         LOG_ERROR("End boundary not found in request");
         return false;
     }
+ 
     _fileBuf.assign(_pos, _request.begin() + end_pos - 4);
-       std::cout << "Firsts 100 octets de _fileBuf : '" <<
+    std::cout << "Firsts 100 octets de _fileBuf : '" <<
     std::string(_fileBuf.begin(), _fileBuf.begin() + 100) << "'" << std::endl;
     std::cout << "Derniers 100 octets de _fileBuf : '" <<
     std::string(_fileBuf.end() - 100, _fileBuf.end()) << "'" << std::endl;
@@ -824,12 +802,7 @@ bool HTTPParser::gatherFile() {
 ** ============================================================================
 */
 
-// Main function findMethods() :
-// Compare method found in request and in config file
-// if no correspondance : error 405 method not accepted
-// then get index from config file :
-// if multiple, check if valide then goes to the next
-// if none valid, index by default
+
 
 bool HTTPParser::compareMethodWithConfigFile() {
     
@@ -858,6 +831,7 @@ bool HTTPParser::compareMethodWithConfigFile() {
     return false;
 }
 
+
 std::string HTTPParser::addSuffix(std::string suffix) {
     
     if (suffix  == ".jpg")
@@ -875,7 +849,12 @@ std::string HTTPParser::addSuffix(std::string suffix) {
     return _type;
 }
 
-
+// Main function findMethods() :
+// Compare method found in request and in config file
+// if no correspondance : error 405 method not accepted
+// then get index from config file :
+// if multiple, check if valide then goes to the next
+// if none valid, index by default
 bool HTTPParser::findMethods() {
 
     if (compareMethodWithConfigFile() == true)
@@ -953,15 +932,11 @@ bool HTTPParser::findMethods() {
             if (_requesttarget.find("/images") == 0)
             {
                 char const *lastSlash = strrchr(_requesttarget.c_str(), '/');
-                char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
-                if (!lastSlash || !lastPoint)
-                {
-                    _errors = true;
-                    _code = HTTP_400;
-                    _type = "text/html";
-
+                if (doesCharCExist400(lastSlash) == false)
                     return false;
-                }
+                char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
+                if (doesCharCExist400(lastPoint) == false)
+                    return false;
                 std::string name = std::string(lastSlash, strlen(lastSlash));
                 name.erase(name.begin());
                 _fileName = name;
@@ -975,6 +950,8 @@ bool HTTPParser::findMethods() {
             if (_requesttarget.find("/data/upload") != std::string::npos)
             {
                 char const *lastSlash = strrchr(_requesttarget.c_str(), '/');
+                if (doesCharCExist400(lastSlash) == false)
+                    return false;
                 std::string name = std::string(lastSlash, strlen(lastSlash));
                 name.erase(name.begin());
                 _fileName = name;
@@ -1039,20 +1016,13 @@ bool HTTPParser::findMethods() {
 
                 } else {
 
-                    char const *lastSlash =
-                        strrchr(_requesttarget.c_str(), '/');
-                    char const *lastPoint =
-                        strrchr(_requesttarget.c_str(), '.');
-                    if (!lastSlash || !lastPoint)
-                    {
-                        _errors = true;
-                        _code = HTTP_400;
-                        _type = "text/html";
-
+                    char const *lastSlash = strrchr(_requesttarget.c_str(), '/');
+                    if (doesCharCExist400(lastSlash) == false)
                         return false;
-                    }
-                    std::string name =
-                        std::string(lastSlash, strlen(lastSlash));
+                    char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
+                    if (doesCharCExist400(lastPoint) == false)
+                        return false;
+                    std::string name = std::string(lastSlash, strlen(lastSlash));
                     name.erase(name.begin());
 
                     LOG_DEBUG("POST upload target: " + name);
@@ -1074,15 +1044,11 @@ bool HTTPParser::findMethods() {
             {
                 
                 char const *lastSlash = strrchr(_requesttarget.c_str(), '/');
-                char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
-                if (!lastSlash || !lastPoint)
-                {
-                    _errors = true;
-                    _code = HTTP_400;
-                    _type = "text/html";
-
+                if (doesCharCExist400(lastSlash) == false)
                     return false;
-                }
+                char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
+                if (doesCharCExist400(lastPoint) == false)
+                    return false;
                 std::string name = std::string(lastSlash, strlen(lastSlash));
                 name.erase(name.begin());
                 LOG_DEBUG("DELETE target: " + name);
