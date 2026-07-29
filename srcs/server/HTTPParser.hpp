@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/29 16:09:56 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/29 21:23:30 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -139,7 +139,7 @@ public:
     bool                        validateCGIRequest();
     /*------------------------- */
 
-    bool                        isVarInRequest400 ( size_t var );
+    bool                        varNotFound400 ( size_t var );
     bool                        doesCharCExist400 ( char const *str );
     
     std::vector<size_t>         collectSpace( std::string::iterator start, std::string::iterator end );

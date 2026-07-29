@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/28 14:47:18 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/29 22:45:14 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,12 +26,12 @@
 ** ============================================================================
 */
 
-EpollLoop:: EpollLoop() : _header(), _content() {}
+EpollLoop:: EpollLoop() : _totalrequest() {}
 
 EpollLoop::EpollLoop( EpollLoop const & src ) :
     _clientToListener(src._clientToListener),
     _clientResponseBuffer(src._clientResponseBuffer),
-    _header(src._header), _content(src._content) {}
+    _totalrequest(src._totalrequest) {}
 
 EpollLoop::~EpollLoop() {}
 
@@ -41,8 +41,7 @@ EpollLoop & EpollLoop::operator=( EpollLoop const & other )
     {
         _clientToListener       = other._clientToListener;
         _clientResponseBuffer   = other._clientResponseBuffer;
-        _header                 = other._header;
-        _content                = other._content;
+        _totalrequest           = other._totalrequest;
     }
 
     return *this;
@@ -97,21 +96,32 @@ bool EpollLoop::do_read_fd(
     const GlobalConfig & config, int epollfd, epoll_event & ev)
 {
 
-    char    buf[BUF_SIZE];
+    char    buf[BUF_SIZE] = {0};
+    ssize_t n_read = 0;
 
-    ssize_t n_read = read(fd, buf, BUF_SIZE);
-    if (n_read == 0)
-    {
-        LOG_ERROR("Client closed connection");
-        return (close(fd), false);
-    }
-    if (n_read == -1)
-    {
-        LOG_ERROR("Error reading from client fd");
-        return (close(fd), false);
-    }
+    while(n_read = read(fd, buf, BUF_SIZE) > 0){
+        
+        if (n_read == 0)
+        {
+            LOG_ERROR("Client closed connection");
+            return (close(fd), false);
+        }
+        if (n_read == -1)
+        {
+            LOG_ERROR("Error reading from client fd");
+            return (close(fd), false);
+        }
+        
+        std::string request = std::string(buf, n_read);
 
-    std::string request = std::string(buf, n_read);
+        _totalrequest += request;
+        
+    }
+        size_t headerEnd = _totalrequest.find("\r\n\r\n");
+        size_t sepLen = 4;
+        
+        if (headerEnd != std::string::npos)
+            std::string rqst = _totalrequest.substr(headerEnd + sepLen);
 
     // find which listener accepted this client
     int listenerSockfd = _clientToListener[fd];

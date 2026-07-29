@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/29 19:08:35 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/29 22:12:54 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -207,7 +207,7 @@ std::string     HTTPParser::getRange() const
 ** ============================================================================
 */
 
-bool HTTPParser::isVarInRequest400 ( size_t var ){
+bool HTTPParser::varNotFound400 ( size_t var ){
     
     if (var == std::string::npos)
     {
@@ -319,7 +319,7 @@ std::vector<std::string> HTTPParser::collectString(std::string & line,
 bool HTTPParser::checkRequestLine() {
     
     size_t requestLineEnd = _request.find("\r\n");
-    if (isVarInRequest400(requestLineEnd) == false)
+    if (varNotFound400(requestLineEnd) == false)
         return false;
         
     std::string line = _request.substr(0, requestLineEnd);
@@ -375,10 +375,10 @@ bool HTTPParser::checkHost( ListenerManager const & listener ) {
     LOG_DEBUG("Expected hostname: " + hostname);
 
     size_t host = _request.find("Host:");
-    if (isVarInRequest400(host) == false)
+    if (varNotFound400(host) == false)
         return false;
     size_t requestLineEnd = _request.find("\r\n", host);
-    if (isVarInRequest400(requestLineEnd) == false)
+    if (varNotFound400(requestLineEnd) == false)
         return false;
     std::string line = _request.substr(host, requestLineEnd - host);
     
@@ -541,10 +541,10 @@ void HTTPParser::buildFullPath() {
         + "' autoindex=" + (_autoindexOn ? "on" : "off"));
 }
 
-void HTTPParser::extractRange() {
+void HTTPParser::extractRange() {//bool
 
     size_t start = _request.find("Range:");
-    if (start == std::string::npos)
+    if (start == std::string::npos)//if varNotFound400(start)
         return;
     start += 6;
     size_t end = _request.find("\r\n", start);
@@ -570,11 +570,11 @@ void HTTPParser::extractRange() {
 bool HTTPParser::checkContentType() {
 
     size_t start = _request.find("Content-Type:");
-    if (isVarInRequest400(start) == false)
+    if (varNotFound400(start) == false)
         return false;
         
     size_t requestLineEnd = _request.find("\r\n", start);
-    if (isVarInRequest400(requestLineEnd) == false)
+    if (varNotFound400(requestLineEnd) == false)
         return false;
     std::string line = _request.substr(start, requestLineEnd - start);
 
@@ -618,13 +618,13 @@ bool HTTPParser::checkContentType() {
 bool HTTPParser::checkContentLength() {
 
     size_t start = _request.find("Content-Length:");
-    if (isVarInRequest400(start) == false){
+    if (varNotFound400(start) == false){
         LOG_ERROR("No COntent-Length");
         return false;
     }
     
     size_t requestLineEnd = _request.find("\r\n", start);
-    if (isVarInRequest400(requestLineEnd) == false)
+    if (varNotFound400(requestLineEnd) == false)
         return false;
     std::string line = _request.substr(start, requestLineEnd - start);
     std::string::iterator space = line.begin();
@@ -676,11 +676,11 @@ bool HTTPParser::checkContentLength() {
 bool HTTPParser::checkContentDisposition() {
     
     size_t pos = _request.find("Content-Disposition:");
-    if (isVarInRequest400(pos) == false)
+    if (varNotFound400(pos) == false)
         return false;
     
     size_t requestLineEnd = _request.find("\r\n", pos);
-    if (isVarInRequest400(requestLineEnd) == false)
+    if (varNotFound400(requestLineEnd) == false)
         return false;
         
     std::string line = _request.substr(pos, requestLineEnd - pos);
@@ -727,18 +727,13 @@ bool HTTPParser::gatherFile() {
     
     _pos++;
     _pos++;
-    // _pos++;
-    // _pos++;
     
     size_t begin = distance(_request.begin(),_pos);
     std::cout << "begin: " << begin << std::endl;
     size_t requestLineEnd = _request.find("\r\n",begin);
-    if (isVarInRequest400(requestLineEnd) == false){
-        LOG_ERROR("NO END LINE");
+    if (varNotFound400(requestLineEnd) == false)
         return false;
-    }
     
-    // std::string line = _request.substr(0, requestLineEnd);
     std::string line = _request.substr(begin, requestLineEnd - begin);
     std::cout << "gatherfile line:"<< line << std::endl;
     std::string::iterator start = line.begin();
@@ -768,7 +763,7 @@ bool HTTPParser::gatherFile() {
 
     std::string endOfFile = _boundary + "--";
     size_t end_pos = _request.find(endOfFile);
-    if (isVarInRequest400(requestLineEnd) == false){
+    if (varNotFound400(requestLineEnd) == false){
         LOG_ERROR("End boundary not found in request");
         return false;
     }
