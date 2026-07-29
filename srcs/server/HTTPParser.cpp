@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/29 17:13:07 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/29 18:43:40 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -291,8 +291,6 @@ std::vector<size_t> HTTPParser::collectSpace( std::string::iterator start, std::
         pos++;
     }
     
-    _pos = pos;
-
     return space_inter;
 }
 
@@ -306,7 +304,7 @@ std::vector<std::string> HTTPParser::collectString(std::string & line,
         size_t start = (i == 0) ? 0 : space_inter[i - 1] + 1;
         size_t end = space_inter[i];
 
-        subss.push_back(_request.substr(start, end - start));
+        subss.push_back(line.substr(start, end - start));
     }
     
     if (!space_inter.empty()){
@@ -330,7 +328,6 @@ bool HTTPParser::checkRequestLine() {
     std::string::iterator end = line.end();
 
     std::vector<size_t> space_inter = collectSpace(space, end);
-    std::cout << "checkRequestLine space_intersize: " << space_inter.size() << std::endl;
  
     std::vector<std::string> subss = collectString(line, space_inter);
  
@@ -384,18 +381,14 @@ bool HTTPParser::checkHost( ListenerManager const & listener ) {
     if (isVarInRequest400(requestLineEnd) == false)
         return false;
     std::string line = _request.substr(host, requestLineEnd - host);
-    std::cout << "line: "<< line <<std::endl;
     
     std::string::iterator start = line.begin();
     std::string::iterator end = line.end();
 
     std::vector<size_t> space_inter = collectSpace(start, end);
-    std::cout << "checkHost space_intersize: " << space_inter.size() << std::endl;
     
     std::vector<std::string> subss = collectString(line,space_inter);
-    std::cout << "checkHost subss size: " << subss.size() << std::endl;
-    std::cout << "checkHost subss[0]: " << subss[0] << std::endl;
-    std::cout << "checkHost subss[1]: " << subss[1] << std::endl;
+   
     
     if (subss.size() == 2) {
 
@@ -625,7 +618,6 @@ bool HTTPParser::checkContentType() {
 bool HTTPParser::checkContentLength() {
 
     size_t start = _request.find("Content-Length:");
-    std::cout << "start: " << start << std::endl;
     if (isVarInRequest400(start) == false){
         LOG_ERROR("No COntent-Length");
         return false;
@@ -635,18 +627,12 @@ bool HTTPParser::checkContentLength() {
     if (isVarInRequest400(requestLineEnd) == false)
         return false;
     std::string line = _request.substr(start, requestLineEnd - start);
-    std::cout << "checkContentLength line: "<< line << std::endl;
     std::string::iterator space = line.begin();
     std::string::iterator end = line.end();
     
     std::vector<size_t> space_inter = collectSpace(space, end);
-    std::cout << "checkContentLength space_intersize: " << space_inter.size() << std::endl;
     
     std::vector<std::string> subss = collectString(line, space_inter);
-    std::cout << "checkContentLength subsssize: " << subss.size() << std::endl;
-    std::cout << "checkContentLength subss[0]: " << subss[0] << std::endl;
-    std::cout << "checkContentLength subss[1]: " << subss[1] << std::endl;
-
 
     if (subss.size() == 2) {
 
@@ -694,23 +680,21 @@ bool HTTPParser::checkContentDisposition() {
         return false;
     
     size_t requestLineEnd = _request.find("\r\n", pos);
-     if (isVarInRequest400(requestLineEnd) == false)
+    if (isVarInRequest400(requestLineEnd) == false)
         return false;
         
     std::string line = _request.substr(pos, requestLineEnd - pos);
+
     std::string::iterator newpos = line.begin();
     std::string::iterator end = line.end();
 
     std::vector<size_t> space_inter = collectSpace(newpos, end);
-    std::cout << "checkContentDisposition space_intersize: " << space_inter.size() << std::endl;
 
-    std::vector<std::string> subss = collectString(line,space_inter);
-    std::cout << "checkContentDisposition subsssize: " << subss.size() << std::endl;
-    std::cout << "checkContentDisposition subss[0]: " << subss[0] << std::endl;
+    std::vector<std::string> subsss = collectString(line,space_inter);
      
-     if (subss.size() == 4) {
+     if (subsss.size() == 4) {
 
-        std::string type = subss[1];
+        std::string type = subsss[1];
         char const *slash = strchr(_type.c_str(), '/');
         if (doesCharCExist400(slash) == false)
             return false;
@@ -718,10 +702,10 @@ bool HTTPParser::checkContentDisposition() {
         std::string checktype = std::string(slash, strlen(slash));
         checktype.erase(checktype.begin());
         checktype.erase(checktype.end() - 1);
-        std::string name = subss[2];
+        std::string name = subsss[2];
         name.erase(name.end() - 2);
         name.erase(name.begin(), name.begin() + 6);
-        _fileName = subss[3];
+        _fileName = subsss[3];
         _fileName.erase(_fileName.end() - 1);
         _fileName.erase(_fileName.begin(), _fileName.begin() + 10 );
         LOG_DEBUG("Disposition type: " + checktype);
@@ -740,17 +724,22 @@ bool HTTPParser::checkContentDisposition() {
 
 bool HTTPParser::gatherFile() {
     
-    _pos++;
-    _pos++;
-    _pos++;
-    _pos++;
+    // _pos++;
+    // _pos++;
+    // _pos++;
+    // _pos++;
     
     size_t begin = distance(_request.begin(),_pos);
-    size_t requestLineEnd = _request.find("\r\n", begin);
-    if (isVarInRequest400(requestLineEnd) == false)
+    std::cout << "begin: " << begin << std::endl;
+    size_t requestLineEnd = _request.find("\r\n");
+    if (isVarInRequest400(requestLineEnd) == false){
+        LOG_ERROR("NO END LINE");
         return false;
+    }
     
-    std::string line = _request.substr(begin, requestLineEnd - begin);
+    std::string line = _request.substr(0, requestLineEnd);
+    std::cout << "gatherfile line:"<< line << std::endl;
+    // std::string line = _request.substr(begin, requestLineEnd - begin);
     std::string::iterator start = line.begin();
     std::string::iterator end = line.end();
     
