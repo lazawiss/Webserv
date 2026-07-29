@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/29 18:43:40 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/29 19:08:35 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -712,6 +712,7 @@ bool HTTPParser::checkContentDisposition() {
         LOG_DEBUG("Disposition name: " + name);
         LOG_DEBUG("Upload filename: " + _fileName);
 
+        _pos = _request.begin() + requestLineEnd; 
         return true;
     }
 
@@ -724,22 +725,22 @@ bool HTTPParser::checkContentDisposition() {
 
 bool HTTPParser::gatherFile() {
     
-    // _pos++;
-    // _pos++;
+    _pos++;
+    _pos++;
     // _pos++;
     // _pos++;
     
     size_t begin = distance(_request.begin(),_pos);
     std::cout << "begin: " << begin << std::endl;
-    size_t requestLineEnd = _request.find("\r\n");
+    size_t requestLineEnd = _request.find("\r\n",begin);
     if (isVarInRequest400(requestLineEnd) == false){
         LOG_ERROR("NO END LINE");
         return false;
     }
     
-    std::string line = _request.substr(0, requestLineEnd);
+    // std::string line = _request.substr(0, requestLineEnd);
+    std::string line = _request.substr(begin, requestLineEnd - begin);
     std::cout << "gatherfile line:"<< line << std::endl;
-    // std::string line = _request.substr(begin, requestLineEnd - begin);
     std::string::iterator start = line.begin();
     std::string::iterator end = line.end();
     
@@ -762,6 +763,7 @@ bool HTTPParser::gatherFile() {
     _type = subss[1];
     LOG_DEBUG("File Content-Type: " + _type);
 
+    _pos = _request.begin() + requestLineEnd;
     _pos += 4;
 
     std::string endOfFile = _boundary + "--";
