@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/29 22:12:54 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/30 17:56:26 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -263,12 +263,7 @@ void HTTPParser::extractBody() {
 
     size_t headerEnd = _request.find("\r\n\r\n");
     size_t sepLen = 4;
-
-    // if (headerEnd == std::string::npos)
-    // {
-    //     headerEnd = _request.find("\n\n");
-    //     sepLen = 2;
-    // }
+    
     if (headerEnd != std::string::npos)
         _body = _request.substr(headerEnd + sepLen);
 }
@@ -397,8 +392,6 @@ bool HTTPParser::checkHost( ListenerManager const & listener ) {
             return false;
         std::string service = std::string(doublePoint, strlen(doublePoint));
         service.erase(service.begin());
-
-        std::cout << "service: " << service << std::endl;
 
         if (subss[1] == hostname || (listener.getNode() == "0.0.0.0" &&
          listener.getService() == service)){
@@ -729,22 +722,17 @@ bool HTTPParser::gatherFile() {
     _pos++;
     
     size_t begin = distance(_request.begin(),_pos);
-    std::cout << "begin: " << begin << std::endl;
     size_t requestLineEnd = _request.find("\r\n",begin);
     if (varNotFound400(requestLineEnd) == false)
         return false;
     
     std::string line = _request.substr(begin, requestLineEnd - begin);
-    std::cout << "gatherfile line:"<< line << std::endl;
     std::string::iterator start = line.begin();
     std::string::iterator end = line.end();
     
     std::vector<size_t> space_inter = collectSpace(start, end);
-    std::cout << "gatherFile space_intersize: " << space_inter.size() << std::endl;
 
     std::vector<std::string> subss = collectString(line,space_inter);
-    std::cout << "gatherFile subsssize: " << subss.size() << std::endl;
-    std::cout << "gatherFile subss[0]: " << subss[0] << std::endl;
      
     if (subss.size() < 2)
     {
@@ -832,6 +820,12 @@ std::string HTTPParser::addSuffix(std::string suffix) {
         _type = "text/plain";
     if (suffix == ".html")
         _type = "text/html";
+    if (suffix == ".bla")
+        _type = "text/bla";
+    if (suffix == ".pouic")
+        _type = "text/pouic";
+    if (suffix == ".bad_extension")
+        _type = "text/bad_extension";
     return _type;
 }
 
@@ -889,7 +883,9 @@ bool HTTPParser::findMethods() {
                     std::string indexPath = _fullPath;
                     if (indexPath[indexPath.size() - 1] != '/')
                         indexPath += "/";
+                    // indexPath += "index.html";
                     indexPath += "index.html";
+
                     struct stat index_stat;
                     if (stat(indexPath.c_str(), &index_stat) == 0
                         && S_ISREG(index_stat.st_mode))

@@ -626,7 +626,7 @@ void Parser::parseDirectiveCGI(LocationConfig &ref)
             + "', should be a 'word' type");
 
 
-    if (current().value != ".py" && current().value != ".php")
+    if (current().value != ".py" && current().value != ".php" && current().value != ".bla") // modif tester
         throw std::runtime_error("Invalid CGI file format: "
             "expected .py or .php");
 
