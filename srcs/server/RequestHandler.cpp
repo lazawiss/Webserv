@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestHandler.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
+/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/24 15:28:35 by ankim            ###   ########.fr       */
+/*   Updated: 2026/07/30 17:41:45 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -228,9 +228,10 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
     
     LOG_DEBUG("Building response header, code: " + code);
 
-    std::string codeName[10] =
+    std::string codeName[11] =
     {
         "400",
+        "403",
         "404",
         "405",
         "413",
@@ -243,7 +244,7 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
     };
     
     int index = -1;
-    for (int i = 0 ;i < 10; i++){
+    for (int i = 0 ;i < 11; i++){
         
         if (codeName[i] == code){
             index = i;
@@ -260,38 +261,42 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
         break;
 
         case(1):
+        str = "403 FORBIDDEN";
+        break;
+        
+        case(2):
         str = "404 Not Found";
         break;
 
-        case(2):
+        case(3):
         str = "405 METHOD NOT ALLOWED\r\nAllow: GET, POST, DELETE";
         break;
         
-        case(3):
+        case(4):
         str = "413 CONTENT TOO LARGE";
         break;
         
-        case(4):
+        case(5):
         str = "414 URI TOO LONG";
         break;
         
-        case(5):
+        case(6):
         str = "421 MISDIRECTED REQUEST";
         break;
         
-        case(6):
+        case(7):
         str = "201 CREATED\r\nLocation: " + _pathToFile;
         break;
         
-        case(7):
+        case(8):
         str = "204 NO CONTENT";
         break;
 
-        case(8):
+        case(9):
         str = "500 INTERNAL SERVER ERROR";
         break;
 
-        case(9):
+        case(10):
         str = "502 BADGATEWAY";
         break;
 
@@ -500,6 +505,7 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     if (HTTPParser.isRequestValid(listen) == false) {
 
         LOG_DEBUG("Request invalid");
+
         sendError(HTTPParser, HTTPParser.getCode());
         buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");
         return true;
@@ -640,12 +646,12 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
             if (answerFile(uploadFile) == false)
                 sendError(HTTPParser, HTTP_500);
 
-        } else {
+        }
+        else {
 
             std::string imgFile = getFileImage(HTTPParser.getFileName());
             if (answerFile(imgFile) == false)
                 sendError(HTTPParser, HTTP_500);
-
         }
 
     } else if (HTTPParser.getType() == "image/x-icon") {

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HTTPParser.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: andikim <andikim@student.42.fr>            +#+  +:+       +#+        */
+/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/23 09:20:51 by andikim          ###   ########.fr       */
+/*   Updated: 2026/07/29 21:23:30 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -139,8 +139,11 @@ public:
     bool                        validateCGIRequest();
     /*------------------------- */
 
-    std::vector<size_t>         collectSpace( std::string::iterator pos );
-    std::vector<std::string>    collectString( std::vector<size_t> space_inter );
+    bool                        varNotFound400 ( size_t var );
+    bool                        doesCharCExist400 ( char const *str );
+    
+    std::vector<size_t>         collectSpace( std::string::iterator start, std::string::iterator end );
+    std::vector<std::string>    collectString( std::string & line, std::vector<size_t> & space_inter );
 
     bool                        checkSize();
     bool                        checkRequestLine();
@@ -154,6 +157,8 @@ public:
             
     std::string                 addSuffix(std::string suffix);
     bool                        compareMethodWithConfigFile();
+
+
 
     bool                        findMethods();
     bool                        findPath();

@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/26 13:59:52 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/07/30 14:34:51 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -110,6 +110,7 @@ bool EpollLoop::do_read_fd(
         LOG_ERROR("Error reading from client fd");
         return (close(fd), false);
     }
+    
 
     std::string request = std::string(buf, n_read);
 
@@ -156,12 +157,17 @@ bool EpollLoop::do_read_fd(
     if (requestHandler.handleRequest(*listener) == false)
     {
         LOG_ERROR("handleRequest failed, sending 500");
-        std::string err500 =
+        _clientResponseBuffer[fd] =
             "HTTP/1.1 500 Internal Server Error\r\n"
             "Content-Type: text/html\r\n"
             "Content-Length: 0\r\n\r\n";
-        send(fd, err500.c_str(), err500.size(), 0);
-        return (close(fd), false);
+        // return (close(fd), false);  
+        ev.events = EPOLLOUT;
+
+        ev.data.fd = fd;
+        epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &ev);
+        
+        return true;
     }
     if (requestHandler.getCGI())
     {
@@ -169,13 +175,20 @@ bool EpollLoop::do_read_fd(
         if (!cgi->start())
         {
             delete cgi;
-            std::string err =
-                "HTTP/1.1 500 Internal Server Error\r\n"
-                "Content-Length: 0\r\n\r\n";
+            _clientResponseBuffer[fd] =
+              "HTTP/1.1 500 Internal Server Error\r\n"
+            "Content-Type: text/html\r\n"
+            "Content-Length: 0\r\n\r\n";
 
-            send(fd, err.c_str(), err.size(), 0);
-            _clientToListener.erase(fd);
-            return (close(fd), false);
+            // send(fd, err.c_str(), err.size(), 0);
+            // _clientToListener.erase(fd);
+            // return (close(fd), false);
+            ev.events = EPOLLOUT;
+
+            ev.data.fd = fd;
+            epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &ev);
+            
+            return true;
         }
 
         // stdin pipe: WE write the body into it -> watch for EPOLLOUT
