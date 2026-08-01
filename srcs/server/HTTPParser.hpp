@@ -62,7 +62,8 @@ enum HttpCode
 
 #define BUF_SIZE 800000
 
-typedef enum RequestParser{
+typedef enum RequestParser
+{
     REQUESTLINE,
     HOST,
     USER_AGENT,
@@ -175,7 +176,7 @@ public:
 
     bool                        checkSize();
     bool                        checkRequestLine();
-    bool                        checkHost( ListenerManager const & listener );
+    bool                        checkHost( std::string const & value, ListenerManager const & listener );
     bool                        isRequestValid( ListenerManager const & listen );
                 
     bool                        checkContentType();
