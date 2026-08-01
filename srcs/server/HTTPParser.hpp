@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HTTPParser.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/29 21:23:30 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/01 17:57:14 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,6 +61,34 @@ enum HttpCode
 
 
 #define BUF_SIZE 800000
+
+typedef enum RequestParser{
+    REQUESTLINE,
+    HOST,
+    USER_AGENT,
+    ACCEPT,
+    ACCEPT_LANGUAGE,
+    ACCEPT_ENCODING,
+    CONTENT_TYPE,
+    CONTENT_LENGTH,
+    CONNECTION,
+    REFERER,
+    UPGRADE_INSECURE_REQUESTS,
+    SEC_FETCH_DEST,
+    SEC_FETCH_MODE,
+    SEC_FETCH_SITE,
+    SEC_FETCH_USER,
+    PRIORITY,
+    // CHROME
+    SEC_CH_UA_PLATFORM,
+    SEC_CH_UA,
+    SEC_CH_UA_MOBILE,
+    ORIGIN, // FOR CGI FOR CHROME
+    //BRAVE
+    CACHE_CONTROL,
+    SEC_GPC,
+    UNKNOWN_BROWSER,
+} RequestParser ;
 
 class HTTPParser
 {

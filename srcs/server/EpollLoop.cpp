@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   EpollLoop.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/30 14:34:51 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/01 17:36:45 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -113,6 +113,8 @@ bool EpollLoop::do_read_fd(
     
 
     std::string request = std::string(buf, n_read);
+
+    std::cout << "REQUEST LINE BEFORE PARSER: \n" << request << std::endl;
 
     // find which listener accepted this client
     int listenerSockfd = _clientToListener[fd];
