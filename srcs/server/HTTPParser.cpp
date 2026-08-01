@@ -209,17 +209,18 @@ std::string     HTTPParser::getRange() const
 
 static RequestParser getHeaderType( const std::string & key ) {
 
-    if (key == "Host")            return HOST;              // DONE
-    if (key == "Content-Type")    return CONTENT_TYPE;
-    if (key == "Content-Length")  return CONTENT_LENGTH;
-    if (key == "User-Agent")      return USER_AGENT;
-    if (key == "Accept")          return ACCEPT;
-    if (key == "Accept-Language") return ACCEPT_LANGUAGE;
-    if (key == "Accept-Encoding") return ACCEPT_ENCODING;
-    if (key == "Connection")      return CONNECTION;
-    if (key == "Referer")         return REFERER;
-    if (key == "Origin")          return ORIGIN;
-    if (key == "Cache-Control")   return CACHE_CONTROL;
+    if (key == "Host")              return HOST;              // DONE
+    if (key == "Content-Type")      return CONTENT_TYPE;
+    if (key == "Connection")        return CONNECTION;        // DONE
+    if (key == "Content-Length")    return CONTENT_LENGTH;
+    if (key == "User-Agent")        return USER_AGENT;
+    if (key == "Accept")            return ACCEPT;
+    if (key == "Accept-Language")   return ACCEPT_LANGUAGE;
+    if (key == "Accept-Encoding")   return ACCEPT_ENCODING;
+    if (key == "Connection")        return CONNECTION;
+    if (key == "Referer")           return REFERER;
+    if (key == "Origin")            return ORIGIN;
+    if (key == "Cache-Control")     return CACHE_CONTROL;
 
     return UNKNOWN_BROWSER;
 }
@@ -233,6 +234,8 @@ bool HTTPParser::isRequestValid( ListenerManager const & listen ) {
         return LOG_ERROR("Invalid request line"), false;
 
     bool hostFound = false;
+    bool connection = false;
+
     size_t i = _request.find("\r\n");
     if (i == std::string::npos)
         return false;
@@ -265,12 +268,23 @@ bool HTTPParser::isRequestValid( ListenerManager const & listen ) {
             case HOST:
 
                 if (hostFound == true)
-                    return LOG_ERROR("Duplicate Host header"), false;
+                    return LOG_ERROR("Duplicate 'Host' header"), false;
 
                 if (checkHost(value, listen) == false)
                     return LOG_ERROR("Host header invalid or missing"), false;
 
                 hostFound = true;
+                break;
+
+            case CONNECTION:
+
+                if (checkConnection == true)
+                    return LOG_ERROR("Duplicate 'Connection' header"), false;
+
+                if (checkConnection(value, listen) == false)
+                    return LOG_ERROR("Connection header invalid or missing"), false;
+
+                connection = true;
                 break;
 
             // case CONTENT_TYPE:
@@ -385,6 +399,22 @@ bool HTTPParser::checkHost( std::string const & value, ListenerManager const & l
 
     _errors = true;
     _code = HTTP_421;
+    _type = "text/html";
+
+    return false;
+}
+
+bool HTTPParser::checkConnection( std::string const & value, ListenerManager const & listener ) {
+
+    (void)listener;
+    if (value == "keep-alive" || value == "close" || value == "Keep-Alive")
+        return true;
+
+    LOG_ERROR("Invalid Connection header: '" + value + "'");
+
+    _errors = true;
+    // check code error
+    _code = HTTP_400;
     _type = "text/html";
 
     return false;

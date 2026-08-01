@@ -177,6 +177,8 @@ public:
     bool                        checkSize();
     bool                        checkRequestLine();
     bool                        checkHost( std::string const & value, ListenerManager const & listener );
+    bool                        checkConnection( std::string const & value, ListenerManager const & listener );
+
     bool                        isRequestValid( ListenerManager const & listen );
                 
     bool                        checkContentType();
