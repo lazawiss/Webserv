@@ -232,6 +232,9 @@ bool HTTPParser::isRequestValid( ListenerManager const & listen ) {
 
     if (checkRequestLine() == false)
         return LOG_ERROR("Invalid request line"), false;
+    
+    if (_request.find("\r\n\r\n") == std::string::npos)
+        return LOG_ERROR("Malformed request: missing end of headers"), false;
 
     bool hostFound = false;
     bool connection = false;
