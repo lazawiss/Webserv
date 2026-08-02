@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestHandler.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/30 17:41:45 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/02 16:55:40 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -511,13 +511,13 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
 
     } else if (HTTPParser.isCGI()) {
 
-        if (HTTPParser.validateCGIRequest() == false)
-        {
-            LOG_ERROR("CGI request validation failed");
-            sendError(HTTPParser, HTTP_500);
-            buildAnswerHeader("500", "text/html");
-            return true;
-        }
+        // if (HTTPParser.validateCGIRequest() == false)
+        // {
+        //     LOG_ERROR("CGI request validation failed");
+        //     sendError(HTTPParser, HTTP_500);
+        //     buildAnswerHeader("500", "text/html");
+        //     return true;
+        // }
 
         _scriptFilename = HTTPParser.getScriptFilename();
         _fullPath = "data/" + _scriptFilename;
