@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/02 16:55:40 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/02 17:06:02 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -509,15 +509,17 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");
         return true;
 
-    } else if (HTTPParser.isCGI()) {
+    } 
+    else if (HTTPParser.isCGI()) 
+    {
 
-        // if (HTTPParser.validateCGIRequest() == false)
-        // {
-        //     LOG_ERROR("CGI request validation failed");
-        //     sendError(HTTPParser, HTTP_500);
-        //     buildAnswerHeader("500", "text/html");
-        //     return true;
-        // }
+        if (HTTPParser.validateCGIRequest() == false)
+        {
+            LOG_ERROR("CGI request validation failed");
+            sendError(HTTPParser, HTTP_500);
+            buildAnswerHeader("500", "text/html");
+            return true;
+        }
 
         _scriptFilename = HTTPParser.getScriptFilename();
         _fullPath = "data/" + _scriptFilename;
@@ -530,7 +532,8 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
 
         return true;
 
-    } else if (HTTPParser.findMethods() == false) {
+    } 
+    else if (HTTPParser.findMethods() == false) {
 
         LOG_ERROR("Method not implemented");
         sendError(HTTPParser, HTTPParser.getCode());

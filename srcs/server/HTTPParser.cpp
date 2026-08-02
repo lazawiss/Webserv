@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/02 16:55:55 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/02 17:19:21 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -230,9 +230,10 @@ bool HTTPParser::isRequestValid( ListenerManager const & listen ) {
 
     if (checkRequestLine() == false)
         return LOG_ERROR("Invalid request line"), false;
-    
-    if (_request.find("\r\n\r\n") == std::string::npos)
+    size_t headerEnd = _request.find("\r\n\r\n");
+    if (headerEnd == std::string::npos)
         return LOG_ERROR("Malformed request: missing end of headers"), false;
+    _body = _request.substr(headerEnd + 4);
 
     bool hostFound = false;
     bool contentLengthFound = false;
@@ -320,8 +321,29 @@ bool HTTPParser::isRequestValid( ListenerManager const & listen ) {
 
     buildFullPath();
     extractRange();
-    extractBody();
-    parseCGI();
+    //extractBody(); moved to top
+    // parseCGI();
+    // GET /cgi-bin/hello.py?name=andi HTTP/1.1
+    if (_requesttarget.find("/cgi-bin/") != std::string::npos)
+    {
+        _isCGI = true;
+        size_t pos = _requesttarget.find('?');
+        if (pos != std::string::npos) 
+        {
+        
+            _scriptFilename = _requesttarget.substr(0, pos);
+            _query_string = _requesttarget.substr(pos + 1);
+        
+        } 
+        else 
+        {
+        
+            _scriptFilename = _requesttarget;
+            _query_string = "";
+        }
+        
+    }
+
 
     return true;
 }
@@ -846,14 +868,14 @@ static bool containsCaseInsensitive( std::string const & haystack, std::string c
 //     return found == ' ';
 // }
 
-void HTTPParser::extractBody() {
+// void HTTPParser::extractBody() {
 
-    size_t headerEnd = _request.find("\r\n\r\n");
-    size_t sepLen = 4;
+//     size_t headerEnd = _request.find("\r\n\r\n");
+//     size_t sepLen = 4;
     
-    if (headerEnd != std::string::npos)
-        _body = _request.substr(headerEnd + sepLen);
-}
+//     if (headerEnd != std::string::npos)
+//         _body = _request.substr(headerEnd + sepLen);
+// }
 
 // std::vector<size_t> HTTPParser::collectSpace( std::string::iterator start, std::string::iterator end ) {
     
@@ -902,34 +924,34 @@ void HTTPParser::extractBody() {
 
 /* --------- CGI PARSING INCLUSION ------------*/
 
-void HTTPParser::parseCGI(){
-        // GET /cgi-bin/hello.py?name=andi HTTP/1.1
-    if (_requesttarget.find("/cgi-bin/") == std::string::npos)
-    {
-        _isCGI = false;
-        return;
-    }
+// void HTTPParser::parseCGI(){
+//         // GET /cgi-bin/hello.py?name=andi HTTP/1.1
+//     if (_requesttarget.find("/cgi-bin/") == std::string::npos)
+//     {
+//         _isCGI = false;
+//         return;
+//     }
 
-    size_t pos = _requesttarget.find('?');
-    if (pos != std::string::npos) {
+//     size_t pos = _requesttarget.find('?');
+//     if (pos != std::string::npos) {
 
-        _scriptFilename = _requesttarget.substr(0, pos);
-        _query_string = _requesttarget.substr(pos + 1);
+//         _scriptFilename = _requesttarget.substr(0, pos);
+//         _query_string = _requesttarget.substr(pos + 1);
     
-    } else {
+//     } else {
 
-        _scriptFilename = _requesttarget;
-        _query_string = "";
-    }
+//         _scriptFilename = _requesttarget;
+//         _query_string = "";
+//     }
 
-    _isCGI = true;
-    return;
-}
+//     _isCGI = true;
+//     return;
+// }
 
-bool HTTPParser::isCGI() const
-{
-    return _isCGI;
-}
+// bool HTTPParser::isCGI() const
+// {
+//     return _isCGI;
+// }
 
 // bool HTTPParser::validateCGIRequest()
 // {
