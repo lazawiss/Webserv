@@ -22,6 +22,7 @@
 
 enum ConnectionType
 {
+    CONN_NONE,
     CONN_CLOSE,
     CONN_KEEP_ALIVE
 };
@@ -77,7 +78,8 @@ typedef enum RequestParser
     CONTENT_LENGTH,
     CONNECTION,
     HOST,
-    
+    RANGE,
+
     UNKNOWN,
 
 } RequestParser ;
@@ -102,7 +104,6 @@ private:
     bool                        _errors;
     bool                        _upload;
 
-    std::map<std::string, std::string> _rawHeaders;
     std::string                 _content_length;
     ConnectionType              _connectionType;
     std::string                 _host;
@@ -157,26 +158,25 @@ public:
     const LocationConfig*       matchLocation() const;
     void                        buildFullPath();
 
-    void                        extractRange();
+    void                        checkRange( std::string const & value );
     std::string                 getRange() const;
 
     void                        parseCGI();
-    void                        extractBody();
     bool                        validateCGIRequest();
     /*------------------------- */
 
     bool                        varNotFound400 ( size_t var );
     bool                        doesCharCExist400 ( char const *str );
     
-    std::vector<size_t>         collectSpace( std::string::iterator start, std::string::iterator end );
-    std::vector<std::string>    collectString( std::string & line, std::vector<size_t> & space_inter );
+    // std::vector<size_t>         collectSpace( std::string::iterator start, std::string::iterator end );
+    // std::vector<std::string>    collectString( std::string & line, std::vector<size_t> & space_inter );
 
     bool                        checkSize();
     bool                        checkRequestLine();
-    int                         processConnection(std::string const & value);
+    int                         checkConnection(std::string const & value);
     int                         checkHost(std::string const & value, ListenerManager const & listener);
-    bool                        validateHost(std::string const & value, std::string & hostOut);
-    bool                        matchVirtualServer(std::string const & host, ListenerManager const & listener);
+    bool                        validateHost(std::string const & value, std::string & listen);
+    bool                        matchHost(std::string const & host, ListenerManager const & listener);
 
     bool                        isRequestValid( ListenerManager const & listen );
                 
@@ -198,4 +198,7 @@ public:
 
     int                         checkContentLength(std::string const & value);
     int                         checkContentType(std::string const & value);
+
+    static bool containsCaseInsensitive( std::string const & haystack, std::string const & needle );
+    void resolveConnectionType();
 };

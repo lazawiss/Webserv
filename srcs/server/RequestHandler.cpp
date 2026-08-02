@@ -504,7 +504,7 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
 
     if (HTTPParser.isRequestValid(listen) == false)
     {
-
+        // Note Delphine :
         sendError(HTTPParser, HTTPParser.getCode());
         buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");
         return true;
