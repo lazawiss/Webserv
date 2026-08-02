@@ -16,6 +16,9 @@
 #include "HTTPParser.hpp"
 #include "Server.hpp"
 
+static bool containsCaseInsensitive( std::string const & haystack, std::string const & needle );
+static bool isSimpleSpace( int found );
+
 /*
 ** ============================================================================
 ** The Rule of Three
@@ -29,7 +32,7 @@ HTTPParser::HTTPParser( std::string const & request,
     _code(HTTP_INDEX), _type(), _method(),
     _requesttarget(), _httpversion(), _boundary(),
     _fileLength(), _fileName(), _fileBuf(),
-    _errors(false), _upload(false), _isCGI(false),
+    _errors(false), _upload(false), _connectionType(CONN_KEEP_ALIVE), _isCGI(false),
     _fullPath(), _query_string(), _scriptFilename(),
     _body(), _content_type(), _content_length(),
     _content_int(0) {}
@@ -42,7 +45,7 @@ HTTPParser::HTTPParser( HTTPParser const & src ) :
     _httpversion(src._httpversion), _boundary(src._boundary),
     _fileLength(src._fileLength), _fileName(src._fileName),
     _fileBuf(src._fileBuf), _errors(src._errors),
-    _upload(src._upload), _isCGI(src._isCGI),
+    _upload(src._upload), _connectionType(src._connectionType), _host(src._host), _isCGI(src._isCGI),
     _fullPath(src._fullPath), _query_string(src._query_string),
     _scriptFilename(src._scriptFilename), _body(src._body),
     _content_type(src._content_type),
@@ -67,6 +70,8 @@ HTTPParser &    HTTPParser::operator=( HTTPParser const & other )
         _fileBuf        = other._fileBuf;
         _errors         = other._errors;
         _upload         = other._upload;
+        _connectionType = other._connectionType;
+        _host           = other._host;
         _isCGI          = other._isCGI;
         _fullPath       = other._fullPath;
         _query_string   = other._query_string;
@@ -209,20 +214,12 @@ std::string     HTTPParser::getRange() const
 
 static RequestParser getHeaderType( const std::string & key ) {
 
-    if (key == "Host")              return HOST;              // DONE
-    if (key == "Content-Type")      return CONTENT_TYPE;
-    if (key == "Connection")        return CONNECTION;        // DONE
-    if (key == "Content-Length")    return CONTENT_LENGTH;
-    if (key == "User-Agent")        return USER_AGENT;
-    if (key == "Accept")            return ACCEPT;
-    if (key == "Accept-Language")   return ACCEPT_LANGUAGE;
-    if (key == "Accept-Encoding")   return ACCEPT_ENCODING;
     if (key == "Connection")        return CONNECTION;
-    if (key == "Referer")           return REFERER;
-    if (key == "Origin")            return ORIGIN;
-    if (key == "Cache-Control")     return CACHE_CONTROL;
+    if (key == "Content-Length")    return CONTENT_LENGTH;
+    if (key == "Content-Type")      return CONTENT_TYPE;
+    if (key == "Host")              return HOST;
 
-    return UNKNOWN_BROWSER;
+    return UNKNOWN;
 }
 
 bool HTTPParser::isRequestValid( ListenerManager const & listen ) {
@@ -237,7 +234,8 @@ bool HTTPParser::isRequestValid( ListenerManager const & listen ) {
         return LOG_ERROR("Malformed request: missing end of headers"), false;
 
     bool hostFound = false;
-    bool connection = false;
+    bool contentLengthFound = false;
+    bool contentTypeFound = false;
 
     size_t i = _request.find("\r\n");
     if (i == std::string::npos)
@@ -273,35 +271,42 @@ bool HTTPParser::isRequestValid( ListenerManager const & listen ) {
                 if (hostFound == true)
                     return LOG_ERROR("Duplicate 'Host' header"), false;
 
-                if (checkHost(value, listen) == false)
-                    return LOG_ERROR("Host header invalid or missing"), false;
+                if (checkHost(value, listen) != SERVER_OK)
+                    return false;
 
                 hostFound = true;
                 break;
 
             case CONNECTION:
 
-                if (checkConnection == true)
-                    return LOG_ERROR("Duplicate 'Connection' header"), false;
+                if (processConnection(value) != SERVER_OK)
+                    return false;
 
-                if (checkConnection(value, listen) == false)
-                    return LOG_ERROR("Connection header invalid or missing"), false;
-
-                connection = true;
                 break;
 
-            // case CONTENT_TYPE:
-            //     _content_type = value;
-            //     LOG_DEBUG("Content-Type: " + _content_type);
-            //     break;
+            case CONTENT_LENGTH:
+                if (contentLengthFound == true)
+                    return LOG_ERROR("Duplicate 'Content-Length' header"), false;
 
-            // case CONTENT_LENGTH:
-            //     _content_length = value;
-            //     LOG_DEBUG("Content-Length: " + _content_length);
-            //     break;
+                if (processContentLength(value) != SERVER_OK)
+                    return false;
 
-            // default:
-            //     break;
+                contentLengthFound = true;
+                break;
+            
+            case CONTENT_TYPE:
+                if (contentTypeFound == true)
+                    return LOG_ERROR("Duplicate 'Content-Type' header"), false;
+
+                if (processContentType(value) != SERVER_OK)
+                    return false;
+
+                contentTypeFound = true;
+                break;
+
+            default:
+                _rawHeaders[key] = value;
+                break;
         }
 
         i = end + 2;
@@ -309,7 +314,7 @@ bool HTTPParser::isRequestValid( ListenerManager const & listen ) {
             return LOG_ERROR("Leading whitespace after request-line"), false;
     }
 
-    if (hostFound == false) {
+    if (hostFound == false)
         return LOG_ERROR("Host header missing"), false;
 
     buildFullPath();
@@ -319,6 +324,12 @@ bool HTTPParser::isRequestValid( ListenerManager const & listen ) {
 
     return true;
 }
+
+/*
+** ============================================================================
+** Parser HTTP - GET
+** ============================================================================
+*/
 
 bool HTTPParser::checkSize() {
     
@@ -334,204 +345,342 @@ bool HTTPParser::checkSize() {
     return true;
 }
 
-bool HTTPParser::checkRequestLine() {
+// bool HTTPParser::checkRequestLine() {
     
-    size_t requestLineEnd = _request.find("\r\n");
-    if (varNotFound400(requestLineEnd) == false)
-        return false;
+//     size_t requestLineEnd = _request.find("\r\n");
+//     if (varNotFound400(requestLineEnd) == false)
+//         return false;
         
-    std::string line = _request.substr(0, requestLineEnd);
+//     std::string line = _request.substr(0, requestLineEnd);
     
-    std::string::iterator space = line.begin();
-    std::string::iterator end = line.end();
+//     std::string::iterator space = line.begin();
+//     std::string::iterator end = line.end();
 
-    std::vector<size_t> space_inter = collectSpace(space, end);
+//     std::vector<size_t> space_inter = collectSpace(space, end);
  
-    std::vector<std::string> subss = collectString(line, space_inter);
+//     std::vector<std::string> subss = collectString(line, space_inter);
  
-    if (subss.size() == 3) {
+//     if (subss.size() == 3) {
 
-        _method = subss[0];
+//         _method = subss[0];
         
-        if (isMethod(_method))
-            LOG_DEBUG("Method: " + _method);
-        else{
+//         if (isMethod(_method))
+//             LOG_DEBUG("Method: " + _method);
+//         else{
             
-            _errors = true;
-            _code = HTTP_405;
-            _type = "text/html";
+//             _errors = true;
+//             _code = HTTP_405;
+//             _type = "text/html";
 
-            return false;
-        }
+//             return false;
+//         }
         
-        _requesttarget = subss[1];
+//         _requesttarget = subss[1];
         
-        char const *slash = strrchr( _requesttarget.c_str(), '/');
-        if (slash)
-            LOG_DEBUG("RequestTarget: " + _requesttarget);
+//         char const *slash = strrchr( _requesttarget.c_str(), '/');
+//         if (slash)
+//             LOG_DEBUG("RequestTarget: " + _requesttarget);
 
-        _httpversion = subss[2];
-        if ( _httpversion == "HTTP/1.1")
-            LOG_DEBUG("HTTP version: " + _httpversion);
+//         _httpversion = subss[2];
+//         if ( _httpversion == "HTTP/1.1")
+//             LOG_DEBUG("HTTP version: " + _httpversion);
      
-        return true;
+//         return true;
+//     }
+
+//     _errors = true;
+//     _code = HTTP_400;
+//     _type = "text/html";
+
+//     return false;
+// }
+
+bool HTTPParser::checkRequestLine() {
+
+    size_t requestLineEnd = _request.find("\r\n");
+    if (varNotFound400(requestLineEnd, "request-line CRLF") == false)
+        return false;
+
+    std::string line = _request.substr(0, requestLineEnd);
+
+    size_t firstSpace = line.find(' ');
+    if (firstSpace == std::string::npos) {
+        _errors = true;
+        _code   = HTTP_400;
+        _type   = "text/html";
+
+        return false;
     }
 
-    _errors = true;
-    _code = HTTP_400;
-    _type = "text/html";
+    size_t secondSpace = line.find(' ', firstSpace + 1);
+    if (secondSpace == std::string::npos) {
+        _errors = true;
+        _code   = HTTP_400;
+        _type   = "text/html";
 
-    return false;
+        return false;
+    }
+
+    if (line.find(' ', secondSpace + 1) != std::string::npos) {
+        _errors = true;
+        _code   = HTTP_400;
+        _type   = "text/html";
+
+        return false;
+    }
+
+    _method       = line.substr(0, firstSpace);
+    _requesttarget = line.substr(firstSpace + 1, secondSpace - firstSpace - 1);
+    _httpversion  = line.substr(secondSpace + 1);
+
+    if (_method != "GET" && _method != "POST" && _method != "DELETE") {
+        _errors = true;
+        _code   = HTTP_405;
+        _type   = "text/html";
+
+        return false;
+    }
+
+    LOG_DEBUG("Method: " + _method);
+    LOG_DEBUG("RequestTarget: " + _requesttarget);
+
+    if (_httpversion != "HTTP/1.1") {
+
+        LOG_ERROR("Unsupported HTTP version: " + _httpversion);
+
+        _errors = true;
+        _code   = HTTP_400;
+        _type   = "text/html";
+
+        return false;
+    }
+
+    LOG_DEBUG("HTTP version: " + _httpversion);
+
+    return true;
 }
 
-bool HTTPParser::checkHost( std::string const & value, ListenerManager const & listener ) {
+int HTTPParser::checkHost( std::string const & value, ListenerManager const & listener ) {
 
-    std::string hostname = listener.getNode() + ":" + listener.getService();
-    // LOG_DEBUG("Expected hostname: " + hostname);
+    std::string normalized;
+
+    if (validateHost(value, normalized) == false)
+    {
+        LOG_ERROR("Invalid Host header: '" + value + "'");
+
+        _errors = true;
+        _code   = HTTP_400;
+        _type   = "text/html";
+
+        return SERVER_ERROR;
+    }
+
+    if (matchVirtualServer(normalized, listener) == false)
+    {
+        LOG_DEBUG("Host mismatch, got: " + value);
+
+        _errors = true;
+        _code   = HTTP_421;
+
+        _type   = "text/html";
+        return SERVER_ERROR;
+    }
+
+    _host = normalized;
+
+    return SERVER_OK;
+}
+
+bool HTTPParser::validateHost( std::string const & value, std::string & hostOut ) {
 
     char const *doublePoint = strrchr(value.c_str(), ':');
-    if (doesCharCExist400(doublePoint) == false)
+    if (!doublePoint)
         return false;
 
-    std::string service = std::string(doublePoint + 1);
+    hostOut = value;
 
-    if (value == hostname || (listener.getNode() == "0.0.0.0" && listener.getService() == service))
-        return true;
-
-    LOG_DEBUG("Host mismatch, got: " + value);
-
-    _errors = true;
-    _code = HTTP_421;
-    _type = "text/html";
-
-    return false;
+    return true;
 }
 
-bool HTTPParser::checkConnection( std::string const & value, ListenerManager const & listener ) {
+bool HTTPParser::matchVirtualServer( std::string const & host, ListenerManager const & listener ) {
 
-    (void)listener;
-    if (value == "keep-alive" || value == "close" || value == "Keep-Alive")
-        return true;
+    std::string hostname = listener.getNode() + ":" + listener.getService();
 
-    LOG_ERROR("Invalid Connection header: '" + value + "'");
+    char const *doublePoint = strrchr(host.c_str(), ':');
+    std::string service = doublePoint ? std::string(doublePoint + 1) : "";
 
-    _errors = true;
-    // check code error
-    _code = HTTP_400;
-    _type = "text/html";
-
-    return false;
+    return host == hostname || (listener.getNode() == "0.0.0.0" && listener.getService() == service);
 }
 
-// POST Request
-bool HTTPParser::checkContentType() {
+int HTTPParser::processConnection( std::string const & value ) {
 
-    size_t start = _request.find("Content-Type:");
-    if (varNotFound400(start) == false)
-        return false;
+    if (containsCaseInsensitive(value, "close"))
+        _connectionType = CONN_CLOSE;
+    else if (containsCaseInsensitive(value, "keep-alive"))
+        _connectionType = CONN_KEEP_ALIVE;
+
+    return SERVER_OK;
+}
+
+
+
+
+
+
+
+
+
+
+
+int HTTPParser::processContentType( std::string const & value ) {
+
+    if (value.empty()) {
+        LOG_ERROR("Empty Content-Type header");
+
+        _errors = true;
+        _code   = HTTP_400;
+        _type   = "text/html";
+
+        return SERVER_ERROR;
+    }
+
+    // "multipart/form-data; boundary=----XXXX"
+    size_t semicolon = value.find(';');
+    std::string type = (semicolon == std::string::npos) ? value : value.substr(0, semicolon);
+
+    while (!type.empty() && (type[type.size() - 1] == ' ' || type[type.size() - 1] == '\t'))
+        type.erase(type.size() - 1);
+
+    _type = type;
+    LOG_DEBUG("Content-Type: " + _type);
+
+    if (_isCGI)
+        return SERVER_OK;
+
+    if (semicolon == std::string::npos) {
+        LOG_ERROR("Missing boundary in Content-Type: '" + value + "'");
+
+        _errors = true;
+        _code   = HTTP_400;
+        _type   = "text/html";
+
+        return SERVER_ERROR;
+    }
+
+    size_t boundary = value.find("boundary=", semicolon);
+    if (boundary == std::string::npos) {
+        LOG_ERROR("Missing boundary in Content-Type: '" + value + "'");
+
+        _errors = true;
+        _code   = HTTP_400;
+        _type   = "text/html";
+
+        return SERVER_ERROR;
+    }
+
+    _boundary = value.substr(boundary + 9); // 9 = strlen("boundary=")
+    LOG_DEBUG("boundary: " + _boundary);
+
+    return SERVER_OK;
+}
+
+
+
+// bool HTTPParser::checkContentType() {
+
+//     size_t start = _request.find("Content-Type:");
+//     if (varNotFound400(start) == false)
+//         return false;
         
-    size_t requestLineEnd = _request.find("\r\n", start);
-    if (varNotFound400(requestLineEnd) == false)
-        return false;
+//     size_t requestLineEnd = _request.find("\r\n", start);
+//     if (varNotFound400(requestLineEnd) == false)
+//         return false;
 
-    std::string line = _request.substr(start, requestLineEnd - start);
+//     std::string line = _request.substr(start, requestLineEnd - start);
 
-    std::string::iterator space = line.begin();
-    std::string::iterator end = line.end();
+//     std::string::iterator space = line.begin();
+//     std::string::iterator end = line.end();
 
-    std::vector<size_t> space_inter = collectSpace(space, end);
+//     std::vector<size_t> space_inter = collectSpace(space, end);
     
-    std::vector<std::string> subss = collectString(line, space_inter);
+//     std::vector<std::string> subss = collectString(line, space_inter);
 
-    if (subss.size() >= 2) {
+//     if (subss.size() >= 2) {
 
-        _type = subss[1];
-        _type.erase(_type.end() - 1);
-        LOG_DEBUG("Content-Type: " + _type);
-        if (_isCGI)
-            return true;
-        if (subss.size() < 3)
-        {
+//         _type = subss[1];
+//         _type.erase(_type.end() - 1);
+//         LOG_DEBUG("Content-Type: " + _type);
+//         if (_isCGI)
+//             return true;
+//         if (subss.size() < 3)
+//         {
+//             _errors = true;
+//             _code = HTTP_400;
+//             _type = "text/html";
+
+//             return false;
+//         }
+
+//         _boundary = subss[2];
+//         _boundary.erase(_boundary.begin(), _boundary.begin() + 9);
+//         LOG_DEBUG("boundary: " + _boundary);
+
+//         return true;
+//     }
+
+//     _errors = true;
+//     _code = HTTP_400;
+//     _type = "text/html";
+
+//     return false;
+// }
+
+
+int HTTPParser::processContentLength( std::string const & value ) {
+
+    if (value.empty()) {
+        LOG_ERROR("Empty Content-Length header");
+
+        _errors = true;
+        _code   = HTTP_400;
+        _type   = "text/html";
+
+        return SERVER_ERROR;
+    }
+
+    for (size_t i = 0; i < value.size(); i++) {
+        if (!std::isdigit(static_cast<unsigned char>(value[i]))) {
+            LOG_ERROR("Invalid Content-Length: '" + value + "'");
+
             _errors = true;
-            _code = HTTP_400;
-            _type = "text/html";
+            _code   = HTTP_400;
+            _type   = "text/html";
 
-            return false;
+            return SERVER_ERROR;
         }
-
-        _boundary = subss[2];
-        _boundary.erase(_boundary.begin(), _boundary.begin() + 9);
-        LOG_DEBUG("boundary: " + _boundary);
-
-        return true;
     }
 
-    _errors = true;
-    _code = HTTP_400;
-    _type = "text/html";
+    std::stringstream ss(value);
+    size_t len;
+    ss >> len;
 
-    return false;
+    if (len > BUF_SIZE) {
+        LOG_ERROR("Content-Length exceeds limit");
+
+        _errors = true;
+        _code   = HTTP_413;
+        _type   = "text/html";
+
+        return SERVER_ERROR;
+    }
+
+    _content_length = value;
+    LOG_DEBUG("Content-Length: " + _content_length);
+
+    return SERVER_OK;
 }
 
-// Post Request
-bool HTTPParser::checkContentLength() {
 
-    size_t start = _request.find("Content-Length:");
-    if (varNotFound400(start) == false){
-        LOG_ERROR("No COntent-Length");
-        return false;
-    }
-    
-    size_t requestLineEnd = _request.find("\r\n", start);
-    if (varNotFound400(requestLineEnd) == false)
-        return false;
-
-    std::string line = _request.substr(start, requestLineEnd - start);
-    std::string::iterator space = line.begin();
-    std::string::iterator end = line.end();
-    
-    std::vector<size_t> space_inter = collectSpace(space, end);
-    
-    std::vector<std::string> subss = collectString(line, space_inter);
-
-    if (subss.size() == 2) {
-
-        _fileLength = subss[1];
-        std::stringstream ss(_fileLength);
-        if (_isCGI)
-        {
-            int len;
-            ss >> len;
-            LOG_DEBUG("Content-Length: " + _fileLength);
-
-            if (len > BUF_SIZE) {
-                LOG_ERROR("File size exceeds limit");
-                return false;
-            }
-            _content_int = len;
-            _content_length = _fileLength;
-
-            return true;
-        }
-
-        size_t len;
-        ss >> len;
-        LOG_DEBUG("Content-Length: " + _fileLength);
-
-        if (len > BUF_SIZE) {
-            LOG_ERROR("File size exceeds limit");
-            return false;
-        }
-        _content_length = _fileLength;
-        return true;
-    }
-
-    _errors = true;
-    _code = HTTP_400;
-    _type = "text/html";
-
-    return false;
-}
 
 bool HTTPParser::checkContentDisposition() {
     
@@ -583,6 +732,66 @@ bool HTTPParser::checkContentDisposition() {
     return false;
 }
 
+// // Post Request
+// bool HTTPParser::checkContentLength() {
+
+//     size_t start = _request.find("Content-Length:");
+//     if (varNotFound400(start) == false){
+//         LOG_ERROR("No COntent-Length");
+//         return false;
+//     }
+    
+//     size_t requestLineEnd = _request.find("\r\n", start);
+//     if (varNotFound400(requestLineEnd) == false)
+//         return false;
+
+//     std::string line = _request.substr(start, requestLineEnd - start);
+//     std::string::iterator space = line.begin();
+//     std::string::iterator end = line.end();
+    
+//     std::vector<size_t> space_inter = collectSpace(space, end);
+    
+//     std::vector<std::string> subss = collectString(line, space_inter);
+
+//     if (subss.size() == 2) {
+
+//         _fileLength = subss[1];
+//         std::stringstream ss(_fileLength);
+//         if (_isCGI)
+//         {
+//             int len;
+//             ss >> len;
+//             LOG_DEBUG("Content-Length: " + _fileLength);
+
+//             if (len > BUF_SIZE) {
+//                 LOG_ERROR("File size exceeds limit");
+//                 return false;
+//             }
+//             _content_int = len;
+//             _content_length = _fileLength;
+
+//             return true;
+//         }
+
+//         size_t len;
+//         ss >> len;
+//         LOG_DEBUG("Content-Length: " + _fileLength);
+
+//         if (len > BUF_SIZE) {
+//             LOG_ERROR("File size exceeds limit");
+//             return false;
+//         }
+//         _content_length = _fileLength;
+//         return true;
+//     }
+
+//     _errors = true;
+//     _code = HTTP_400;
+//     _type = "text/html";
+
+//     return false;
+// }
+
 /*
 ** ============================================================================
 ** Method helpers
@@ -615,6 +824,15 @@ bool  HTTPParser::doesCharCExist400 ( char const *str ){
     }
     
     return true;
+}
+
+static bool containsCaseInsensitive( std::string const & haystack, std::string const & needle ) {
+
+    std::string h = haystack;
+    std::string n = needle;
+    std::transform(h.begin(), h.end(), h.begin(), ::tolower);
+    std::transform(n.begin(), n.end(), n.begin(), ::tolower);
+    return h.find(n) != std::string::npos;
 }
 
 static bool isMethod( std::string const & str ) {
@@ -810,6 +1028,16 @@ void HTTPParser::extractRange() {//bool
     LOG_DEBUG("[HTTPParser] Range: '" + _rangeHeader + "'");
 }
 
+
+
+
+
+
+
+
+
+
+
 /*
 ** ============================================================================
 ** Parser HTTP - Second Part: POST
@@ -869,6 +1097,32 @@ bool HTTPParser::gatherFile() {
 
     return true;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /*
 ** ============================================================================
