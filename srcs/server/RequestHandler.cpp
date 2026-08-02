@@ -502,9 +502,8 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     
     HTTPParser HTTPParser(_request, _serverConfig);
 
-    if (HTTPParser.isRequestValid(listen) == false) {
-
-        LOG_DEBUG("Request invalid");
+    if (HTTPParser.isRequestValid(listen) == false)
+    {
 
         sendError(HTTPParser, HTTPParser.getCode());
         buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");

@@ -634,8 +634,15 @@ void Parser::parseDirectiveCGI(LocationConfig &ref)
 
     next();
 
-    std::string value = current().value;
-    ref.addMap(key, value);
+    std::string path = current().value;
+
+    struct stat info;
+    if (stat(path.c_str(), &info) != 0)
+        throw std::runtime_error("Root path does not exist: '" + path + "'");
+    if (!S_ISDIR(info.st_mode))
+        throw std::runtime_error("Root path isn't a directory: '" + path + "'");
+
+    ref.addMap(key, path);
 
     next();
 
