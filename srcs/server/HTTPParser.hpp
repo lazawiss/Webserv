@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/02 15:43:23 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/02 16:29:38 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,15 @@
 #include "../lexer/Lexer.hpp"
 #include "ListenerManager.hpp"
 #include "../parser/config/ServerConfig.hpp"
+
+#define SERVER_OK     0
+#define SERVER_ERROR -1
+
+enum ConnectionType
+{
+    CONN_CLOSE,
+    CONN_KEEP_ALIVE
+};
 
 enum HttpCode
 {
@@ -64,31 +73,13 @@ enum HttpCode
 
 typedef enum RequestParser
 {
-    REQUESTLINE,
-    HOST, // done
-    USER_AGENT,// done
-    ACCEPT,// done
-    ACCEPT_LANGUAGE,// done
-    ACCEPT_ENCODING,// done
-    CONTENT_TYPE, // done
-    CONTENT_LENGTH, // done
-    CONNECTION,// done
-    REFERER,// done
-    UPGRADE_INSECURE_REQUESTS, // done
-    SEC_FETCH_DEST,
-    SEC_FETCH_MODE,
-    SEC_FETCH_SITE,
-    SEC_FETCH_USER,
-    PRIORITY,
-    // CHROME
-    SEC_CH_UA_PLATFORM,
-    SEC_CH_UA,
-    SEC_CH_UA_MOBILE,
-    ORIGIN, // FOR CGI FOR CHROME // done
-    //BRAVE
-    CACHE_CONTROL,// done
-    SEC_GPC,
-    UNKNOWN_BROWSER,
+    CONTENT_TYPE,
+    CONTENT_LENGTH,
+    CONNECTION,
+    HOST,
+    
+    UNKNOWN,
+
 } RequestParser ;
 
 class HTTPParser
@@ -111,6 +102,11 @@ private:
     bool                        _errors;
     bool                        _upload;
 
+    std::map<std::string, std::string> _rawHeaders;
+    std::string                 _content_length;
+    ConnectionType              _connectionType;
+    std::string                 _host;
+
     
 /* ADD INS FOR CGI------*/
     bool                        _isCGI;
@@ -119,11 +115,12 @@ private:
     std::string                 _scriptFilename;
     std::string                 _body;
     std::string                 _content_type;
-    std::string                 _content_length;
     int                         _content_int;
 
-    bool                _autoindexOn; 
+
+    bool                _autoindexOn;
     std::string         _rangeHeader;
+
 
 public:
 
@@ -176,13 +173,15 @@ public:
 
     bool                        checkSize();
     bool                        checkRequestLine();
-    bool                        checkHost( std::string const & value, ListenerManager const & listener );
-    bool                        checkConnection( std::string const & value, ListenerManager const & listener );
+    int                         processConnection(std::string const & value);
+    int                         checkHost(std::string const & value, ListenerManager const & listener);
+    bool                        validateHost(std::string const & value, std::string & hostOut);
+    bool                        matchVirtualServer(std::string const & host, ListenerManager const & listener);
 
     bool                        isRequestValid( ListenerManager const & listen );
                 
-    bool                        checkContentType();
-    bool                        checkContentLength();
+    // bool                        checkContentType();
+    // bool                        checkContentLength();
     bool                        checkContentDisposition();
     bool                        gatherFile();
             
@@ -196,4 +195,7 @@ public:
     bool                        findHeaders();
 
     static std::string          httpCodeToString( HttpCode code );
+
+    int                         checkContentLength(std::string const & value);
+    int                         checkContentType(std::string const & value);
 };
