@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/01 17:35:31 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/02 15:51:05 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -209,18 +209,30 @@ std::string     HTTPParser::getRange() const
 
 static RequestParser getHeaderType( const std::string & key ) {
 
-    if (key == "Host")              return HOST;              // DONE
-    if (key == "Content-Type")      return CONTENT_TYPE;
-    if (key == "Connection")        return CONNECTION;        // DONE
-    if (key == "Content-Length")    return CONTENT_LENGTH;
-    if (key == "User-Agent")        return USER_AGENT;
-    if (key == "Accept")            return ACCEPT;
-    if (key == "Accept-Language")   return ACCEPT_LANGUAGE;
-    if (key == "Accept-Encoding")   return ACCEPT_ENCODING;
-    if (key == "Connection")        return CONNECTION;
-    if (key == "Referer")           return REFERER;
-    if (key == "Origin")            return ORIGIN;
-    if (key == "Cache-Control")     return CACHE_CONTROL;
+    if (key == "Host")                          return HOST;              // DONE
+    if (key == "Content-Type")                  return CONTENT_TYPE;
+    if (key == "Connection")                    return CONNECTION;        // DONE
+    if (key == "Content-Length")                return CONTENT_LENGTH;
+    if (key == "User-Agent")                    return USER_AGENT;
+    if (key == "Accept")                        return ACCEPT;
+    if (key == "Accept-Language")               return ACCEPT_LANGUAGE;
+    if (key == "Accept-Encoding")               return ACCEPT_ENCODING;
+    if (key == "Connection")                    return CONNECTION;
+    if (key == "Referer")                       return REFERER;
+    if (key == "Origin")                        return ORIGIN; 
+    if (key == "Cache-Control")                 return CACHE_CONTROL;
+    if (key == "Upgrade-Insecure-Requests")     return UPGRADE_INSECURE_REQUESTS;
+    if (key == "Sec-Fetch-Dest")                return SEC_FETCH_DEST;
+    if (key == "Sec-Fetch-Mode")                return SEC_FETCH_MODE;
+    if (key == "Sec-Fetch-User")                return SEC_FETCH_USER;
+    if (key == "Sec-Fetch-Mode")                return SEC_FETCH_MODE;
+    if (key == "Sec-Fetch-Site")                return SEC_FETCH_SITE;
+    if (key == "Priority")                      return PRIORITY; // only for Firefox 
+    if (key == "sec-ch-ua-platform")            return SEC_CH_UA_PLATFORM;
+    if (key == "sec-ch-ua")                     return SEC_CH_UA;
+    if (key == "sec-ch-ua-mobile")              return SEC_CH_UA_MOBILE;
+    if (key == "Sec-GPC")                       return SEC_GPC; // only for Brave
+    
 
     return UNKNOWN_BROWSER;
 }
@@ -237,7 +249,7 @@ bool HTTPParser::isRequestValid( ListenerManager const & listen ) {
         return LOG_ERROR("Malformed request: missing end of headers"), false;
 
     bool hostFound = false;
-    bool connection = false;
+    // bool connection = false;
 
     size_t i = _request.find("\r\n");
     if (i == std::string::npos)
@@ -281,13 +293,13 @@ bool HTTPParser::isRequestValid( ListenerManager const & listen ) {
 
             case CONNECTION:
 
-                if (checkConnection == true)
+                if (checkConnection(value, listen) == true)
                     return LOG_ERROR("Duplicate 'Connection' header"), false;
 
                 if (checkConnection(value, listen) == false)
                     return LOG_ERROR("Connection header invalid or missing"), false;
 
-                connection = true;
+                // connection = true;
                 break;
 
             // case CONTENT_TYPE:
@@ -309,7 +321,7 @@ bool HTTPParser::isRequestValid( ListenerManager const & listen ) {
             return LOG_ERROR("Leading whitespace after request-line"), false;
     }
 
-    if (hostFound == false) {
+    if (hostFound == false)
         return LOG_ERROR("Host header missing"), false;
 
     buildFullPath();
@@ -320,19 +332,19 @@ bool HTTPParser::isRequestValid( ListenerManager const & listen ) {
     return true;
 }
 
-bool HTTPParser::checkSize() {
+// bool HTTPParser::checkSize() {
     
-    if (_request.size() > BUF_SIZE){
+//     if (_request.size() > BUF_SIZE){
         
-        _errors = true;
-        _code = HTTP_413;
-        _type = "text/html";
+//         _errors = true;
+//         _code = HTTP_413;
+//         _type = "text/html";
 
-        return false;
-    }
+//         return false;
+//     }
 
-    return true;
-}
+//     return true;
+// }
 
 bool HTTPParser::checkRequestLine() {
     
@@ -355,7 +367,8 @@ bool HTTPParser::checkRequestLine() {
         
         if (isMethod(_method))
             LOG_DEBUG("Method: " + _method);
-        else{
+        else
+        {
             
             _errors = true;
             _code = HTTP_405;
@@ -890,7 +903,8 @@ bool HTTPParser::compareMethodWithConfigFile() {
     {
         const std::vector<std::string> &methodVector = locs[i].getMethods();
         if (methodVector.size() > 0) {
-            for (size_t i = 0; i < methodVector.size() ; i++) {
+            for (size_t i = 0; i < methodVector.size() ; i++)
+            {
                 if ( _method == methodVector[i])
                     return true;
             }
@@ -1095,7 +1109,9 @@ bool HTTPParser::findMethods() {
                     }
                     return true;
 
-                } else {
+                } 
+                else 
+                {
 
                     char const *lastSlash = strrchr(_requesttarget.c_str(), '/');
                     if (doesCharCExist400(lastSlash) == false)

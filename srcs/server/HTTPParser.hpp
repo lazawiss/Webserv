@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/01 17:57:14 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/02 15:43:23 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,16 +65,16 @@ enum HttpCode
 typedef enum RequestParser
 {
     REQUESTLINE,
-    HOST,
-    USER_AGENT,
-    ACCEPT,
-    ACCEPT_LANGUAGE,
-    ACCEPT_ENCODING,
-    CONTENT_TYPE,
-    CONTENT_LENGTH,
-    CONNECTION,
-    REFERER,
-    UPGRADE_INSECURE_REQUESTS,
+    HOST, // done
+    USER_AGENT,// done
+    ACCEPT,// done
+    ACCEPT_LANGUAGE,// done
+    ACCEPT_ENCODING,// done
+    CONTENT_TYPE, // done
+    CONTENT_LENGTH, // done
+    CONNECTION,// done
+    REFERER,// done
+    UPGRADE_INSECURE_REQUESTS, // done
     SEC_FETCH_DEST,
     SEC_FETCH_MODE,
     SEC_FETCH_SITE,
@@ -84,9 +84,9 @@ typedef enum RequestParser
     SEC_CH_UA_PLATFORM,
     SEC_CH_UA,
     SEC_CH_UA_MOBILE,
-    ORIGIN, // FOR CGI FOR CHROME
+    ORIGIN, // FOR CGI FOR CHROME // done
     //BRAVE
-    CACHE_CONTROL,
+    CACHE_CONTROL,// done
     SEC_GPC,
     UNKNOWN_BROWSER,
 } RequestParser ;
