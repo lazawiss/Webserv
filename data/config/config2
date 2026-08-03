@@ -14,6 +14,13 @@ server {
         autoindex   off;
     }
 
+    location /cgi-bin/python {
+        root            data/cgi-bin;
+        methods         GET POST;
+        cgi_extension   .py  /usr/bin/python3;
+        index           index.py;
+    }
+
     location /api {
         root        data/www/html1;
         methods     GET;

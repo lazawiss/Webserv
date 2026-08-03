@@ -511,20 +511,24 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
 
     } else if (HTTPParser.isCGI()) {
 
-        // if (HTTPParser.validateCGIRequest() == false)
-        // {
-        //     LOG_ERROR("CGI request validation failed");
-        //     sendError(HTTPParser, HTTP_500);
-        //     buildAnswerHeader("500", "text/html");
-        //     return true;
-        // }
+        if (HTTPParser.validateCGIRequest() == false)
+        {
+            LOG_ERROR("CGI request validation failed");
+            sendError(HTTPParser, HTTP_500);
+            buildAnswerHeader("500", "text/html");
+            return true;
+        }
 
         _scriptFilename = HTTPParser.getScriptFilename();
         _fullPath = "data/" + _scriptFilename;
         _query_string = HTTPParser.getQueryString();
         _body = HTTPParser.getBody();
         _content_type = HTTPParser.getContentType();
-        _content_length = HTTPParser.getContentLength();
+
+        std::ostringstream oss;
+        oss << HTTPParser.getContentLength();
+        _content_length = oss.str();
+
         _method = HTTPParser.getMethod();
         _isCGI = true;
 

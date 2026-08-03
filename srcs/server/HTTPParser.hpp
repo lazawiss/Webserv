@@ -163,7 +163,6 @@ public:
 
     void                        parseCGI();
     bool                        validateCGIRequest();
-    /*------------------------- */
 
     bool                        varNotFound400 ( size_t var );
     bool                        doesCharCExist400 ( char const *str );

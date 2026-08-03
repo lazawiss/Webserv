@@ -372,6 +372,19 @@ void HTTPParser::parseCGI(){
     _isCGI = true;
 }
 
+bool HTTPParser::validateCGIRequest() {
+
+    if (_scriptFilename.empty())
+        return false;
+    
+    std::string path = "data/" + _scriptFilename;
+    struct stat st;
+    if (stat(path.c_str(), &st) != 0 || S_ISREG(st.st_mode))
+        return false;
+    
+    return true;
+}
+
 /*
 ** ============================================================================
 ** Parser HTTP - GET
@@ -608,10 +621,13 @@ int HTTPParser::checkContentType( std::string const & value ) {
         type.erase(type.size() - 1);
 
     _type = type;
-    // ------------ Debug ------------
-    LOG_DEBUG("Content-Type: " + _type);
+    _content_type = type;
 
-    if (_isCGI) // MARQUE for Andi 
+    // ------------ Debug ------------
+    LOG_DEBUG("Content-Type(1): " + _type);
+    LOG_DEBUG("Content-Type(2): " + _content_type);
+
+    if (_isCGI)
         return SERVER_OK;
     
     if (_type != "multipart/form-data")
