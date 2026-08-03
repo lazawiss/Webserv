@@ -961,7 +961,7 @@ bool HTTPParser::gatherFile( size_t curPos ) {
 */
 
 bool HTTPParser::compareMethodWithConfigFile() {
-    
+
     const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
     if (locs.size() == 0) {
         _code = HTTP_INDEX;
@@ -969,17 +969,34 @@ bool HTTPParser::compareMethodWithConfigFile() {
 
         return true;
     }
-    
+
+    // Find the best matching location for the current URI (longest prefix match)
+    int bestIdx = -1;
+    size_t bestLen = 0;
     for (size_t i = 0; i < locs.size(); i++)
     {
-        const std::vector<std::string> &methodVector = locs[i].getMethods();
-        if (methodVector.size() > 0) {
-            for (size_t j = 0; j < methodVector.size() ; j++)
-            {
-                if ( _method == methodVector[j])
-                    return true;
-            }
+        const std::string &path = locs[i].getPath();
+        if (_requesttarget.find(path) == 0 && path.size() > bestLen
+            && (path == "/" || _requesttarget.size() == path.size()
+                || _requesttarget[path.size()] == '/' || _requesttarget[path.size()] == '?'))
+        {
+            bestLen = path.size();
+            bestIdx = (int)i;
         }
+    }
+
+    if (bestIdx == -1) {
+        _errors = true;
+        _code = HTTP_405;
+        _type = "text/html";
+        return false;
+    }
+
+    const std::vector<std::string> &methodVector = locs[bestIdx].getMethods();
+    for (size_t j = 0; j < methodVector.size(); j++)
+    {
+        if (_method == methodVector[j])
+            return true;
     }
 
     _errors = true;
