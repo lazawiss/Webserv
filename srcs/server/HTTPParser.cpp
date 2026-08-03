@@ -602,8 +602,8 @@ int HTTPParser::checkContentType( std::string const & value ) {
     size_t semicolon = value.find(';');
     std::string type = (semicolon == std::string::npos) ? value : value.substr(0, semicolon);
 
-    while (!type.empty() && isspace(static_cast<unsigned char>(type.back())))
-        type.pop_back();
+    while (!type.empty() && isspace(static_cast<unsigned char>(type[type.size() - 1])))
+        type.erase(type.size() - 1);
 
     _type = type;
     // ------------ Debug ------------
@@ -694,9 +694,11 @@ int HTTPParser::checkContentLength( std::string const & value ) {
         return SERVER_ERROR;
     }
 
-    _content_length = value;
+    _content_length = len;
     // ------------ Debug ------------
-    LOG_DEBUG("Content-Length: " + _content_length);
+    std::ostringstream oss;
+    oss << _content_length;
+    LOG_DEBUG("Content-Length: " + oss.str());
 
     return SERVER_OK;
 }
@@ -735,7 +737,7 @@ bool  HTTPParser::doesCharCExist400 ( char const *str ){
     return true;
 }
 
-static bool containsCaseInsensitive( std::string const & haystack, std::string const & needle ) {
+bool containsCaseInsensitive( std::string const & haystack, std::string const & needle ) {
 
     std::string h = haystack;
     std::string n = needle;
