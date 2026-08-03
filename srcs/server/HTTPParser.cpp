@@ -512,7 +512,7 @@ bool HTTPParser::validateHost( std::string const & value, std::string & listen )
     for (size_t i = 0; i < host.size(); ++i)
     {
         char c = host[i];
-        if (isalnum(static_cast<unsigned char>(c)) == false)
+        if (isalnum(static_cast<unsigned char>(c)) == false && c != '.' && c !=  '-')
             return false;
     }
     for (size_t i = 0; i < port.size(); ++i)
@@ -737,7 +737,7 @@ bool  HTTPParser::doesCharCExist400 ( char const *str ){
     return true;
 }
 
-bool containsCaseInsensitive( std::string const & haystack, std::string const & needle ) {
+bool HTTPParser::containsCaseInsensitive( std::string const & haystack, std::string const & needle ) {
 
     std::string h = haystack;
     std::string n = needle;
@@ -1114,10 +1114,10 @@ bool HTTPParser::findMethods() {
                         LOG_ERROR("POST upload: missing Content-Length");
                         return false;
                     }
-                    if (checkContentDisposition() == false) {
-                        LOG_ERROR("POST upload: missing Content-Disposition");
-                        return false;
-                    }
+                    // if (checkContentDisposition() == false) {
+                    //     LOG_ERROR("POST upload: missing Content-Disposition");
+                    //     return false;
+                    // }
                     // if (gatherFile() == false){
                     //     LOG_ERROR("POST upload: failed to gather file content");
                     //     return false;

@@ -181,8 +181,8 @@ public:
                 
     // bool                        checkContentType();
     // bool                        checkContentLength();
-    bool                        checkContentDisposition();
-    bool                        gatherFile();
+    //bool                        checkContentDisposition();
+    //bool                        gatherFile();
             
     std::string                 addSuffix(std::string suffix);
     bool                        compareMethodWithConfigFile();
@@ -198,6 +198,6 @@ public:
     int                         checkContentLength(std::string const & value);
     int                         checkContentType(std::string const & value);
 
-    static bool containsCaseInsensitive( std::string const & haystack, std::string const & needle );
-    void resolveConnectionType();
+    static bool                 containsCaseInsensitive( std::string const & haystack, std::string const & needle );
+    void                        resolveConnectionType();
 };
