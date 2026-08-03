@@ -521,8 +521,8 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         if (HTTPParser.validateCGIRequest() == false)
         {
             LOG_ERROR("CGI request validation failed");
-            sendError(HTTPParser, HTTP_500);
-            buildAnswerHeader("500", "text/html");
+            sendError(HTTPParser, HTTP_502);
+            buildAnswerHeader("502", "text/html");
             return true;
         }
 

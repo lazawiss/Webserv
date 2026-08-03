@@ -178,7 +178,7 @@ bool EpollLoop::do_read_fd(
         {
             delete cgi;
             _clientResponseBuffer[fd] =
-              "HTTP/1.1 500 Internal Server Error\r\n"
+              "HTTP/1.1 502 Bad Gateway\r\n"
             "Content-Type: text/html\r\n"
             "Content-Length: 0\r\n\r\n";
 

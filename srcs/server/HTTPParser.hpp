@@ -37,6 +37,7 @@ enum HttpCode
     HTTP_201,
     HTTP_204,
     HTTP_500,
+    HTTP_502,
     HTTP_CGI,
     HTTP_INDEX,
     HTTP_AUTOINDEX,

@@ -1267,6 +1267,7 @@ std::string HTTPParser::httpCodeToString( HttpCode code )
         case HTTP_201:          return "201";
         case HTTP_204:          return "204";
         case HTTP_500:          return "500";
+        case HTTP_502:          return "502";
         case HTTP_CGI:          return "200";
         case HTTP_INDEX:        return "200";
         case HTTP_AUTOINDEX:    return "200";
