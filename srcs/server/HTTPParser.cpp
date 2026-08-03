@@ -768,37 +768,45 @@ bool HTTPParser::containsCaseInsensitive( std::string const & haystack, std::str
     return true;
 }
 
-const LocationConfig* HTTPParser::matchLocation() const {
+void HTTPParser::buildFullPath() {
 
     const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
-    const LocationConfig *best = NULL;
+    const LocationConfig *bestLoc = NULL;
     size_t bestLen = 0;
 
     for (size_t i = 0; i < locs.size(); ++i)
     {
-        const std::string &path = locs[i].getPath();
-        if (_requesttarget.compare(0, path.size(), path) == 0
-            && path.size() >= bestLen)
+        const std::string &locPath = locs[i].getPath();
+        if (_requesttarget.compare(0, locPath.size(), locPath) == 0
+            && locPath.size() >= bestLen)
         {
-            bestLen = path.size();
-            best = &locs[i];
+            bestLen  = locPath.size();
+            bestLoc  = &locs[i];
         }
     }
 
-    return best;
-}
+    // MARQUE
+    std::string root;
+    if (bestLoc && !bestLoc->getRoot().empty())
+        root = bestLoc->getRoot();
+    else
+        root = _serverConfig.getRoot();
 
-void HTTPParser::buildFullPath() {
+    _autoindexOn = (bestLoc && bestLoc->getAutoindex() == "on");
 
-    const LocationConfig *loc = matchLocation();
-
-    std::string root = (loc && !loc->getRoot().empty()) ? loc->getRoot() : _serverConfig.getRoot();
-    _autoindexOn = (loc && loc->getAutoindex() == "on");
+    std::string suffix = _requesttarget;
+    if (bestLoc)
+        suffix = _requesttarget.substr(bestLoc->getPath().size());
 
     _fullPath = root;
-    if (!_fullPath.empty() && _fullPath[_fullPath.size() - 1] == '/' && !_requesttarget.empty() && _requesttarget[0] == '/')
-        _fullPath.erase(_fullPath.size() - 1);
-    _fullPath += _requesttarget;
+
+    if (suffix.empty()) {
+    } else if (suffix[0] == '/') {
+        _fullPath += suffix;
+    } else {
+        _fullPath += '/';
+        _fullPath += suffix;
+    }
 
     LOG_DEBUG(std::string("[HTTPParser] _fullPath: '") + _fullPath + "' autoindex=" + (_autoindexOn ? "on" : "off"));
 }
@@ -1033,21 +1041,9 @@ bool HTTPParser::findMethods() {
                 }
             }
 
-            if (_requesttarget == "/" || _requesttarget == "/api")
             {
                 struct stat path_stat;
-                if (stat(_fullPath.c_str(), &path_stat) == -1)
-                {
-                    LOG_ERROR("stat failed for: " + _fullPath);
-
-                    _errors = true;
-                    _code = HTTP_404;
-                    _type = "text/html";
-
-                    return false;
-                }
-
-                if (S_ISDIR(path_stat.st_mode))
+                if (stat(_fullPath.c_str(), &path_stat) != -1 && S_ISDIR(path_stat.st_mode))
                 {
                     std::string indexPath = _fullPath;
                     if (indexPath[indexPath.size() - 1] != '/')
@@ -1245,21 +1241,22 @@ std::string HTTPParser::httpCodeToString( HttpCode code )
 {
     switch (code)
     {
-        case HTTP_400: return "400";
-        case HTTP_403: return "403";
-        case HTTP_404: return "404";
-        case HTTP_405: return "405";
-        case HTTP_413: return "413";
-        case HTTP_421: return "421";
-        case HTTP_201:      return "201";
-        case HTTP_204:      return "204";
-        case HTTP_500:      return "500";
-        case HTTP_CGI:      return "200";
-        case HTTP_INDEX:    return "200";
-        case HTTP_AUTOINDEX:return "200";
-        case HTTP_FAVICON:  return "200";
-        case HTTP_FILE:     return "200";
-        default:            return "200";
+        case HTTP_400:          return "400";
+        case HTTP_403:          return "403";
+        case HTTP_404:          return "404";
+        case HTTP_405:          return "405";
+        case HTTP_413:          return "413";
+        case HTTP_421:          return "421";
+        case HTTP_201:          return "201";
+        case HTTP_204:          return "204";
+        case HTTP_500:          return "500";
+        case HTTP_CGI:          return "200";
+        case HTTP_INDEX:        return "200";
+        case HTTP_AUTOINDEX:    return "200";
+        case HTTP_FAVICON:      return "200";
+        case HTTP_FILE:         return "200";
+
+        default:                return "200";
     }
 }
 

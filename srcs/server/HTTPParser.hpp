@@ -10,7 +10,6 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-
 # pragma once
 
 #include "../lexer/Lexer.hpp"
@@ -155,7 +154,6 @@ public:
     std::string                 getRequestTarget() const;
     bool                        isCGI() const;
 
-    const LocationConfig*       matchLocation() const;
     void                        buildFullPath();
 
     void                        checkRange( std::string const & value );
@@ -167,7 +165,6 @@ public:
     bool                        varNotFound400 ( size_t var );
     bool                        doesCharCExist400 ( char const *str );
     
-
     bool                        checkSize();
     bool                        checkRequestLine();
     int                         checkConnection(std::string const & value);
