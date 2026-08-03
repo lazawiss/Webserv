@@ -35,7 +35,7 @@ HTTPParser::HTTPParser( std::string const & request,
     _isCGI(false), _fullPath(), _query_string(), _scriptFilename(),
     _body(), _content_type(), 
     _content_int(0), _isContentLengthFound(false),
-    _isHostFound(false), _isContentTypeFound(false) {}
+    _isHostFound(false), _isContentTypeFound(false), _fileContentType() {}
 
 HTTPParser::HTTPParser( HTTPParser const & src ) :
     _request(src._request),
@@ -54,7 +54,8 @@ HTTPParser::HTTPParser( HTTPParser const & src ) :
     _content_int(src._content_int),
     _isContentLengthFound(src._isContentLengthFound),
     _isHostFound(src._isHostFound),
-    _isContentTypeFound(src._isContentTypeFound) {}
+    _isContentTypeFound(src._isContentTypeFound), 
+    _fileContentType(src._fileContentType) {}
 
 HTTPParser::~HTTPParser() {}
 
@@ -89,6 +90,7 @@ HTTPParser &    HTTPParser::operator=( HTTPParser const & other )
         _isContentLengthFound = other._isContentLengthFound;
         _isHostFound        = other._isHostFound;
         _isContentTypeFound = other._isContentTypeFound;
+        _fileContentType    = other._fileContentType;
 
     }
 
@@ -789,115 +791,144 @@ void HTTPParser::buildFullPath() {
 
 /*
 ** ============================================================================
-** Parser HTTP - Second Part: POST
+** Parser HTTP - POST
 ** ============================================================================
 */
 
-// bool HTTPParser::gatherFile() {
+// Parses "Content-Disposition: form-data; name="..."; filename="...""
+bool HTTPParser::checkContentDisposition( size_t & curPos ) {
+
+    size_t pos = _body.find("Content-Disposition:");
+    if (pos == std::string::npos) {
+        LOG_ERROR("Content-Disposition missing for POST method");
+
+        _errors = true;
+        _code = HTTP_400;
+        _type = "text/html";
+
+        return false;
+    }
+
+    size_t lineEnd = _body.find("\r\n", pos);
+    if (lineEnd == std::string::npos) {
+        LOG_ERROR("Malformed request: missing CRLF");
+
+        _errors = true;
+        _code = HTTP_400;
+        _type = "text/html";
+
+        return false;
+    }
+
+    std::string line = _body.substr(pos, lineEnd - pos);
+
+    if (line.find("form-data") == std::string::npos) {
+        LOG_ERROR("Content-Disposition is not a form-data type");
+
+        _errors = true;
+        _code = HTTP_400;
+        _type = "text/html";
+
+        return false;
+    }
+
+    size_t fnamePos = line.find("filename=\"");
+    if (fnamePos == std::string::npos) {
+        LOG_ERROR("Content-Disposition needs a filename");
+
+        _errors = true;
+        _code = HTTP_400;
+        _type = "text/html";
+
+        return false;
+    }
+
+    size_t fnameStart = fnamePos + 10;
+    size_t fnameEnd = line.find("\"", fnameStart);
+    if (fnameEnd == std::string::npos) {
+        _errors = true;
+        _code = HTTP_400;
+        _type = "text/html";
+
+        return false;
+    }
+
+    _fileName = line.substr(fnameStart, fnameEnd - fnameStart);
+    // ------------ Debug ------------
+    LOG_DEBUG("Upload filename: " + _fileName);
+
+    curPos = lineEnd + 2;
+    return true;
+}
+
+bool HTTPParser::gatherFile( size_t curPos ) {
+
+    size_t lineEnd = _body.find("\r\n", curPos);
+        if (lineEnd == std::string::npos) {
+        LOG_ERROR("Malformed request: missing CRLF");
+
+        _errors = true;
+        _code = HTTP_400;
+        _type = "text/html";
+
+        return false;
+    }
+
+    std::string line = _body.substr(curPos, lineEnd - curPos);
+
+    // Content-Type: image/jpeg
+    size_t pos = line.find("Content-Type:");
+    if (pos == 0) {
+        size_t j = pos + 13;
+        while (j < line.size() && (line[j] == ' ' || line[j] == '\t'))
+            j++;
+
+        _fileContentType = line.substr(j);
     
-//     _pos++;
-//     _pos++;
-    
-//     size_t begin = distance(_request.begin(),_pos);
-//     size_t requestLineEnd = _request.find("\r\n",begin);
-//     if (varNotFound400(requestLineEnd) == false)
-//         return false;
-    
-//     std::string line = _request.substr(begin, requestLineEnd - begin);
-//     std::string::iterator start = line.begin();
-//     std::string::iterator end = line.end();
-    
-//     std::vector<size_t> space_inter = collectSpace(start, end);
+        // ------------ Debug ------------
+        LOG_DEBUG("File Content-Type: " + _fileContentType);
+    } else {
+        _fileContentType = "";
+    }
 
-//     std::vector<std::string> subss = collectString(line,space_inter);
-     
-//     if (subss.size() < 2)
-//     {
-//         _errors = true;
-//         _code = HTTP_400;
-//         _type = "text/html";
+    size_t position = lineEnd + 2;
+    if (position + 1 < _body.size() && _body[position] == '\r' && _body[position + 1] == '\n')
+        position += 2;
 
-//         return false;
-//     }
+    std::string endMarker = "--" + _boundary; // ----boundary=
+    size_t endPos = _body.find(endMarker, position);
+    if (endPos == std::string::npos) {
+        LOG_ERROR("End boundary not found in body");
 
-//     _type = subss[1];
-//     LOG_DEBUG("File Content-Type: " + _type);
+        _errors = true;
+        _code = HTTP_400;
+        _type = "text/html";
 
-//     _pos = _request.begin() + requestLineEnd;
-//     _pos += 4;
+        return false;
+    }
 
-//     std::string endOfFile = _boundary + "--";
-//     size_t end_pos = _request.find(endOfFile);
-//     if (varNotFound400(requestLineEnd) == false){
-//         LOG_ERROR("End boundary not found in request");
-//         return false;
-//     }
- 
-//     _fileBuf.assign(_pos, _request.begin() + end_pos - 4);
-//     std::cout << "Firsts 100 octets de _fileBuf : '" <<
-//     std::string(_fileBuf.begin(), _fileBuf.begin() + 100) << "'" << std::endl;
-//     std::cout << "Derniers 100 octets de _fileBuf : '" <<
-//     std::string(_fileBuf.end() - 100, _fileBuf.end()) << "'" << std::endl;
-//     std::cout << "20 derniers octets de _fileBuf : ";
-//     for (size_t i = _fileBuf.size() - 20; i < _fileBuf.size(); ++i) {
-//         printf("%02X ", static_cast<unsigned char>(_fileBuf[i]));
-//     }
-//     std::cout << std::endl;
+    size_t fileEnd = endPos;
+    if (fileEnd >= 2 && _body[fileEnd - 2] == '\r' && _body[fileEnd - 1] == '\n')
+        fileEnd -= 2;
 
-//     return true;
-// }
+    if (fileEnd < position) {
+        LOG_ERROR("Malformed or empty file content");
 
-// ============================================================================
+        _errors = true;
+        _code = HTTP_400;
+        _type = "text/html";
 
-// bool HTTPParser::checkContentDisposition() {
-    
-//     size_t pos = _request.find("Content-Disposition:");
-//     if (varNotFound400(pos) == false)
-//         return false;
-    
-//     size_t requestLineEnd = _request.find("\r\n", pos);
-//     if (varNotFound400(requestLineEnd) == false)
-//         return false;
-        
-//     std::string line = _request.substr(pos, requestLineEnd - pos);
+        return false;
+    }
 
-//     std::string::iterator newpos = line.begin();
-//     std::string::iterator end = line.end();
+    _fileBuf = _body.substr(position, fileEnd - position);
 
-//     std::vector<size_t> space_inter = collectSpace(newpos, end);
+    std::ostringstream oss;
+    oss << _fileBuf.size();
+    LOG_DEBUG("Gathered file bytes: " + oss.str());
 
-//     std::vector<std::string> subsss = collectString(line,space_inter);
-     
-//      if (subsss.size() == 4) {
-
-//         std::string type = subsss[1];
-//         char const *slash = strchr(_type.c_str(), '/');
-//         if (doesCharCExist400(slash) == false)
-//             return false;
-
-//         std::string checktype = std::string(slash, strlen(slash));
-//         checktype.erase(checktype.begin());
-//         checktype.erase(checktype.end() - 1);
-//         std::string name = subsss[2];
-//         name.erase(name.end() - 2);
-//         name.erase(name.begin(), name.begin() + 6);
-//         _fileName = subsss[3];
-//         _fileName.erase(_fileName.end() - 1);
-//         _fileName.erase(_fileName.begin(), _fileName.begin() + 10 );
-//         LOG_DEBUG("Disposition type: " + checktype);
-//         LOG_DEBUG("Disposition name: " + name);
-//         LOG_DEBUG("Upload filename: " + _fileName);
-
-//         _pos = _request.begin() + requestLineEnd; 
-//         return true;
-//     }
-
-//     _errors = true;
-//     _code = HTTP_400;
-//     _type = "text/html";
-
-//     return false;
-// }
+    return true;
+}
 
 /*
 ** ============================================================================
@@ -1114,14 +1145,15 @@ bool HTTPParser::findMethods() {
                         LOG_ERROR("POST upload: missing Content-Length");
                         return false;
                     }
-                    // if (checkContentDisposition() == false) {
-                    //     LOG_ERROR("POST upload: missing Content-Disposition");
-                    //     return false;
-                    // }
-                    // if (gatherFile() == false){
-                    //     LOG_ERROR("POST upload: failed to gather file content");
-                    //     return false;
-                    // }
+                    size_t curPos = 0;
+                    if (checkContentDisposition(curPos) == false) {
+                        LOG_ERROR("POST upload: missing Content-Disposition");
+                        return false;
+                    }
+                    if (gatherFile(curPos) == false) {
+                        LOG_ERROR("POST upload: failed to gather file content");
+                        return false;
+                    }
                     return true;
 
                 } 

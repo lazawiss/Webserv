@@ -100,7 +100,6 @@ private:
     std::string                 _fileLength;        // raw Content-Length string (upload)
     std::string                 _fileName;          // filename extracted from the request
     std::string                 _fileBuf;           // binary content of the uploaded file
-    std::string::iterator       _pos;               // cursor used during body parsing
     bool                        _errors;            // true if a parsing error occurred
     bool                        _upload;            // true if this is a file upload request
 
@@ -122,6 +121,8 @@ private:
     bool                        _isContentLengthFound;
     bool                        _isHostFound;
     bool                        _isContentTypeFound;
+
+    std::string                 _fileContentType;
 
 
 public:
@@ -167,8 +168,6 @@ public:
     bool                        varNotFound400 ( size_t var );
     bool                        doesCharCExist400 ( char const *str );
     
-    // std::vector<size_t>         collectSpace( std::string::iterator start, std::string::iterator end );
-    // std::vector<std::string>    collectString( std::string & line, std::vector<size_t> & space_inter );
 
     bool                        checkSize();
     bool                        checkRequestLine();
@@ -179,10 +178,8 @@ public:
 
     bool                        isRequestValid( ListenerManager const & listen );
                 
-    // bool                        checkContentType();
-    // bool                        checkContentLength();
-    //bool                        checkContentDisposition();
-    //bool                        gatherFile();
+    bool                        checkContentDisposition( size_t & curPos );
+    bool                        gatherFile( size_t curPos );
             
     std::string                 addSuffix(std::string suffix);
     bool                        compareMethodWithConfigFile();
