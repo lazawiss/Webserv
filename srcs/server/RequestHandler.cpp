@@ -286,7 +286,13 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
         break;
         
         case(7):
-        str = "201 CREATED\r\nLocation: " + _pathToFile;
+        {
+            std::string loc = _pathToFile;
+            size_t pos = loc.find("data/upload/");
+            if (pos != std::string::npos)
+                loc.replace(pos, std::string("data/upload").size(), "/upload");
+            str = "201 CREATED\r\nLocation: " + loc;
+        }
         break;
         
         case(8):
