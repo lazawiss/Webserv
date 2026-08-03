@@ -379,7 +379,7 @@ bool HTTPParser::validateCGIRequest() {
     
     std::string path = "data/" + _scriptFilename;
     struct stat st;
-    if (stat(path.c_str(), &st) != 0 || S_ISREG(st.st_mode))
+    if (stat(path.c_str(), &st) != 0 || !S_ISREG(st.st_mode))
         return false;
     
     return true;
