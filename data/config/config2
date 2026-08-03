@@ -26,5 +26,11 @@ server {
         methods     GET;
         autoindex   off;
     }
+
+    location /upload {
+        root        data/upload;
+        methods     GET POST DELETE;
+        autoindex   off;
+    }
 }
 

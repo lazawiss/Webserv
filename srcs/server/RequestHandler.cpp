@@ -172,7 +172,8 @@ static std::string resolveRoot(const ServerConfig &cfg, const std::string &uri)
     for (size_t i = 0; i < locs.size(); ++i)
     {
         const std::string &path = locs[i].getPath();
-        if (uri.find(path) == 0 && path.size() > bestLen)
+        if (uri.find(path) == 0 && path.size() > bestLen
+            && (path == "/" || uri.size() == path.size() || uri[path.size()] == '/' || uri[path.size()] == '?'))
         {
             bestLen = path.size();
             root = locs[i].getRoot();
