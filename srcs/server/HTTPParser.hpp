@@ -89,38 +89,39 @@ class HTTPParser
 
 private:
 
-    std::string                 _request;
-    const ServerConfig          &_serverConfig;
-    HttpCode                    _code;
-    std::string                 _type;
-    std::string                 _method;
-    std::string                 _requesttarget;
-    std::string                 _httpversion;
-    std::string                 _boundary;
-    std::string                 _fileLength;
-    std::string                 _fileName;
-    std::string                 _fileBuf;
-    std::string::iterator       _pos;
-    bool                        _errors;
-    bool                        _upload;
+    std::string                 _request;           // raw request received from the buffer
+    const ServerConfig          &_serverConfig;     // server config matched to this request
+    HttpCode                    _code;              // HTTP response code to send
+    std::string                 _type;              // MIME type for the response
+    std::string                 _method;            // GET || POST || DELETE
+    std::string                 _requesttarget;     // path from the request line
+    std::string                 _httpversion;       // HTTP/1.1
+    std::string                 _boundary;          // multipart boundary string
+    std::string                 _fileLength;        // raw Content-Length string (upload)
+    std::string                 _fileName;          // filename extracted from the request
+    std::string                 _fileBuf;           // binary content of the uploaded file
+    std::string::iterator       _pos;               // cursor used during body parsing
+    bool                        _errors;            // true if a parsing error occurred
+    bool                        _upload;            // true if this is a file upload request
 
-    std::string                 _content_length;
-    ConnectionType              _connectionType;
-    std::string                 _host;
+    size_t                      _content_length;    // validated Content-Length value
+    ConnectionType              _connectionType;    // keep-alive || close
+    std::string                 _host;              // Host header value (host:port)
 
-    
-/* ADD INS FOR CGI------*/
-    bool                        _isCGI;
-    std::string                 _fullPath;
-    std::string                 _query_string;
-    std::string                 _scriptFilename;
-    std::string                 _body;
-    std::string                 _content_type;
-    int                         _content_int;
+    bool                        _isCGI;             // true if target is under /cgi-bin/
+    std::string                 _fullPath;          // resolved filesystem path
+    std::string                 _query_string;      // query string from CGI URL (after '?')
+    std::string                 _scriptFilename;    // CGI script path (before '?')
+    std::string                 _body;              // everything after the first \r\n\r\n
+    std::string                 _content_type;      // Content-Type header value
+    int                         _content_int;       // Content-Length as integer (CGI)
 
+    bool                        _autoindexOn;       // true if autoindex is enabled for the matched location
+    std::string                 _rangeHeader;       // Range header value (bytes=X-Y)
 
-    bool                _autoindexOn;
-    std::string         _rangeHeader;
+    bool                        _isContentLengthFound;
+    bool                        _isHostFound;
+    bool                        _isContentTypeFound;
 
 
 public:
@@ -144,14 +145,12 @@ public:
     std::string                 setType( std::string const & type );
     bool                        setError( bool error );    
 
-
-    /* ADD INS FOR CGI-------------*/
     std::string                 getPath() const;
     std::string                 getScriptFilename() const;
     std::string                 getQueryString() const;
     std::string                 getBody() const;
     std::string                 getContentType() const;
-    std::string                 getContentLength() const;
+    size_t                      getContentLength() const;
     std::string                 getRequestTarget() const;
     bool                        isCGI() const;
 
