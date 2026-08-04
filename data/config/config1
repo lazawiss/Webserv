@@ -1,0 +1,17 @@
+# ─────────────────────────────────────────
+#  SERVEUR 1
+# ─────────────────────────────────────────
+server {
+    listen       127.0.0.1:8080;     # même port, mais interface différente
+    server_name  internal.localhost;
+
+    error_page 400 /errors/404.html;
+
+    location / {
+        root        data/www/nasa;
+        index       index.html;
+        methods     GET;
+        autoindex   off;
+    }
+}
+
