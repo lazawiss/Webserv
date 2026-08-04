@@ -626,7 +626,7 @@ void Parser::parseDirectiveCGI(LocationConfig &ref)
             + "', should be a 'word' type");
 
 
-    if (current().value != ".py" && current().value != ".php" && current().value != ".bla") // modif tester
+    if (current().value != ".py" && current().value != ".php")
         throw std::runtime_error("Invalid CGI file format: "
             "expected .py or .php");
 
@@ -634,8 +634,15 @@ void Parser::parseDirectiveCGI(LocationConfig &ref)
 
     next();
 
-    std::string value = current().value;
-    ref.addMap(key, value);
+    std::string path = current().value;
+
+    struct stat info;
+    if (stat(path.c_str(), &info) != 0)
+        throw std::runtime_error("CGI interpreter does not exist: '" + path + "'");
+    if (!S_ISREG(info.st_mode))
+        throw std::runtime_error("CGI interpreter path is not a regular file: '" + path + "'");
+
+    ref.addMap(key, path);
 
     next();
 

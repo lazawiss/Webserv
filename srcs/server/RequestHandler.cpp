@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestHandler.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/30 17:41:45 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/02 16:55:40 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -172,7 +172,8 @@ static std::string resolveRoot(const ServerConfig &cfg, const std::string &uri)
     for (size_t i = 0; i < locs.size(); ++i)
     {
         const std::string &path = locs[i].getPath();
-        if (uri.find(path) == 0 && path.size() > bestLen)
+        if (uri.find(path) == 0 && path.size() > bestLen
+            && (path == "/" || uri.size() == path.size() || uri[path.size()] == '/' || uri[path.size()] == '?'))
         {
             bestLen = path.size();
             root = locs[i].getRoot();
@@ -285,7 +286,13 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
         break;
         
         case(7):
-        str = "201 CREATED\r\nLocation: " + _pathToFile;
+        {
+            std::string loc = _pathToFile;
+            size_t pos = loc.find("data/upload/");
+            if (pos != std::string::npos)
+                loc.replace(pos, std::string("data/upload").size(), "/upload");
+            str = "201 CREATED\r\nLocation: " + loc;
+        }
         break;
         
         case(8):
@@ -502,10 +509,8 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     
     HTTPParser HTTPParser(_request, _serverConfig);
 
-    if (HTTPParser.isRequestValid(listen) == false) {
-
-        LOG_DEBUG("Request invalid");
-
+    if (HTTPParser.isRequestValid(listen) == false)
+    {
         sendError(HTTPParser, HTTPParser.getCode());
         buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");
         return true;
@@ -515,8 +520,8 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         if (HTTPParser.validateCGIRequest() == false)
         {
             LOG_ERROR("CGI request validation failed");
-            sendError(HTTPParser, HTTP_500);
-            buildAnswerHeader("500", "text/html");
+            sendError(HTTPParser, HTTP_502);
+            buildAnswerHeader("502", "text/html");
             return true;
         }
 
@@ -525,7 +530,11 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         _query_string = HTTPParser.getQueryString();
         _body = HTTPParser.getBody();
         _content_type = HTTPParser.getContentType();
-        _content_length = HTTPParser.getContentLength();
+
+        std::ostringstream oss;
+        oss << HTTPParser.getContentLength();
+        _content_length = oss.str();
+
         _method = HTTPParser.getMethod();
         _isCGI = true;
 
@@ -602,7 +611,10 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
 
         }
     
-    } else if (HTTPParser.getType() == "text/html") {
+    } else if (HTTPParser.getType() == "text/html"
+        || HTTPParser.getType() == "text/css"
+        || HTTPParser.getType() == "text/javascript"
+        || HTTPParser.getType() == "application/javascript") {
 
         std::string file = HTTPParser.getError()
             ? getFile(HTTPParser::httpCodeToString(HTTPParser.getCode()), true)

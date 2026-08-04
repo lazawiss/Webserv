@@ -11,7 +11,7 @@ server {
     location / {
         root        data/www/html;
         index       index.html;
-        methods     GET POST DELETE;
+        methods     GET;
         autoindex   off;
     }
 
@@ -21,8 +21,7 @@ server {
 #  SERVEUR 3 — Même port, autre interface
 # ─────────────────────────────────────────
 server {
-    listen       127.0.0.1:8081;     # même port, mais interface différente
-    # listen       127.0.0.1:8082;
+    listen       127.0.0.1:8081;
     server_name  internal.localhost;
 
     error_page 400 /errors/404.html;
@@ -30,7 +29,7 @@ server {
     location / {
         root        data/www/html1;
         index       index.html;
-        methods     GET POST DELETE;
+        methods     GET;
         autoindex   off;
     }
 }
