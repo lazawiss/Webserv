@@ -1,5 +1,5 @@
 /* ============================================================
-   CONFIGURATION — fill in with your NASA info
+   CONFIGURATION — NASA info
    ============================================================ */
 const NASA_API_KEY = "YOUR_API_KEY_HERE"; 
 const NASA_API_URL = "https://api.nasa.gov/planetary/apod";
@@ -63,9 +63,6 @@ function renderApod(data) {
   }
 }
 
-/* ============================================================
-   Starfield background — subtle, respects prefers-reduced-motion
-   ============================================================ */
 function initStarfield() {
   const canvas = document.getElementById("stars");
   if (!canvas) return;

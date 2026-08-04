@@ -511,7 +511,6 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
 
     if (HTTPParser.isRequestValid(listen) == false)
     {
-        // Note Delphine :
         sendError(HTTPParser, HTTPParser.getCode());
         buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");
         return true;
@@ -612,7 +611,10 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
 
         }
     
-    } else if (HTTPParser.getType() == "text/html") {
+    } else if (HTTPParser.getType() == "text/html"
+        || HTTPParser.getType() == "text/css"
+        || HTTPParser.getType() == "text/javascript"
+        || HTTPParser.getType() == "application/javascript") {
 
         std::string file = HTTPParser.getError()
             ? getFile(HTTPParser::httpCodeToString(HTTPParser.getCode()), true)

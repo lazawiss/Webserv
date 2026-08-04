@@ -1021,12 +1021,11 @@ std::string HTTPParser::addSuffix(std::string suffix) {
         _type = "text/plain";
     if (suffix == ".html")
         _type = "text/html";
-    if (suffix == ".bla")
-        _type = "text/bla";
-    if (suffix == ".pouic")
-        _type = "text/pouic";
-    if (suffix == ".bad_extension")
-        _type = "text/bad_extension";
+    if (suffix == ".css")
+        _type = "text/css";
+    if (suffix == ".js")
+        _type = "text/javascript";
+
     return _type;
 }
 
@@ -1147,8 +1146,11 @@ bool HTTPParser::findMethods() {
 
                 _fileName = _requesttarget;
                 _fileName.erase(_fileName.begin());
-                _code = HTTP_FILE;
-                _type = "text/html";
+                char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
+                if (lastPoint)
+                    _type = addSuffix(std::string(lastPoint, strlen(lastPoint)));
+                else
+                    _type = "text/html";
 
                 return true;
             }

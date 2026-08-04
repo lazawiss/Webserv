@@ -1,8 +1,10 @@
 # ─────────────────────────────────────────
 #  SERVEUR 1
 # ─────────────────────────────────────────
+
 server {
-    listen       127.0.0.1:8080;     # même port, mais interface différente
+
+    listen       127.0.0.1:8080;
     server_name  internal.localhost;
 
     error_page 400 /errors/404.html;
