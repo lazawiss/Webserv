@@ -1,7 +1,7 @@
 /* ============================================================
    CONFIGURATION — NASA info
    ============================================================ */
-const NASA_API_KEY = "YOUR_API_KEY_HERE"; 
+const NASA_API_KEY = "hJAiHQrDTzbQ4MDZ1yezaE6l8uPlJZUKeHprDcRJ"; 
 const NASA_API_URL = "https://api.nasa.gov/planetary/apod";
 /* ============================================================ */
 
