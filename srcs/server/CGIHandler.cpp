@@ -13,6 +13,7 @@
 #include "CGIHandler.hpp"
 #include "RequestHandler.hpp"
 #include "ListenerManager.hpp"
+#include "Server.hpp"
 #include <fcntl.h>
 #include <sys/wait.h>
 #include <cerrno>
@@ -130,7 +131,7 @@ bool CGI::start()
     if (interpreter.empty() || access(_fullPath.c_str(), R_OK) != 0
         || access(interpreter.c_str(), X_OK) != 0)
     {
-        std::cerr << "CGI: invalid script or interpreter: " << _fullPath << std::endl;
+        LOG_ERROR("CGI: invalid script or interpreter: " + _fullPath);
         return false;
     }
 
@@ -177,7 +178,7 @@ bool CGI::start()
         execve(interpreter.c_str(), argv, &_envp[0]);
 
         // only reached if execve failed
-        std::cerr << "CGI: execve failed: " << strerror(errno) << std::endl;
+        LOG_ERROR("CGI: execve failed: " + std::string(strerror(errno)));
         std::exit(1);
     }
 

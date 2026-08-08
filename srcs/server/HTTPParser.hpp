@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HTTPParser.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: andikim <andikim@student.42.fr>            +#+  +:+       +#+        */
+/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/23 09:20:51 by andikim          ###   ########.fr       */
+/*   Updated: 2026/08/02 16:29:38 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,32 @@
 #include "ListenerManager.hpp"
 #include "../parser/config/ServerConfig.hpp"
 
+#define SERVER_OK     0
+#define SERVER_ERROR -1
+
+enum ConnectionType
+{
+    CONN_CLOSE,
+    CONN_KEEP_ALIVE
+};
+
+enum HttpCode
+{
+    HTTP_400,
+    HTTP_403,
+    HTTP_404,
+    HTTP_405,
+    HTTP_413,
+    HTTP_421,
+    HTTP_201,
+    HTTP_204,
+    HTTP_500,
+    HTTP_CGI,
+    HTTP_INDEX,
+    HTTP_AUTOINDEX,
+    HTTP_FAVICON,
+    HTTP_FILE
+};
 
 #include <iostream>
 #include <fstream>
@@ -35,7 +61,6 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 
-// #include <sys/epoll.h>
 #include <csignal>
 #include <cerrno>
 #include <cstdlib>
@@ -46,17 +71,28 @@
 
 #define BUF_SIZE 800000
 
+typedef enum RequestParser
+{
+    CONTENT_TYPE,
+    CONTENT_LENGTH,
+    CONNECTION,
+    HOST,
+    
+    UNKNOWN,
 
-class HTTPParser {
+} RequestParser ;
+
+class HTTPParser
+{
 
 private:
 
     std::string                 _request;
     const ServerConfig          &_serverConfig;
-    std::string                 _code;
+    HttpCode                    _code;
     std::string                 _type;
     std::string                 _method;
-    std::string                 _requesttarget; // CGI 
+    std::string                 _requesttarget;
     std::string                 _httpversion;
     std::string                 _boundary;
     std::string                 _fileLength;
@@ -66,19 +102,25 @@ private:
     bool                        _errors;
     bool                        _upload;
 
+    std::map<std::string, std::string> _rawHeaders;
+    std::string                 _content_length;
+    ConnectionType              _connectionType;
+    std::string                 _host;
+
     
 /* ADD INS FOR CGI------*/
     bool                        _isCGI;
-    std::string                 _fullPath; // location.root + _scriptFilename
+    std::string                 _fullPath;
     std::string                 _query_string;
     std::string                 _scriptFilename;
     std::string                 _body;
     std::string                 _content_type;
-    std::string                 _content_length;
     int                         _content_int;
 
-    bool                _autoindexOn; 
-    std::string         _rangeHeader; // raw value of the "Range:" request header, "" if absent
+
+    bool                _autoindexOn;
+    std::string         _rangeHeader;
+
 
 public:
 
@@ -87,7 +129,7 @@ public:
                                 ~HTTPParser();    
     HTTPParser &                operator=( HTTPParser const & other );
             
-    std::string                 getCode() const;
+    HttpCode                    getCode() const;
     std::string                 getType() const;
     std::string                 getMethod() const;
     std::string                 getBoundary() const;
@@ -97,7 +139,7 @@ public:
     bool                        getUpload() const;
 
 
-    std::string                 setCode( std::string const & code );
+    HttpCode                    setCode( HttpCode code );
     std::string                 setType( std::string const & type );
     bool                        setError( bool error );    
 
@@ -115,7 +157,6 @@ public:
     const LocationConfig*       matchLocation() const;
     void                        buildFullPath();
 
-    // 206 wiring: pull the raw "Range:" header from requete baby
     void                        extractRange();
     std::string                 getRange() const;
 
@@ -124,24 +165,37 @@ public:
     bool                        validateCGIRequest();
     /*------------------------- */
 
-    std::vector<size_t>         collectSpace( std::string::iterator pos );
-    std::vector<std::string>    collectString( std::vector<size_t> space_inter );
+    bool                        varNotFound400 ( size_t var );
+    bool                        doesCharCExist400 ( char const *str );
+    
+    std::vector<size_t>         collectSpace( std::string::iterator start, std::string::iterator end );
+    std::vector<std::string>    collectString( std::string & line, std::vector<size_t> & space_inter );
 
     bool                        checkSize();
     bool                        checkRequestLine();
-    bool                        checkHost( ListenerManager const & listener );
+    int                         processConnection(std::string const & value);
+    int                         checkHost(std::string const & value, ListenerManager const & listener);
+    bool                        validateHost(std::string const & value, std::string & hostOut);
+    bool                        matchVirtualServer(std::string const & host, ListenerManager const & listener);
+
     bool                        isRequestValid( ListenerManager const & listen );
                 
-    bool                        checkContentType();
-    bool                        checkContentLength();
+    // bool                        checkContentType();
+    // bool                        checkContentLength();
     bool                        checkContentDisposition();
     bool                        gatherFile();
             
     std::string                 addSuffix(std::string suffix);
     bool                        compareMethodWithConfigFile();
 
-                
+
+
     bool                        findMethods();
     bool                        findPath();
     bool                        findHeaders();
+
+    static std::string          httpCodeToString( HttpCode code );
+
+    int                         checkContentLength(std::string const & value);
+    int                         checkContentType(std::string const & value);
 };

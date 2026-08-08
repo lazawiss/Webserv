@@ -10,7 +10,6 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "errors/Errors.hpp"
 #include "parser/Parser.hpp"
 #include "server/Server.hpp"
 
@@ -37,17 +36,18 @@ int parse_arguments(int argc)
 {
     if (argc != 2)
     {
-        std::cerr << "Error: Invalid number of arguments!" << "\n";
-        std::cerr << "Usage: ./webserv ./data/config/<config_file>" << std::endl;
-        return ERROR_ARGS;
+        LOG_ERROR("Invalid number of arguments!");
+        LOG_ERROR("Usage: ./webserv ./data/config/<config_file>");
+
+        return -1;
     }
-    return SUCCESS;
+    return 1;
 }
 int main(int argc, char **argv)
 {
     int             result;
     
-    if ((result = parse_arguments(argc)) != SUCCESS)
+    if ((result = parse_arguments(argc)) != 1)
         return result;
 
     try
@@ -62,8 +62,8 @@ int main(int argc, char **argv)
     }
     catch(const std::exception &e)
     {
-        std::cerr << e.what() << std::endl;
-        return ERROR;
+        LOG_ERROR(e.what());
+        return -1;
     }
   
     return 0;
