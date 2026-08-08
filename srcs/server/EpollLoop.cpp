@@ -6,13 +6,14 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/01 17:36:45 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/08 20:17:34 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../lexer/Lexer.hpp"
 #include "../parser/Parser.hpp"
 #include <sstream>
+
 #include "CGIHandler.hpp"
 #include "EpollLoop.hpp"
 #include "ListenerManager.hpp"
@@ -177,7 +178,7 @@ bool EpollLoop::do_read_fd(
         {
             delete cgi;
             _clientResponseBuffer[fd] =
-              "HTTP/1.1 500 Internal Server Error\r\n"
+              "HTTP/1.1 502 Bad Gateway\r\n"
             "Content-Type: text/html\r\n"
             "Content-Length: 0\r\n\r\n";
 

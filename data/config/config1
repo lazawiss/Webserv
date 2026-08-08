@@ -1,13 +1,16 @@
 # ─────────────────────────────────────────
-#  SERVEUR 3 — Même port, autre interface
+#  SERVEUR 1
 # ─────────────────────────────────────────
+
 server {
-    listen       127.0.0.1:8080;     # même port, mais interface différente
+
+    listen       127.0.0.1:8080;
     server_name  internal.localhost;
 
     error_page 400 /errors/404.html;
 
     location / {
+<<<<<<< HEAD:data/config/configauto
         root        data/www;
         methods     GET;
         autoindex   on;
@@ -15,13 +18,20 @@ server {
 
     location /api {
         root        data/www;
+=======
+        root        data/www/nasa;
+        index       index.html;
+>>>>>>> dev:data/config/config1
         methods     GET;
         autoindex   off;
     }
 }
 
+<<<<<<< HEAD:data/config/configauto
 
 // segmentation fault ./webserv data/config/configauto - data/www/images
 // check for also clickables to see if we have to actually list all or if it is ok 
 // cgi - page principale stuff
 // buttons to come back to the page principal
+=======
+>>>>>>> dev:data/config/config1

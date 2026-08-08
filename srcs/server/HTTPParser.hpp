@@ -10,7 +10,6 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-
 # pragma once
 
 #include "../lexer/Lexer.hpp"
@@ -22,6 +21,7 @@
 
 enum ConnectionType
 {
+    CONN_NONE,
     CONN_CLOSE,
     CONN_KEEP_ALIVE
 };
@@ -37,6 +37,7 @@ enum HttpCode
     HTTP_201,
     HTTP_204,
     HTTP_500,
+    HTTP_502,
     HTTP_CGI,
     HTTP_INDEX,
     HTTP_AUTOINDEX,
@@ -77,7 +78,8 @@ typedef enum RequestParser
     CONTENT_LENGTH,
     CONNECTION,
     HOST,
-    
+    RANGE,
+
     UNKNOWN,
 
 } RequestParser ;
@@ -87,39 +89,40 @@ class HTTPParser
 
 private:
 
-    std::string                 _request;
-    const ServerConfig          &_serverConfig;
-    HttpCode                    _code;
-    std::string                 _type;
-    std::string                 _method;
-    std::string                 _requesttarget;
-    std::string                 _httpversion;
-    std::string                 _boundary;
-    std::string                 _fileLength;
-    std::string                 _fileName;
-    std::string                 _fileBuf;
-    std::string::iterator       _pos;
-    bool                        _errors;
-    bool                        _upload;
+    std::string                 _request;           // raw request received from the buffer
+    const ServerConfig          &_serverConfig;     // server config matched to this request
+    HttpCode                    _code;              // HTTP response code to send
+    std::string                 _type;              // MIME type for the response
+    std::string                 _method;            // GET || POST || DELETE
+    std::string                 _requesttarget;     // path from the request line
+    std::string                 _httpversion;       // HTTP/1.1
+    std::string                 _boundary;          // multipart boundary string
+    std::string                 _fileLength;        // raw Content-Length string (upload)
+    std::string                 _fileName;          // filename extracted from the request
+    std::string                 _fileBuf;           // binary content of the uploaded file
+    bool                        _errors;            // true if a parsing error occurred
+    bool                        _upload;            // true if this is a file upload request
 
-    std::map<std::string, std::string> _rawHeaders;
-    std::string                 _content_length;
-    ConnectionType              _connectionType;
-    std::string                 _host;
+    size_t                      _content_length;    // validated Content-Length value
+    ConnectionType              _connectionType;    // keep-alive || close
+    std::string                 _host;              // Host header value (host:port)
 
-    
-/* ADD INS FOR CGI------*/
-    bool                        _isCGI;
-    std::string                 _fullPath;
-    std::string                 _query_string;
-    std::string                 _scriptFilename;
-    std::string                 _body;
-    std::string                 _content_type;
-    int                         _content_int;
+    bool                        _isCGI;             // true if target is under /cgi-bin/
+    std::string                 _fullPath;          // resolved filesystem path
+    std::string                 _query_string;      // query string from CGI URL (after '?')
+    std::string                 _scriptFilename;    // CGI script path (before '?')
+    std::string                 _body;              // everything after the first \r\n\r\n
+    std::string                 _content_type;      // Content-Type header value
+    int                         _content_int;       // Content-Length as integer (CGI)
 
+    bool                        _autoindexOn;       // true if autoindex is enabled for the matched location
+    std::string                 _rangeHeader;       // Range header value (bytes=X-Y)
 
-    bool                _autoindexOn;
-    std::string         _rangeHeader;
+    bool                        _isContentLengthFound;
+    bool                        _isHostFound;
+    bool                        _isContentTypeFound;
+
+    std::string                 _fileContentType;
 
 
 public:
@@ -143,47 +146,37 @@ public:
     std::string                 setType( std::string const & type );
     bool                        setError( bool error );    
 
-
-    /* ADD INS FOR CGI-------------*/
     std::string                 getPath() const;
     std::string                 getScriptFilename() const;
     std::string                 getQueryString() const;
     std::string                 getBody() const;
     std::string                 getContentType() const;
-    std::string                 getContentLength() const;
+    size_t                      getContentLength() const;
     std::string                 getRequestTarget() const;
     bool                        isCGI() const;
 
-    const LocationConfig*       matchLocation() const;
     void                        buildFullPath();
 
-    void                        extractRange();
+    void                        checkRange( std::string const & value );
     std::string                 getRange() const;
 
     void                        parseCGI();
-    void                        extractBody();
     bool                        validateCGIRequest();
-    /*------------------------- */
 
     bool                        varNotFound400 ( size_t var );
     bool                        doesCharCExist400 ( char const *str );
     
-    std::vector<size_t>         collectSpace( std::string::iterator start, std::string::iterator end );
-    std::vector<std::string>    collectString( std::string & line, std::vector<size_t> & space_inter );
-
     bool                        checkSize();
     bool                        checkRequestLine();
-    int                         processConnection(std::string const & value);
+    int                         checkConnection(std::string const & value);
     int                         checkHost(std::string const & value, ListenerManager const & listener);
-    bool                        validateHost(std::string const & value, std::string & hostOut);
-    bool                        matchVirtualServer(std::string const & host, ListenerManager const & listener);
+    bool                        validateHost(std::string const & value, std::string & listen);
+    bool                        matchHost(std::string const & host, ListenerManager const & listener);
 
     bool                        isRequestValid( ListenerManager const & listen );
                 
-    // bool                        checkContentType();
-    // bool                        checkContentLength();
-    bool                        checkContentDisposition();
-    bool                        gatherFile();
+    bool                        checkContentDisposition( size_t & curPos );
+    bool                        gatherFile( size_t curPos );
             
     std::string                 addSuffix(std::string suffix);
     bool                        compareMethodWithConfigFile();
@@ -198,4 +191,7 @@ public:
 
     int                         checkContentLength(std::string const & value);
     int                         checkContentType(std::string const & value);
+
+    static bool                 containsCaseInsensitive( std::string const & haystack, std::string const & needle );
+    void                        resolveConnectionType();
 };
