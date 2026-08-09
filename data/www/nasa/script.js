@@ -6,10 +6,10 @@ const NASA_API_URL = "https://api.nasa.gov/planetary/apod";
 /* ============================================================ */
 
 async function loadApod() {
-  const loading = document.getElementById("state-loading");
-  const errorState = document.getElementById("state-error");
+  const loading = document.getElementById("loading");
+  const errorState = document.getElementById("error");
   const errorDetail = document.getElementById("error-detail");
-  const content = document.getElementById("state-content");
+  const content = document.getElementById("content");
 
   try {
     const url = `${NASA_API_URL}?api_key=${encodeURIComponent(NASA_API_KEY)}`;
