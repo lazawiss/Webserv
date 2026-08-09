@@ -1067,7 +1067,8 @@ bool HTTPParser::findMethods() {
                     for (size_t j = 0; j < indexVector.size(); j++)
                     {
                         struct stat sb;
-                        std::string index = "data/www/html/" + indexVector[j];
+                        std::string locRoot = locs[i].getRoot().empty() ? _serverConfig.getRoot() : locs[i].getRoot();
+                        std::string index = locRoot + "/" + indexVector[j];
                         if (stat(index.c_str(), &sb) == 0) {
                             _fileName = indexVector[j];
                             _code = HTTP_FILE;
