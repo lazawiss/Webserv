@@ -1,3 +1,4 @@
 webserv
 *.o
 vgcore.*
+data/www/nasa/config.js

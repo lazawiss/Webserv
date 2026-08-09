@@ -1,7 +1,7 @@
 /* ============================================================
    CONFIGURATION — NASA info
+   NASA_API_KEY is loaded from config.js (gitignored)
    ============================================================ */
-const NASA_API_KEY = "Put_your_API_key_here"; 
 const NASA_API_URL = "https://api.nasa.gov/planetary/apod";
 /* ============================================================ */
 
