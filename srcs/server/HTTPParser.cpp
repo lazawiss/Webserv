@@ -25,21 +25,18 @@
 
 HTTPParser::HTTPParser( std::string const & request,
     const ServerConfig & serverConfig) :
-    _request(request),
-    _serverConfig(serverConfig),
+    _request(request), _serverConfig(serverConfig),
     _code(HTTP_INDEX), _type(), _method(),
     _requesttarget(), _httpversion(), _boundary(),
     _fileLength(), _fileName(), _fileBuf(),
-    _errors(false), _upload(false), _content_length(0), _connectionType(CONN_KEEP_ALIVE), 
-    _host("8080"),
+    _errors(false), _upload(false), _content_length(0), 
+    _connectionType(CONN_KEEP_ALIVE), _host("8080"),
     _isCGI(false), _fullPath(), _query_string(), _scriptFilename(),
-    _body(), _content_type(), 
-    _content_int(0), _isContentLengthFound(false),
+    _body(), _content_type(), _content_int(0), _isContentLengthFound(false),
     _isHostFound(false), _isContentTypeFound(false), _fileContentType() {}
 
 HTTPParser::HTTPParser( HTTPParser const & src ) :
-    _request(src._request),
-    _serverConfig(src._serverConfig),
+    _request(src._request), _serverConfig(src._serverConfig),
     _code(src._code), _type(src._type),
     _method(src._method), _requesttarget(src._requesttarget),
     _httpversion(src._httpversion), _boundary(src._boundary),
@@ -279,11 +276,11 @@ bool HTTPParser::isRequestValid( ListenerManager const & listen ) {
         std::string key = line.substr(0, colon);
         std::string value = line.substr(colon + 1);
         
-        size_t j = 0; // MARQUE
-        while (j < value.size() && (value[j] == ' ' || value[j] == '\t'))
-            j++;
+        if (!value.empty() && value[0] == ' ')
+            value = value.substr(1);
 
-        value = value.substr(j);
+        if (!value.empty() && (value[0] == ' ' || value[0] == '\t'))
+            return LOG_ERROR("Invalid whitespace after ':' in header: " + line), false;
 
         switch (getHeaderType(key))
         {
@@ -335,7 +332,7 @@ bool HTTPParser::isRequestValid( ListenerManager const & listen ) {
                 break;
         }
 
-        i = end + 2; // MARQUE
+        i = end + 2;
         if (i < _request.size() && (_request[i] == ' ' || _request[i] == '\t'))
             return LOG_ERROR("Leading whitespace after request-line"), false;
     }
@@ -408,33 +405,18 @@ bool HTTPParser::checkSize() {
 bool HTTPParser::checkRequestLine() {
 
     size_t lineEnd = _request.find("\r\n");
-    if (lineEnd == std::string::npos) {
-        _errors = true;
-        _code = HTTP_400;
-        _type = "text/html";
-        
+    if (varNotFound400(lineEnd) == false)
         return false;
-    }
 
     std::string line = _request.substr(0, lineEnd);
 
     size_t firstSpace = line.find(' ');
-    if (firstSpace == std::string::npos) {
-        _errors = true;
-        _code   = HTTP_400;
-        _type   = "text/html";
-
+    if (varNotFound400(firstSpace) == false)
         return false;
-    }
 
     size_t secondSpace = line.find(' ', firstSpace + 1);
-    if (secondSpace == std::string::npos) {
-        _errors = true;
-        _code   = HTTP_400;
-        _type   = "text/html";
-
+    if (varNotFound400(secondSpace) == false)
         return false;
-    }
 
     if (line.find(' ', secondSpace + 1) != std::string::npos) {
         _errors = true;
@@ -528,7 +510,7 @@ bool HTTPParser::validateHost( std::string const & value, std::string & listen )
     for (size_t i = 0; i < host.size(); ++i)
     {
         char c = host[i];
-        if (isalnum(static_cast<unsigned char>(c)) == false && c != '.' && c !=  '-')
+        if (isalnum(static_cast<unsigned char>(c)) == false && c != '.' && c != '-')
             return false;
     }
     for (size_t i = 0; i < port.size(); ++i)
@@ -549,6 +531,9 @@ bool HTTPParser::matchHost( std::string const & host, ListenerManager const & li
     std::string hostname = listener.getNode() + ":" + listener.getService();
 
     char const *colon = strrchr(host.c_str(), ':');
+    if (colon == NULL)
+        return false;
+
     std::string hostName = std::string(host.c_str(), colon);
     std::string service  = std::string(colon + 1);
 
@@ -742,6 +727,7 @@ size_t HTTPParser::parseBodySize( std::string const & s ) {
         case 'K': return value * 1024UL;
         case 'M': return value * 1024UL * 1024UL;
         case 'G': return value * 1024UL * 1024UL * 1024UL;
+
         default:  return value;
     }
 }
@@ -850,59 +836,26 @@ void HTTPParser::buildFullPath() {
 bool HTTPParser::checkContentDisposition( size_t & curPos ) {
 
     size_t pos = _body.find("Content-Disposition:");
-    if (pos == std::string::npos) {
-        LOG_ERROR("Content-Disposition missing for POST method");
-
-        _errors = true;
-        _code = HTTP_400;
-        _type = "text/html";
-
-        return false;
-    }
+    if (varNotFound400(pos) == false)
+        return LOG_ERROR("Content-Disposition missing for POST method"), false;
 
     size_t lineEnd = _body.find("\r\n", pos);
-    if (lineEnd == std::string::npos) {
-        LOG_ERROR("Malformed request: missing CRLF");
-
-        _errors = true;
-        _code = HTTP_400;
-        _type = "text/html";
-
-        return false;
-    }
+    if (varNotFound400(lineEnd) == false)
+        return LOG_ERROR("Malformed request: missing CRLF"), false;
 
     std::string line = _body.substr(pos, lineEnd - pos);
 
-    if (line.find("form-data") == std::string::npos) {
-        LOG_ERROR("Content-Disposition is not a form-data type");
-
-        _errors = true;
-        _code = HTTP_400;
-        _type = "text/html";
-
-        return false;
-    }
+    if (varNotFound400(line.find("form-data")) == false)
+        return LOG_ERROR("Content-Disposition is not a form-data type"), false;
 
     size_t fnamePos = line.find("filename=\"");
-    if (fnamePos == std::string::npos) {
-        LOG_ERROR("Content-Disposition needs a filename");
-
-        _errors = true;
-        _code = HTTP_400;
-        _type = "text/html";
-
-        return false;
-    }
+    if (varNotFound400(fnamePos) == false)
+        return LOG_ERROR("Content-Disposition needs a filename"), false;
 
     size_t fnameStart = fnamePos + 10;
     size_t fnameEnd = line.find("\"", fnameStart);
-    if (fnameEnd == std::string::npos) {
-        _errors = true;
-        _code = HTTP_400;
-        _type = "text/html";
-
+    if (varNotFound400(fnameEnd) == false)
         return false;
-    }
 
     _fileName = line.substr(fnameStart, fnameEnd - fnameStart);
     // ------------ Debug ------------
@@ -915,15 +868,8 @@ bool HTTPParser::checkContentDisposition( size_t & curPos ) {
 bool HTTPParser::gatherFile( size_t curPos ) {
 
     size_t lineEnd = _body.find("\r\n", curPos);
-        if (lineEnd == std::string::npos) {
-        LOG_ERROR("Malformed request: missing CRLF");
-
-        _errors = true;
-        _code = HTTP_400;
-        _type = "text/html";
-
-        return false;
-    }
+    if (varNotFound400(lineEnd) == false)
+        return LOG_ERROR("Malformed request: missing CRLF"), false;
 
     std::string line = _body.substr(curPos, lineEnd - curPos);
 
@@ -948,15 +894,8 @@ bool HTTPParser::gatherFile( size_t curPos ) {
 
     std::string endMarker = "--" + _boundary; // ----boundary=
     size_t endPos = _body.find(endMarker, position);
-    if (endPos == std::string::npos) {
-        LOG_ERROR("End boundary not found in body");
-
-        _errors = true;
-        _code = HTTP_400;
-        _type = "text/html";
-
-        return false;
-    }
+    if (varNotFound400(endPos) == false)
+        return LOG_ERROR("End boundary not found in body"), false;
 
     size_t fileEnd = endPos;
     if (fileEnd >= 2 && _body[fileEnd - 2] == '\r' && _body[fileEnd - 1] == '\n')
@@ -1308,14 +1247,4 @@ std::string HTTPParser::httpCodeToString( HttpCode code )
 
         default:                return "200";
     }
-}
-
-bool HTTPParser::findPath()
-{
-    return true;
-}
-
-bool HTTPParser::findHeaders()
-{
-    return true;
 }

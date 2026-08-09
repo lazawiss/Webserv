@@ -181,8 +181,6 @@ public:
     bool                        compareMethodWithConfigFile();
 
     bool                        findMethods();
-    bool                        findPath();
-    bool                        findHeaders();
 
     static std::string          httpCodeToString( HttpCode code );
 
