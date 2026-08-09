@@ -1191,7 +1191,7 @@ bool HTTPParser::findMethods() {
 
                 if (_requesttarget == "/upload") {
                     
-                    if (_isContentLengthFound == false) {
+                    if (_isContentTypeFound == false) {
                         LOG_ERROR("POST upload: missing Content-Type");
                         return false;
                     }
