@@ -141,7 +141,6 @@ public:
     bool                        getError() const;
     bool                        getUpload() const;
 
-
     HttpCode                    setCode( HttpCode code );
     std::string                 setType( std::string const & type );
     bool                        setError( bool error );    
@@ -181,8 +180,6 @@ public:
     std::string                 addSuffix(std::string suffix);
     bool                        compareMethodWithConfigFile();
 
-
-
     bool                        findMethods();
     bool                        findPath();
     bool                        findHeaders();
@@ -194,4 +191,5 @@ public:
 
     static bool                 containsCaseInsensitive( std::string const & haystack, std::string const & needle );
     void                        resolveConnectionType();
+    static size_t               parseBodySize( std::string const & s );
 };

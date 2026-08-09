@@ -701,8 +701,10 @@ int HTTPParser::checkContentLength( std::string const & value ) {
         return SERVER_ERROR;
     }
 
-    // MARQUE Lea/Delphine: maybe use _maxBodySize ? 
-    if (len > BUF_SIZE) {
+    size_t limit = parseBodySize(_serverConfig.getClientMaxBodySize());
+    if (limit == 0)
+        limit = BUF_SIZE;
+    if (len > limit) {
         LOG_ERROR("Content-Length exceeds limit");
 
         _errors = true;
@@ -719,6 +721,27 @@ int HTTPParser::checkContentLength( std::string const & value ) {
     LOG_DEBUG("Content-Length: " + oss.str());
 
     return SERVER_OK;
+}
+
+size_t HTTPParser::parseBodySize( std::string const & s ) {
+    if (s.empty())
+        return 0;
+
+    std::stringstream ss(s);
+    size_t value;
+    ss >> value;
+    if (ss.fail())
+        return 0;
+
+    char unit = '\0';
+    ss >> unit;
+
+    switch (std::toupper(static_cast<unsigned char>(unit))) {
+        case 'K': return value * 1024UL;
+        case 'M': return value * 1024UL * 1024UL;
+        case 'G': return value * 1024UL * 1024UL * 1024UL;
+        default:  return value;
+    }
 }
 
 /*
