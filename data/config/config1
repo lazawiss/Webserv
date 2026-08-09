@@ -10,10 +10,10 @@ server {
     error_page 400 /errors/404.html;
 
     location / {
-        root        data/www/nasa;
-        index       index.html;
+        root        data/www/;
+        #index       index.html;
         methods     GET;
-        autoindex   off;
+        autoindex   on;
     }
 }
 

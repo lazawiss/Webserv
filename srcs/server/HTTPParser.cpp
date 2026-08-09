@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HTTPParser.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: leazannis <leazannis@student.42.fr>        +#+  +:+       +#+        */
+/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/07 18:08:42 by leazannis        ###   ########.fr       */
+/*   Updated: 2026/08/09 16:31:59 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -1168,7 +1168,7 @@ bool HTTPParser::findMethods() {
 
                 if (_requesttarget == "/upload") {
                     
-                    if (_isContentLengthFound == false) {
+                    if (_isContentTypeFound == false) {
                         LOG_ERROR("POST upload: missing Content-Type");
                         return false;
                     }
