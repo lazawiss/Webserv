@@ -140,11 +140,6 @@ public:
     std::string                 getFileBuf() const;
     bool                        getError() const;
     bool                        getUpload() const;
-
-    HttpCode                    setCode( HttpCode code );
-    std::string                 setType( std::string const & type );
-    bool                        setError( bool error );    
-
     std::string                 getPath() const;
     std::string                 getScriptFilename() const;
     std::string                 getQueryString() const;
@@ -152,12 +147,17 @@ public:
     std::string                 getContentType() const;
     size_t                      getContentLength() const;
     std::string                 getRequestTarget() const;
+    std::string                 getRange() const;
+
+    HttpCode                    setCode( HttpCode code );
+    std::string                 setType( std::string const & type );
+    bool                        setError( bool error );    
+
     bool                        isCGI() const;
 
     void                        buildFullPath();
 
     void                        checkRange( std::string const & value );
-    std::string                 getRange() const;
 
     void                        parseCGI();
     bool                        validateCGIRequest();

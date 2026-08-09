@@ -734,100 +734,6 @@ size_t HTTPParser::parseBodySize( std::string const & s ) {
 
 /*
 ** ============================================================================
-** Method helpers
-** ============================================================================
-*/
-
-bool HTTPParser::varNotFound400 ( size_t var ) {
-    
-    if (var == std::string::npos)
-    {
-        _errors = true;
-        _code = HTTP_400;
-        _type = "text/html";
-        
-        return false;
-    }
-    
-    return true;
-}
-
-bool  HTTPParser::doesCharCExist400 ( char const *str ){
-    
-    if (!str){
-        
-        _errors = true;
-        _code = HTTP_400;
-        _type = "text/html";
-        
-        return false;
-    }
-    
-    return true;
-}
-
-bool HTTPParser::containsCaseInsensitive( std::string const & haystack, std::string const & needle ) {
-
-    std::string h = haystack;
-    std::string n = needle;
-
-    std::transform(h.begin(), h.end(), h.begin(), ::tolower);
-    std::transform(n.begin(), n.end(), n.begin(), ::tolower);
-    if (h.find(n) == std::string::npos)
-        return false;
-
-    return true;
-}
-
-void HTTPParser::buildFullPath() {
-
-    const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
-    const LocationConfig *bestLoc = NULL;
-    size_t bestLen = 0;
-
-    for (size_t i = 0; i < locs.size(); ++i)
-    {
-        const std::string &locPath = locs[i].getPath();
-        if (_requesttarget.compare(0, locPath.size(), locPath) == 0
-            && locPath.size() >= bestLen)
-        {
-            bestLen  = locPath.size();
-            bestLoc  = &locs[i];
-        }
-    }
-
-    // MARQUE
-    std::string root;
-    if (bestLoc && !bestLoc->getRoot().empty())
-        root = bestLoc->getRoot();
-    else
-        root = _serverConfig.getRoot();
-
-    _autoindexOn = (bestLoc && bestLoc->getAutoindex() == "on");
-
-    std::string suffix = _requesttarget;
-    if (bestLoc)
-        suffix = _requesttarget.substr(bestLoc->getPath().size());
-
-    _fullPath = root;
-
-    if (suffix.empty()) {
-    } else if (suffix[0] == '/') {
-        _fullPath += suffix;
-    } else {
-        _fullPath += '/';
-        _fullPath += suffix;
-    }
-
-    // ------------ Debug ------------
-    LOG_DEBUG(std::string("[HTTPParser] _fullPath: '") + _fullPath + 
-        "' autoindex=" + (_autoindexOn ? "on" : "off"));
-}
-
-
-
-/*
-** ============================================================================
 ** Parser HTTP - POST
 ** ============================================================================
 */
@@ -924,7 +830,145 @@ bool HTTPParser::gatherFile( size_t curPos ) {
 
 /*
 ** ============================================================================
-** Parser HTTP - Dispatch per Method + Helpers
+** Method helpers
+** ============================================================================
+*/
+
+bool HTTPParser::varNotFound400 ( size_t var ) {
+    
+    if (var == std::string::npos)
+    {
+        _errors = true;
+        _code = HTTP_400;
+        _type = "text/html";
+        
+        return false;
+    }
+    
+    return true;
+}
+
+bool  HTTPParser::doesCharCExist400 ( char const *str ){
+    
+    if (!str){
+        
+        _errors = true;
+        _code = HTTP_400;
+        _type = "text/html";
+        
+        return false;
+    }
+    
+    return true;
+}
+
+bool HTTPParser::containsCaseInsensitive( std::string const & haystack, std::string const & needle ) {
+
+    std::string h = haystack;
+    std::string n = needle;
+
+    std::transform(h.begin(), h.end(), h.begin(), ::tolower);
+    std::transform(n.begin(), n.end(), n.begin(), ::tolower);
+    if (h.find(n) == std::string::npos)
+        return false;
+
+    return true;
+}
+
+void HTTPParser::buildFullPath() {
+
+    const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
+    const LocationConfig *bestLoc = NULL;
+    size_t bestLen = 0;
+
+    for (size_t i = 0; i < locs.size(); ++i)
+    {
+        const std::string &locPath = locs[i].getPath();
+        if (_requesttarget.compare(0, locPath.size(), locPath) == 0
+            && locPath.size() >= bestLen)
+        {
+            bestLen  = locPath.size();
+            bestLoc  = &locs[i];
+        }
+    }
+
+    // MARQUE
+    std::string root;
+    if (bestLoc && !bestLoc->getRoot().empty())
+        root = bestLoc->getRoot();
+    else
+        root = _serverConfig.getRoot();
+
+    _autoindexOn = (bestLoc && bestLoc->getAutoindex() == "on");
+
+    std::string suffix = _requesttarget;
+    if (bestLoc)
+        suffix = _requesttarget.substr(bestLoc->getPath().size());
+
+    _fullPath = root;
+
+    if (suffix.empty()) {
+    } else if (suffix[0] == '/') {
+        _fullPath += suffix;
+    } else {
+        _fullPath += '/';
+        _fullPath += suffix;
+    }
+
+    // ------------ Debug ------------
+    LOG_DEBUG(std::string("[HTTPParser] _fullPath: '") + _fullPath + 
+        "' autoindex=" + (_autoindexOn ? "on" : "off"));
+}
+
+std::string HTTPParser::addSuffix(std::string suffix) {
+    
+    if (suffix  == ".jpg")
+        _type = "image/jpeg";
+    if (suffix  == ".png")
+        _type = "image/png";
+    if (suffix  == ".gif")
+        _type = "image/gif";
+    if (suffix  == ".webp")
+        _type = "image/webp";
+    if (suffix == ".txt")
+        _type = "text/plain";
+    if (suffix == ".html")
+        _type = "text/html";
+    if (suffix == ".css")
+        _type = "text/css";
+    if (suffix == ".js")
+        _type = "text/javascript";
+
+    return _type;
+}
+
+std::string HTTPParser::httpCodeToString( HttpCode code )
+{
+    switch (code)
+    {
+        case HTTP_400:          return "400";
+        case HTTP_403:          return "403";
+        case HTTP_404:          return "404";
+        case HTTP_405:          return "405";
+        case HTTP_413:          return "413";
+        case HTTP_421:          return "421";
+        case HTTP_201:          return "201";
+        case HTTP_204:          return "204";
+        case HTTP_500:          return "500";
+        case HTTP_502:          return "502";
+        case HTTP_CGI:          return "200";
+        case HTTP_INDEX:        return "200";
+        case HTTP_AUTOINDEX:    return "200";
+        case HTTP_FAVICON:      return "200";
+        case HTTP_FILE:         return "200";
+
+        default:                return "200";
+    }
+}
+
+/*
+** ============================================================================
+** Parser HTTP - Dispatch per Method
 ** ============================================================================
 */
 
@@ -972,29 +1016,6 @@ bool HTTPParser::compareMethodWithConfigFile() {
     _type = "text/html";
 
     return false;
-}
-
-
-std::string HTTPParser::addSuffix(std::string suffix) {
-    
-    if (suffix  == ".jpg")
-        _type = "image/jpeg";
-    if (suffix  == ".png")
-        _type = "image/png";
-    if (suffix  == ".gif")
-        _type = "image/gif";
-    if (suffix  == ".webp")
-        _type = "image/webp";
-    if (suffix == ".txt")
-        _type = "text/plain";
-    if (suffix == ".html")
-        _type = "text/html";
-    if (suffix == ".css")
-        _type = "text/css";
-    if (suffix == ".js")
-        _type = "text/javascript";
-
-    return _type;
 }
 
 bool HTTPParser::findMethods() {
@@ -1223,28 +1244,4 @@ bool HTTPParser::findMethods() {
     }
 
     return false;
-}
-
-std::string HTTPParser::httpCodeToString( HttpCode code )
-{
-    switch (code)
-    {
-        case HTTP_400:          return "400";
-        case HTTP_403:          return "403";
-        case HTTP_404:          return "404";
-        case HTTP_405:          return "405";
-        case HTTP_413:          return "413";
-        case HTTP_421:          return "421";
-        case HTTP_201:          return "201";
-        case HTTP_204:          return "204";
-        case HTTP_500:          return "500";
-        case HTTP_502:          return "502";
-        case HTTP_CGI:          return "200";
-        case HTTP_INDEX:        return "200";
-        case HTTP_AUTOINDEX:    return "200";
-        case HTTP_FAVICON:      return "200";
-        case HTTP_FILE:         return "200";
-
-        default:                return "200";
-    }
 }
