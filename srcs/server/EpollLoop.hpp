@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   EpollLoop.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:27:21 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/29 22:49:27 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/09 19:27:08 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,6 +46,22 @@
 class Server;
 
 class CGI;
+
+typedef enum ConnState
+{
+    ReadingHeaders,
+    ReadingBody,
+    Complete
+
+}   ConnState;
+
+// struct Token
+// {
+//     TokenType   type;
+//     std::string value;
+
+//     Token (TokenType t, const std::string& v): type(t), value(v) {};
+// };
 
 class EpollLoop {
 

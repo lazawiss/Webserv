@@ -10,7 +10,6 @@ server {
     error_page 400 /errors/404.html;
 
     location / {
-<<<<<<< HEAD:data/config/configauto
         root        data/www;
         methods     GET;
         autoindex   on;
@@ -18,10 +17,6 @@ server {
 
     location /api {
         root        data/www;
-=======
-        root        data/www/nasa;
-        index       index.html;
->>>>>>> dev:data/config/config1
         methods     GET;
         autoindex   off;
     }

@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/08 20:18:41 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/09 20:50:10 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -251,9 +251,9 @@ bool HTTPParser::isRequestValid( ListenerManager const & listen ) {
     if (headerEnd == std::string::npos)
         return LOG_ERROR("Malformed request: missing end of header"), false;
     _body = _request.substr(headerEnd + 4);
-
+    
     parseCGI();
-
+    
     size_t i = _request.find("\r\n");
     if (i == std::string::npos)
         return false;
@@ -349,8 +349,9 @@ bool HTTPParser::isRequestValid( ListenerManager const & listen ) {
     return true;
 }
 
-void HTTPParser::parseCGI(){
-        // GET /cgi-bin/hello.py?name=andi HTTP/1.1
+void HTTPParser::parseCGI()
+{
+    // GET /cgi-bin/hello.py?name=andi HTTP/1.1
     if (_requesttarget.find("/cgi-bin/") == std::string::npos) {
         _isCGI = false;
         return;
@@ -369,7 +370,10 @@ void HTTPParser::parseCGI(){
     }
 
     _isCGI = true;
+    return ; 
 }
+
+
 
 bool HTTPParser::validateCGIRequest() {
 
@@ -806,8 +810,9 @@ void HTTPParser::buildFullPath() {
         _fullPath += '/';
         _fullPath += suffix;
     }
-
+    _fileName = suffix;
     LOG_DEBUG(std::string("[HTTPParser] _fullPath: '") + _fullPath + "' autoindex=" + (_autoindexOn ? "on" : "off"));
+    LOG_DEBUG(std::string("[HTTPParser] _fileName: '") + _fileName);
 }
 
 
@@ -1052,41 +1057,39 @@ bool HTTPParser::findMethods() {
                     }
                 }
                 else {
-                    _code = HTTP_INDEX;
-                }
-            }
-
-            {
-                struct stat path_stat;
-                if (stat(_fullPath.c_str(), &path_stat) != -1 && S_ISDIR(path_stat.st_mode))
-                {
-                    std::string indexPath = _fullPath;
-                    if (indexPath[indexPath.size() - 1] != '/')
-                        indexPath += "/";
-                    indexPath += "index.html";
-
-                    struct stat index_stat;
-                    if (stat(indexPath.c_str(), &index_stat) == 0
-                        && S_ISREG(index_stat.st_mode))
+                    // _code = HTTP_INDEX;
+                    struct stat path_stat;
+                    if (stat(_fullPath.c_str(), &path_stat) != -1 && S_ISDIR(path_stat.st_mode))
                     {
-                        _code = HTTP_INDEX;
+                        std::string indexPath = _fullPath;
+                        if (indexPath[indexPath.size() - 1] != '/')
+                            indexPath += "/";
+                        indexPath += "index.html";
+
+                        struct stat index_stat;
+                        if (stat(indexPath.c_str(), &index_stat) == 0
+                            && S_ISREG(index_stat.st_mode))
+                        {
+                            _code = HTTP_AUTOINDEX;
+                            _type = "text/html";
+
+                            return true;
+                        }
+                        if (_autoindexOn)
+                        {
+                            _code = HTTP_AUTOINDEX;
+                            _type = "text/html";
+
+                            return true;
+                        }
+                        // case of autoindex == off and index doesn't exist
+                        _errors = true;
+                        _code = HTTP_403;
                         _type = "text/html";
 
-                        return true;
+                        return false;
                     }
-                    if (_autoindexOn)
-                    {
-                        _code = HTTP_AUTOINDEX;
-                        _type = "text/html";
 
-                        return true;
-                    }
-                    // case of autoindex == off and index doesn't exist
-                    _errors = true;
-                    _code = HTTP_403;
-                    _type = "text/html";
-
-                    return false;
                 }
             }
 

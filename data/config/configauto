@@ -1,24 +1,18 @@
 # ─────────────────────────────────────────
-#  SERVEUR 3 — Même port, autre interface
+#  SERVEUR 1
 # ─────────────────────────────────────────
+
 server {
-    listen       127.0.0.1:8080;     # même port, mais interface différente
+
+    listen       127.0.0.1:8080;
     server_name  internal.localhost;
 
     error_page 400 /errors/404.html;
 
     location / {
-        root        data/www/html;
-        index       index2.html index.html;
+        root        data/www/;
         methods     GET;
         autoindex   on;
-    }
-
-    location /cgi-bin/python {
-        root            data/cgi-bin;
-        methods         DELETE;
-        cgi_extension   .py  /usr/bin/python3;
-        index           index.py;
     }
 
     location /api {
@@ -27,10 +21,10 @@ server {
         autoindex   off;
     }
 
+
     location /upload {
         root        data/upload;
         methods     GET POST DELETE;
         autoindex   off;
     }
 }
-

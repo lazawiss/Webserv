@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/08 20:17:34 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/09 20:06:36 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -110,11 +110,8 @@ bool EpollLoop::do_read_fd(
         LOG_ERROR("Error reading from client fd");
         return (close(fd), false);
     }
-    
 
     std::string request = std::string(buf, n_read);
-
-    std::cout << "REQUEST LINE BEFORE PARSER: \n" << request << std::endl;
 
     // find which listener accepted this client
     int listenerSockfd = _clientToListener[fd];
@@ -163,7 +160,6 @@ bool EpollLoop::do_read_fd(
             "HTTP/1.1 500 Internal Server Error\r\n"
             "Content-Type: text/html\r\n"
             "Content-Length: 0\r\n\r\n";
-        // return (close(fd), false);  
         ev.events = EPOLLOUT;
 
         ev.data.fd = fd;

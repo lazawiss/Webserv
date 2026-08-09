@@ -86,7 +86,7 @@ def render_page(records, message=""):
 <body>
   <h1>Contact database</h1>
   %s
-  <form method="post">
+#   <form method="post">
     Name: <input name="username" required />
     Email: <input type="email" name="emailaddress" required />
     <button type="submit">Add</button>
