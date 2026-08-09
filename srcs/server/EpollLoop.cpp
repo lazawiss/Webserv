@@ -114,7 +114,8 @@ bool EpollLoop::do_read_fd(
 
     std::string request = std::string(buf, n_read);
 
-    std::cout << "REQUEST LINE BEFORE PARSER: \n" << request << std::endl;
+    // ------------ Debug ------------
+    LOG_DEBUG("\nRequest line:\n" + request);
 
     // find which listener accepted this client
     int listenerSockfd = _clientToListener[fd];
@@ -211,7 +212,8 @@ bool EpollLoop::do_read_fd(
     }
 
     std::ostringstream dbg;
-    dbg << "Response header built for fd=" << fd;
+    // ------------ Debug ------------
+    dbg << "\nResponse header:" << fd;
     LOG_DEBUG(dbg.str());
 
     _clientResponseBuffer[fd] += std::string(requestHandler.getHeader());
@@ -219,7 +221,6 @@ bool EpollLoop::do_read_fd(
         requestHandler.getBuffer().c_str(),
         requestHandler.getNReadIndex());
 
-    
     ev.events = EPOLLOUT;
 
     ev.data.fd = fd;

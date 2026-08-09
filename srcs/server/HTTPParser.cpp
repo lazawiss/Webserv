@@ -279,7 +279,7 @@ bool HTTPParser::isRequestValid( ListenerManager const & listen ) {
         std::string key = line.substr(0, colon);
         std::string value = line.substr(colon + 1);
         
-        size_t j = 0;
+        size_t j = 0; // MARQUE
         while (j < value.size() && (value[j] == ' ' || value[j] == '\t'))
             j++;
 
@@ -335,7 +335,7 @@ bool HTTPParser::isRequestValid( ListenerManager const & listen ) {
                 break;
         }
 
-        i = end + 2;
+        i = end + 2; // MARQUE
         if (i < _request.size() && (_request[i] == ' ' || _request[i] == '\t'))
             return LOG_ERROR("Leading whitespace after request-line"), false;
     }
@@ -494,6 +494,7 @@ int HTTPParser::checkHost( std::string const & value, ListenerManager const & li
 
     if (matchHost(listen, listener) == false)
     {
+        // ------------ Debug ------------
         LOG_DEBUG("Host mismatch, got: " + value);
 
         _errors = true;
@@ -625,6 +626,7 @@ int HTTPParser::checkContentType( std::string const & value ) {
 
     // ------------ Debug ------------
     LOG_DEBUG("Content-Type(1): " + _type);
+    // ------------ Debug ------------
     LOG_DEBUG("Content-Type(2): " + _content_type);
 
     if (_isCGI)
@@ -715,9 +717,9 @@ int HTTPParser::checkContentLength( std::string const & value ) {
     }
 
     _content_length = len;
-    // ------------ Debug ------------
     std::ostringstream oss;
     oss << _content_length;
+    // ------------ Debug ------------
     LOG_DEBUG("Content-Length: " + oss.str());
 
     return SERVER_OK;
@@ -831,7 +833,9 @@ void HTTPParser::buildFullPath() {
         _fullPath += suffix;
     }
 
-    LOG_DEBUG(std::string("[HTTPParser] _fullPath: '") + _fullPath + "' autoindex=" + (_autoindexOn ? "on" : "off"));
+    // ------------ Debug ------------
+    LOG_DEBUG(std::string("[HTTPParser] _fullPath: '") + _fullPath + 
+        "' autoindex=" + (_autoindexOn ? "on" : "off"));
 }
 
 
@@ -926,7 +930,7 @@ bool HTTPParser::gatherFile( size_t curPos ) {
     // Content-Type: image/jpeg
     size_t pos = line.find("Content-Type:");
     if (pos == 0) {
-        size_t j = pos + 13;
+        size_t j = pos + 13; //MARQUE
         while (j < line.size() && (line[j] == ' ' || line[j] == '\t'))
             j++;
 
@@ -972,6 +976,8 @@ bool HTTPParser::gatherFile( size_t curPos ) {
 
     std::ostringstream oss;
     oss << _fileBuf.size();
+
+    // ------------ Debug ------------
     LOG_DEBUG("Gathered file bytes: " + oss.str());
 
     return true;
