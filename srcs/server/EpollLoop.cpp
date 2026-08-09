@@ -151,9 +151,15 @@ bool EpollLoop::do_read_fd(
     if (serverConfig == NULL)
     {
         LOG_ERROR("No ServerConfig found for port " + listener->getService());
-        _clientToListener.erase(fd);  
+        _clientToListener.erase(fd);
         return (close(fd), false);
     }
+
+    std::string requestLine = request.substr(0, request.find("\r\n"));
+
+    const std::vector<std::string> &names = serverConfig->getServerNames();
+    std::string serverName = names.empty() ? listener->getService() : names[0];
+    LOG_INFO("[" + serverName + "] " + requestLine);
 
     RequestHandler requestHandler(request, *serverConfig);
 
@@ -164,7 +170,7 @@ bool EpollLoop::do_read_fd(
             "HTTP/1.1 500 Internal Server Error\r\n"
             "Content-Type: text/html\r\n"
             "Content-Length: 0\r\n\r\n";
-        // return (close(fd), false);  
+
         ev.events = EPOLLOUT;
 
         ev.data.fd = fd;
