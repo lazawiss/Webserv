@@ -2,3 +2,5 @@ webserv
 *.o
 vgcore.*
 data/www/nasa/config.js
+.DS_Store
+data/.DS_Store

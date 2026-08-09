@@ -11,49 +11,48 @@
 </head>
 <body>
 
-<canvas id="stars"></canvas>
+  <canvas id="stars"></canvas>
 
-<header>
-  <p>Daily Transmission — NASA</p>
-  <h1>Welcome to your webserver</h1>
-  <p>Every day, NASA captures an image of the universe. Here it is.</p>
-</header>
+  <header class="site-header">
+    <p class="eyebrow">DAILY TRANSMISSION — NASA</p>
+    <h1 class="wordmark">Welcome to your webserver</h1>
+    <p class="subtitle">Every day, NASA captures an image of the universe. Here it is.</p>
+  </header>
 
-<main>
-  <section id="card" aria-live="polite">
+  <main>
+    <section id="apod-card" class="apod-card" aria-live="polite">
 
-    <div id="loading">
-      <div id="pulse"></div>
-      <p>Receiving signal…</p>
-    </div>
-
-    <div id="error" class="hidden">
-      <p>Signal lost.</p>
-      <p id="error-detail">Could not retrieve today's image.</p>
-    </div>
-
-    <article id="content" class="hidden">
-      <div id="media">
-        <img id="apod-image" alt="">
-        <iframe id="apod-video" class="hidden" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+      <div id="state-loading" class="state">
+        <div class="pulse-dot"></div>
+        <p>Receiving signal…</p>
       </div>
 
-      <div id="info">
-        <p id="date-row"><span>Date</span> <span id="apod-date"></span></p>
-        <h2 id="apod-title"></h2>
-        <p id="apod-explanation"></p>
-        <p id="credit"><span>Credit</span> <span id="apod-copyright">NASA</span></p>
+      <div id="state-error" class="state hidden">
+        <p class="error-title">Signal lost.</p>
+        <p id="error-detail" class="error-detail">Could not retrieve today's image.</p>
       </div>
-    </article>
 
-  </section>
-</main>
+      <article id="state-content" class="content hidden">
+        <div class="media-frame">
+          <img id="apod-image" alt="">
+          <iframe id="apod-video" class="hidden" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </div>
 
-<footer>
-  <p>Powered by NASA's <a href="https://api.nasa.gov/" target="_blank" rel="noopener">Astronomy Picture of the Day API</a>.</p>
-</footer>
+        <div class="log">
+          <p class="log-line"><span class="log-label">Date</span><span id="apod-date"></span></p>
+          <h2 id="apod-title" class="apod-title"></h2>
+          <p id="apod-explanation" class="apod-explanation"></p>
+          <p class="log-line credit"><span class="log-label">Credit</span><span id="apod-copyright">NASA</span></p>
+        </div>
+      </article>
 
-<script src="config.js"></script>
-<script src="script.js"></script>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>Powered by NASA's <a href="https://api.nasa.gov/" target="_blank" rel="noopener">Astronomy Picture of the Day API</a>.</p>
+  </footer>
+
+  <script src="script.js"></script>
 </body>
 </html>
