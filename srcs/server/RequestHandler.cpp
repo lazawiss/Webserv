@@ -367,12 +367,13 @@ bool    RequestHandler::answerFileIcon(){
 
     struct stat sb;
     
-    if (stat("data/www/favicon.ico/favicon-16x16.png", &sb) == -1){
-        LOG_ERROR("stat failed for favicon: " + std::string(strerror(errno)));
+    std::string faviconPath = _root + "/favicon.ico/favicon-16x16.png";
+    if (stat(faviconPath.c_str(), &sb) == -1){
+        LOG_ERROR("Stat failed for favicon: " + std::string(strerror(errno)));
         return false;
     }
 
-    int indexfd = open("data/www/favicon.ico/favicon-16x16.png", O_RDONLY);
+    int indexfd = open(faviconPath.c_str(), O_RDONLY);
     if (indexfd == -1){
         LOG_ERROR("Failed to open favicon: " + std::string(strerror(errno)));
         return false;
