@@ -1,0 +1,172 @@
+body {
+    background-color: var(--main-color);
+    margin: 0px;
+    padding: 0px;
+}
+
+:root {
+    --main-color: #a2d594;
+    --cat-color: #33292b;
+    --pink-color: #d36149;
+    --eye-color: #d2873b;
+    --black-color: #262626;
+}
+
+.container {
+    height: 500px;
+    width: 350px;
+    position: absolute;
+    margin: auto;
+    bottom: 0px;
+    right: 0px;
+    left: 0px;
+    top: 0px;
+    z-index: -1;
+}
+
+.cat {
+    position: relative;
+    top: 150px;
+    left: 50px;
+}
+
+.face {
+    background-color: var(--cat-color);
+    height: 90px;
+    width: 150px;
+    border-radius: 30px;
+}
+
+.ear-r, .ear-l {
+    width: 0px;
+    height: 0px;
+    border-bottom: 50px solid var(--cat-color);
+    border-left: 20px solid transparent;
+    border-right: 20px solid transparent;
+    position: relative;
+    z-index: -1;
+}
+
+.ear-l{
+    bottom: 35px;
+    transform: rotate(-30deg);
+}
+
+.ear-r {
+    bottom: 85px;
+    left: 110px;
+    transform: rotate(30deg);
+}
+
+.inner1 {
+    width: 0px;
+    height: 0px;
+    border-bottom: 50px solid var(--pink-color);
+    border-left: 25px solid transparent;
+    position: relative;
+    right: 25px;
+}
+
+.inner2 {
+    width: 0px;
+    height: 0px;
+    border-bottom: 50px solid var(--pink-color);
+    border-right: 25px solid transparent;
+    position: relative;
+}
+
+.eye-r, .eye-l {
+    background-color: var(--eye-color);
+    height: 30px;
+    width: 30px;
+    border-radius: 50%;
+    position: relative;
+}
+
+.eye-l {
+    bottom: 75px;
+    left: 30px;
+}
+
+.eye-r {
+    bottom: 105px;
+    left: 90px;
+}
+
+.eyeball {
+    background-color: var(--black-color);
+    height: 24px;
+    width: 24px;
+    border-radius: 50%;
+    position: relative;
+    top: 3px;
+    left: 3px;
+}
+
+.nose {
+    height: 0px;
+    width: 0px;
+    border-top: 8px solid var(--pink-color);
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    position: relative;
+    bottom: 110px;
+    left: 68px;
+}
+
+.mustache-l, .mustache-r {
+    background-color: var(--pink-color);
+    height: 8px;
+    width: 1px;
+    position: relative;
+}
+
+.mustache-l{
+    transform: rotate(45deg);
+    right: 4px;
+    bottom: 1.5px;
+}
+
+.mustache-r{
+    transform:rotate(-45deg);
+    bottom: 9px;
+    left: 2.5px;
+}
+
+.body {
+    background-color: var(--cat-color);
+    position: relative;
+    height: 120px;
+    width: 130px;
+    left: 20px;
+    bottom: 5px;
+    border-radius: 0px 65px 0px 0px;
+}
+
+.paw-l, .paw-r {
+    background-color: var(--cat-color);
+    position: relative;
+    height: 10px;
+    width: 22px;
+    border-radius: 0px 0px 10px 10px;
+}
+
+.paw-l {
+    top: 120px;
+}
+
+.paw-r {
+    top: 110px;
+    left: 50px;
+}
+
+.tail {
+    background-color: var(--cat-color);
+    position: relative;
+    width: 100px;
+    height: 20px;
+    left: 100px;
+    top: 80px;
+    border-radius: 0px 20px 20px 0px;
+}
+ 
