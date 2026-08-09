@@ -32,5 +32,13 @@ server {
         methods     GET POST DELETE;
         autoindex   off;
     }
+
+    location /image.html {
+        return          301 /new-page;   # redirection permanente
+    }
+
+    location /google {
+        return          302 https://www.google.com; # redirection externe
+    }
 }
 

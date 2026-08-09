@@ -437,7 +437,7 @@ void Parser::parseDirectiveErrorPage(AConfig &ref)
         std::ostringstream oss;
         oss << code;
         throw std::runtime_error("Invalid HTTP error code '" + oss.str()
-            + "', accepted values: 400, 404, 405, 413, 414, 421, 500, 502");
+            + "', accepted values: 301, 302, 400, 403, 404, 405, 413, 414, 421, 500, 502");
     }
 
     if (current().type != Word)
@@ -458,13 +458,13 @@ size_t Parser::parseCode(const std::string &word) const
 {
     if (word.size() != 3)
         throw std::runtime_error("Invalid HTTP error code: expected a "
-            "value between 400 and 599 (e.g. '404', '500')");
+            "value between 300 and 599 (e.g. '404', '500')");
 
     for (size_t i = 0; i < word.size(); i++)
     {
         if (!std::isdigit(word[i]))
             throw std::runtime_error("Invalid HTTP error code: expected a "
-                "value between 400 and 599 (e.g. '404', '500')");
+                "value between 300 and 599 (e.g. '404', '500')");
     }
 
     return std::atoi(word.c_str());
@@ -594,13 +594,13 @@ void Parser::parseDirectiveReturn(LocationConfig &ref)
 
     int code = parseCode(next().value);
 
-    if (code != 400 && code != 404 && code != 405 && code != 413 && code != 414
+    if (code != 301 && code != 302 && code != 400 && code != 403 && code != 404 && code != 405 && code != 413 && code != 414
         && code != 421 && code != 500 && code != 502)
     {
         std::ostringstream oss;
         oss << code;
         throw std::runtime_error("Invalid HTTP error code '" + oss.str()
-            + "', accepted values: 400, 404, 405, 413, 414, 421, 500, 502");
+            + "', accepted values: 301, 302, 400, 403, 404, 405, 413, 414, 421, 500, 502");
     }
 
     if (current().type != Word)
