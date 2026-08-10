@@ -46,7 +46,11 @@ std::string logTimestamp();
 
 #define LOG_SYSTEM(msg) std::cout << logTimestamp() << " [System]  " << msg << std::endl
 #define LOG_INFO(msg)   std::cout << logTimestamp() << " [Info]    " << msg << std::endl
+#ifdef DEBUG
 #define LOG_DEBUG(msg)  std::cout << logTimestamp() << " [Debug]   " << msg << std::endl
+#else
+#define LOG_DEBUG(msg)  (void)0
+#endif
 #define LOG_ERROR(msg)  std::cerr << logTimestamp() << " [Error]   " << msg << std::endl
 #define LOG_SEP()       std::cout << logTimestamp() << " ---------------------------------------------------" << std::endl
 
