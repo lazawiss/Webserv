@@ -25,21 +25,18 @@
 
 HTTPParser::HTTPParser( std::string const & request,
     const ServerConfig & serverConfig) :
-    _request(request),
-    _serverConfig(serverConfig),
+    _request(request), _serverConfig(serverConfig),
     _code(HTTP_INDEX), _type(), _method(),
     _requesttarget(), _httpversion(), _boundary(),
     _fileLength(), _fileName(), _fileBuf(),
-    _errors(false), _upload(false), _content_length(0), _connectionType(CONN_KEEP_ALIVE), 
-    _host("8080"),
+    _errors(false), _upload(false), _content_length(0), 
+    _connectionType(CONN_KEEP_ALIVE), _host("8080"),
     _isCGI(false), _fullPath(), _query_string(), _scriptFilename(),
-    _body(), _content_type(), 
-    _content_int(0), _isContentLengthFound(false),
+    _body(), _content_type(), _content_int(0), _isContentLengthFound(false),
     _isHostFound(false), _isContentTypeFound(false), _fileContentType() {}
 
 HTTPParser::HTTPParser( HTTPParser const & src ) :
-    _request(src._request),
-    _serverConfig(src._serverConfig),
+    _request(src._request), _serverConfig(src._serverConfig),
     _code(src._code), _type(src._type),
     _method(src._method), _requesttarget(src._requesttarget),
     _httpversion(src._httpversion), _boundary(src._boundary),
@@ -279,11 +276,11 @@ bool HTTPParser::isRequestValid( ListenerManager const & listen ) {
         std::string key = line.substr(0, colon);
         std::string value = line.substr(colon + 1);
         
-        size_t j = 0;
-        while (j < value.size() && (value[j] == ' ' || value[j] == '\t'))
-            j++;
+        if (!value.empty() && value[0] == ' ')
+            value = value.substr(1);
 
-        value = value.substr(j);
+        if (!value.empty() && (value[0] == ' ' || value[0] == '\t'))
+            return LOG_ERROR("Invalid whitespace after ':' in header: " + line), false;
 
         switch (getHeaderType(key))
         {
@@ -408,33 +405,18 @@ bool HTTPParser::checkSize() {
 bool HTTPParser::checkRequestLine() {
 
     size_t lineEnd = _request.find("\r\n");
-    if (lineEnd == std::string::npos) {
-        _errors = true;
-        _code = HTTP_400;
-        _type = "text/html";
-        
+    if (varNotFound400(lineEnd) == false)
         return false;
-    }
 
     std::string line = _request.substr(0, lineEnd);
 
     size_t firstSpace = line.find(' ');
-    if (firstSpace == std::string::npos) {
-        _errors = true;
-        _code   = HTTP_400;
-        _type   = "text/html";
-
+    if (varNotFound400(firstSpace) == false)
         return false;
-    }
 
     size_t secondSpace = line.find(' ', firstSpace + 1);
-    if (secondSpace == std::string::npos) {
-        _errors = true;
-        _code   = HTTP_400;
-        _type   = "text/html";
-
+    if (varNotFound400(secondSpace) == false)
         return false;
-    }
 
     if (line.find(' ', secondSpace + 1) != std::string::npos) {
         _errors = true;
@@ -494,6 +476,7 @@ int HTTPParser::checkHost( std::string const & value, ListenerManager const & li
 
     if (matchHost(listen, listener) == false)
     {
+        // ------------ Debug ------------
         LOG_DEBUG("Host mismatch, got: " + value);
 
         _errors = true;
@@ -527,7 +510,7 @@ bool HTTPParser::validateHost( std::string const & value, std::string & listen )
     for (size_t i = 0; i < host.size(); ++i)
     {
         char c = host[i];
-        if (isalnum(static_cast<unsigned char>(c)) == false && c != '.' && c !=  '-')
+        if (isalnum(static_cast<unsigned char>(c)) == false && c != '.' && c != '-')
             return false;
     }
     for (size_t i = 0; i < port.size(); ++i)
@@ -548,6 +531,9 @@ bool HTTPParser::matchHost( std::string const & host, ListenerManager const & li
     std::string hostname = listener.getNode() + ":" + listener.getService();
 
     char const *colon = strrchr(host.c_str(), ':');
+    if (colon == NULL)
+        return false;
+
     std::string hostName = std::string(host.c_str(), colon);
     std::string service  = std::string(colon + 1);
 
@@ -625,6 +611,7 @@ int HTTPParser::checkContentType( std::string const & value ) {
 
     // ------------ Debug ------------
     LOG_DEBUG("Content-Type(1): " + _type);
+    // ------------ Debug ------------
     LOG_DEBUG("Content-Type(2): " + _content_type);
 
     if (_isCGI)
@@ -701,8 +688,10 @@ int HTTPParser::checkContentLength( std::string const & value ) {
         return SERVER_ERROR;
     }
 
-    // MARQUE Lea/Delphine: maybe use _maxBodySize ? 
-    if (len > BUF_SIZE) {
+    size_t limit = parseBodySize(_serverConfig.getClientMaxBodySize());
+    if (limit == 0)
+        limit = BUF_SIZE;
+    if (len > limit) {
         LOG_ERROR("Content-Length exceeds limit");
 
         _errors = true;
@@ -713,12 +702,130 @@ int HTTPParser::checkContentLength( std::string const & value ) {
     }
 
     _content_length = len;
-    // ------------ Debug ------------
     std::ostringstream oss;
     oss << _content_length;
+    // ------------ Debug ------------
     LOG_DEBUG("Content-Length: " + oss.str());
 
     return SERVER_OK;
+}
+
+size_t HTTPParser::parseBodySize( std::string const & s ) {
+    if (s.empty())
+        return 0;
+
+    std::stringstream ss(s);
+    size_t value;
+    ss >> value;
+    if (ss.fail())
+        return 0;
+
+    char unit = '\0';
+    ss >> unit;
+
+    switch (std::toupper(static_cast<unsigned char>(unit))) {
+        case 'K': return value * 1024UL;
+        case 'M': return value * 1024UL * 1024UL;
+        case 'G': return value * 1024UL * 1024UL * 1024UL;
+
+        default:  return value;
+    }
+}
+
+/*
+** ============================================================================
+** Parser HTTP - POST
+** ============================================================================
+*/
+
+// Parses "Content-Disposition: form-data; name="..."; filename="...""
+bool HTTPParser::checkContentDisposition( size_t & curPos ) {
+
+    size_t pos = _body.find("Content-Disposition:");
+    if (varNotFound400(pos) == false)
+        return LOG_ERROR("Content-Disposition missing for POST method"), false;
+
+    size_t lineEnd = _body.find("\r\n", pos);
+    if (varNotFound400(lineEnd) == false)
+        return LOG_ERROR("Malformed request: missing CRLF"), false;
+
+    std::string line = _body.substr(pos, lineEnd - pos);
+
+    if (varNotFound400(line.find("form-data")) == false)
+        return LOG_ERROR("Content-Disposition is not a form-data type"), false;
+
+    size_t fnamePos = line.find("filename=\"");
+    if (varNotFound400(fnamePos) == false)
+        return LOG_ERROR("Content-Disposition needs a filename"), false;
+
+    size_t fnameStart = fnamePos + 10;
+    size_t fnameEnd = line.find("\"", fnameStart);
+    if (varNotFound400(fnameEnd) == false)
+        return false;
+
+    _fileName = line.substr(fnameStart, fnameEnd - fnameStart);
+    // ------------ Debug ------------
+    LOG_DEBUG("Upload filename: " + _fileName);
+
+    curPos = lineEnd + 2;
+    return true;
+}
+
+bool HTTPParser::gatherFile( size_t curPos ) {
+
+    size_t lineEnd = _body.find("\r\n", curPos);
+    if (varNotFound400(lineEnd) == false)
+        return LOG_ERROR("Malformed request: missing CRLF"), false;
+
+    std::string line = _body.substr(curPos, lineEnd - curPos);
+
+    // Content-Type: image/jpeg
+    size_t pos = line.find("Content-Type:");
+    if (pos == 0) {
+        size_t j = pos + 13; //MARQUE
+        while (j < line.size() && (line[j] == ' ' || line[j] == '\t'))
+            j++;
+
+        _fileContentType = line.substr(j);
+    
+        // ------------ Debug ------------
+        LOG_DEBUG("File Content-Type: " + _fileContentType);
+    } else {
+        _fileContentType = "";
+    }
+
+    size_t position = lineEnd + 2;
+    if (position + 1 < _body.size() && _body[position] == '\r' && _body[position + 1] == '\n')
+        position += 2;
+
+    std::string endMarker = "--" + _boundary; // ----boundary=
+    size_t endPos = _body.find(endMarker, position);
+    if (varNotFound400(endPos) == false)
+        return LOG_ERROR("End boundary not found in body"), false;
+
+    size_t fileEnd = endPos;
+    if (fileEnd >= 2 && _body[fileEnd - 2] == '\r' && _body[fileEnd - 1] == '\n')
+        fileEnd -= 2;
+
+    if (fileEnd < position) {
+        LOG_ERROR("Malformed or empty file content");
+
+        _errors = true;
+        _code = HTTP_400;
+        _type = "text/html";
+
+        return false;
+    }
+
+    _fileBuf = _body.substr(position, fileEnd - position);
+
+    std::ostringstream oss;
+    oss << _fileBuf.size();
+
+    // ------------ Debug ------------
+    LOG_DEBUG("Gathered file bytes: " + oss.str());
+
+    return true;
 }
 
 /*
@@ -808,155 +915,60 @@ void HTTPParser::buildFullPath() {
         _fullPath += suffix;
     }
 
-    LOG_DEBUG(std::string("[HTTPParser] _fullPath: '") + _fullPath + "' autoindex=" + (_autoindexOn ? "on" : "off"));
-}
-
-
-
-/*
-** ============================================================================
-** Parser HTTP - POST
-** ============================================================================
-*/
-
-// Parses "Content-Disposition: form-data; name="..."; filename="...""
-bool HTTPParser::checkContentDisposition( size_t & curPos ) {
-
-    size_t pos = _body.find("Content-Disposition:");
-    if (pos == std::string::npos) {
-        LOG_ERROR("Content-Disposition missing for POST method");
-
-        _errors = true;
-        _code = HTTP_400;
-        _type = "text/html";
-
-        return false;
-    }
-
-    size_t lineEnd = _body.find("\r\n", pos);
-    if (lineEnd == std::string::npos) {
-        LOG_ERROR("Malformed request: missing CRLF");
-
-        _errors = true;
-        _code = HTTP_400;
-        _type = "text/html";
-
-        return false;
-    }
-
-    std::string line = _body.substr(pos, lineEnd - pos);
-
-    if (line.find("form-data") == std::string::npos) {
-        LOG_ERROR("Content-Disposition is not a form-data type");
-
-        _errors = true;
-        _code = HTTP_400;
-        _type = "text/html";
-
-        return false;
-    }
-
-    size_t fnamePos = line.find("filename=\"");
-    if (fnamePos == std::string::npos) {
-        LOG_ERROR("Content-Disposition needs a filename");
-
-        _errors = true;
-        _code = HTTP_400;
-        _type = "text/html";
-
-        return false;
-    }
-
-    size_t fnameStart = fnamePos + 10;
-    size_t fnameEnd = line.find("\"", fnameStart);
-    if (fnameEnd == std::string::npos) {
-        _errors = true;
-        _code = HTTP_400;
-        _type = "text/html";
-
-        return false;
-    }
-
-    _fileName = line.substr(fnameStart, fnameEnd - fnameStart);
     // ------------ Debug ------------
-    LOG_DEBUG("Upload filename: " + _fileName);
-
-    curPos = lineEnd + 2;
-    return true;
+    LOG_DEBUG(std::string("[HTTPParser] _fullPath: '") + _fullPath + 
+        "' autoindex=" + (_autoindexOn ? "on" : "off"));
 }
 
-bool HTTPParser::gatherFile( size_t curPos ) {
-
-    size_t lineEnd = _body.find("\r\n", curPos);
-        if (lineEnd == std::string::npos) {
-        LOG_ERROR("Malformed request: missing CRLF");
-
-        _errors = true;
-        _code = HTTP_400;
-        _type = "text/html";
-
-        return false;
-    }
-
-    std::string line = _body.substr(curPos, lineEnd - curPos);
-
-    // Content-Type: image/jpeg
-    size_t pos = line.find("Content-Type:");
-    if (pos == 0) {
-        size_t j = pos + 13;
-        while (j < line.size() && (line[j] == ' ' || line[j] == '\t'))
-            j++;
-
-        _fileContentType = line.substr(j);
+std::string HTTPParser::addSuffix(std::string suffix) {
     
-        // ------------ Debug ------------
-        LOG_DEBUG("File Content-Type: " + _fileContentType);
-    } else {
-        _fileContentType = "";
-    }
-
-    size_t position = lineEnd + 2;
-    if (position + 1 < _body.size() && _body[position] == '\r' && _body[position + 1] == '\n')
-        position += 2;
-
-    std::string endMarker = "--" + _boundary; // ----boundary=
-    size_t endPos = _body.find(endMarker, position);
-    if (endPos == std::string::npos) {
-        LOG_ERROR("End boundary not found in body");
-
-        _errors = true;
-        _code = HTTP_400;
+    if (suffix  == ".jpg")
+        _type = "image/jpeg";
+    if (suffix  == ".png")
+        _type = "image/png";
+    if (suffix  == ".gif")
+        _type = "image/gif";
+    if (suffix  == ".webp")
+        _type = "image/webp";
+    if (suffix == ".txt")
+        _type = "text/plain";
+    if (suffix == ".html")
         _type = "text/html";
+    if (suffix == ".css")
+        _type = "text/css";
+    if (suffix == ".js")
+        _type = "text/javascript";
 
-        return false;
+    return _type;
+}
+
+std::string HTTPParser::httpCodeToString( HttpCode code )
+{
+    switch (code)
+    {
+        case HTTP_400:          return "400";
+        case HTTP_403:          return "403";
+        case HTTP_404:          return "404";
+        case HTTP_405:          return "405";
+        case HTTP_413:          return "413";
+        case HTTP_421:          return "421";
+        case HTTP_201:          return "201";
+        case HTTP_204:          return "204";
+        case HTTP_500:          return "500";
+        case HTTP_502:          return "502";
+        case HTTP_CGI:          return "200";
+        case HTTP_INDEX:        return "200";
+        case HTTP_AUTOINDEX:    return "200";
+        case HTTP_FAVICON:      return "200";
+        case HTTP_FILE:         return "200";
+
+        default:                return "200";
     }
-
-    size_t fileEnd = endPos;
-    if (fileEnd >= 2 && _body[fileEnd - 2] == '\r' && _body[fileEnd - 1] == '\n')
-        fileEnd -= 2;
-
-    if (fileEnd < position) {
-        LOG_ERROR("Malformed or empty file content");
-
-        _errors = true;
-        _code = HTTP_400;
-        _type = "text/html";
-
-        return false;
-    }
-
-    _fileBuf = _body.substr(position, fileEnd - position);
-
-    std::ostringstream oss;
-    oss << _fileBuf.size();
-    LOG_DEBUG("Gathered file bytes: " + oss.str());
-
-    return true;
 }
 
 /*
 ** ============================================================================
-** Parser HTTP - Dispatch per Method + Helpers
+** Parser HTTP - Dispatch per Method
 ** ============================================================================
 */
 
@@ -1006,29 +1018,6 @@ bool HTTPParser::compareMethodWithConfigFile() {
     return false;
 }
 
-
-std::string HTTPParser::addSuffix(std::string suffix) {
-    
-    if (suffix  == ".jpg")
-        _type = "image/jpeg";
-    if (suffix  == ".png")
-        _type = "image/png";
-    if (suffix  == ".gif")
-        _type = "image/gif";
-    if (suffix  == ".webp")
-        _type = "image/webp";
-    if (suffix == ".txt")
-        _type = "text/plain";
-    if (suffix == ".html")
-        _type = "text/html";
-    if (suffix == ".css")
-        _type = "text/css";
-    if (suffix == ".js")
-        _type = "text/javascript";
-
-    return _type;
-}
-
 bool HTTPParser::findMethods() {
 
     if (compareMethodWithConfigFile() == true)
@@ -1044,7 +1033,8 @@ bool HTTPParser::findMethods() {
                     for (size_t j = 0; j < indexVector.size(); j++)
                     {
                         struct stat sb;
-                        std::string index = "data/www/html/" + indexVector[j];
+                        std::string locRoot = locs[i].getRoot().empty() ? _serverConfig.getRoot() : locs[i].getRoot();
+                        std::string index = locRoot + "/" + indexVector[j];
                         if (stat(index.c_str(), &sb) == 0) {
                             _fileName = indexVector[j];
                             _code = HTTP_FILE;
@@ -1254,38 +1244,4 @@ bool HTTPParser::findMethods() {
     }
 
     return false;
-}
-
-std::string HTTPParser::httpCodeToString( HttpCode code )
-{
-    switch (code)
-    {
-        case HTTP_400:          return "400";
-        case HTTP_403:          return "403";
-        case HTTP_404:          return "404";
-        case HTTP_405:          return "405";
-        case HTTP_413:          return "413";
-        case HTTP_421:          return "421";
-        case HTTP_201:          return "201";
-        case HTTP_204:          return "204";
-        case HTTP_500:          return "500";
-        case HTTP_502:          return "502";
-        case HTTP_CGI:          return "200";
-        case HTTP_INDEX:        return "200";
-        case HTTP_AUTOINDEX:    return "200";
-        case HTTP_FAVICON:      return "200";
-        case HTTP_FILE:         return "200";
-
-        default:                return "200";
-    }
-}
-
-bool HTTPParser::findPath()
-{
-    return true;
-}
-
-bool HTTPParser::findHeaders()
-{
-    return true;
 }

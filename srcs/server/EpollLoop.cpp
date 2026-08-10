@@ -114,7 +114,8 @@ bool EpollLoop::do_read_fd(
 
     std::string request = std::string(buf, n_read);
 
-    std::cout << "REQUEST LINE BEFORE PARSER: \n" << request << std::endl;
+    // ------------ Debug ------------
+    LOG_DEBUG("\nRequest line:\n" + request);
 
     // find which listener accepted this client
     int listenerSockfd = _clientToListener[fd];
@@ -150,9 +151,15 @@ bool EpollLoop::do_read_fd(
     if (serverConfig == NULL)
     {
         LOG_ERROR("No ServerConfig found for port " + listener->getService());
-        _clientToListener.erase(fd);  
+        _clientToListener.erase(fd);
         return (close(fd), false);
     }
+
+    std::string requestLine = request.substr(0, request.find("\r\n"));
+
+    const std::vector<std::string> &names = serverConfig->getServerNames();
+    std::string serverName = names.empty() ? listener->getService() : names[0];
+    LOG_INFO("[" + serverName + "] " + requestLine);
 
     RequestHandler requestHandler(request, *serverConfig);
 
@@ -163,7 +170,7 @@ bool EpollLoop::do_read_fd(
             "HTTP/1.1 500 Internal Server Error\r\n"
             "Content-Type: text/html\r\n"
             "Content-Length: 0\r\n\r\n";
-        // return (close(fd), false);  
+
         ev.events = EPOLLOUT;
 
         ev.data.fd = fd;
@@ -211,7 +218,8 @@ bool EpollLoop::do_read_fd(
     }
 
     std::ostringstream dbg;
-    dbg << "Response header built for fd=" << fd;
+    // ------------ Debug ------------
+    dbg << "\nResponse header:" << fd;
     LOG_DEBUG(dbg.str());
 
     _clientResponseBuffer[fd] += std::string(requestHandler.getHeader());
@@ -219,7 +227,6 @@ bool EpollLoop::do_read_fd(
         requestHandler.getBuffer().c_str(),
         requestHandler.getNReadIndex());
 
-    
     ev.events = EPOLLOUT;
 
     ev.data.fd = fd;

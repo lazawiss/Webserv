@@ -199,7 +199,8 @@ std::string RequestHandler::getFile( std::string const & code, bool const & erro
         file += "/";
         file += code;
     }
- 
+
+    // ------------ Debug ------------
     LOG_DEBUG("Serving file: " + file);
 
     return file;
@@ -210,6 +211,7 @@ std::string RequestHandler::getFileImage( std::string const & code){
     std::string file = "data/www/images";
     file += "/";
     file += code;
+    // ------------ Debug ------------
     LOG_DEBUG("Serving image: " + file);
     return file;
 }
@@ -219,6 +221,7 @@ std::string RequestHandler::getFileUpload( std::string const & code){
     std::string file = "data/upload";
     file += "/";
     file += code;
+    // ------------ Debug ------------
     LOG_DEBUG("Serving upload: " + file);
     return file;
 }
@@ -227,6 +230,7 @@ std::string RequestHandler::getFileUpload( std::string const & code){
 //  header : code + Content-Type
 std::string RequestHandler::buildAnswerHeader( std::string const & code, std::string const & type ){
     
+    // ------------ Debug ------------
     LOG_DEBUG("Building response header, code: " + code);
 
     std::string codeName[11] =
@@ -342,7 +346,9 @@ bool    RequestHandler::answerFile( std::string const & file ){
         LOG_ERROR("stat failed: " + file + " - " + strerror(errno));
         return false;
     }
+
     std::ostringstream dbg; dbg << "File size: " << sb.st_size;
+    // ------------ Debug ------------
     LOG_DEBUG(dbg.str());
 
     int indexfd = open(file.c_str(), O_RDONLY);
@@ -367,12 +373,13 @@ bool    RequestHandler::answerFileIcon(){
 
     struct stat sb;
     
-    if (stat("data/www/favicon.ico/favicon-16x16.png", &sb) == -1){
-        LOG_ERROR("stat failed for favicon: " + std::string(strerror(errno)));
+    std::string faviconPath = "data/www/favicon.ico/favicon-16x16.png";
+    if (stat(faviconPath.c_str(), &sb) == -1){
+        LOG_ERROR("Stat failed for favicon: " + std::string(strerror(errno)));
         return false;
     }
 
-    int indexfd = open("data/www/favicon.ico/favicon-16x16.png", O_RDONLY);
+    int indexfd = open(faviconPath.c_str(), O_RDONLY);
     if (indexfd == -1){
         LOG_ERROR("Failed to open favicon: " + std::string(strerror(errno)));
         return false;
@@ -416,6 +423,8 @@ bool    RequestHandler::uploadFile( std::string const & filename, std::string co
 
     std::ostringstream dbg;
     dbg << "Uploaded file size: " << sb.st_size;
+
+    // ------------ Debug ------------
     LOG_DEBUG(dbg.str());
 
     return true;
