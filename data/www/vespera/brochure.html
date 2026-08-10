@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brochure — Vespera</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="hud" aria-hidden="true">
+    <div class="hud__track">
+      <span>SECTEUR : <b>NEXUS-7</b></span>
+      <span>POPULATION : <b>14,2M</b></span>
+      <span>MÉTÉO : <b>PLUIE ACIDE — 68%</b></span>
+      <span>HEURE LOCALE : <b data-hud-clock>--:--</b></span>
+      <span>NIVEAU DE SÉCURITÉ : <b>ORANGE</b></span>
+      <span>RÉSEAU NÉON : <b>STABLE</b></span>
+      <span>SECTEUR : <b>NEXUS-7</b></span>
+      <span>POPULATION : <b>14,2M</b></span>
+      <span>MÉTÉO : <b>PLUIE ACIDE — 68%</b></span>
+      <span>HEURE LOCALE : <b data-hud-clock>--:--</b></span>
+      <span>NIVEAU DE SÉCURITÉ : <b>ORANGE</b></span>
+      <span>RÉSEAU NÉON : <b>STABLE</b></span>
+    </div>
+  </div>
+
+  <nav class="nav">
+    <div class="nav__logo">VESPERA<span>.</span></div>
+    <button class="nav__toggle" aria-label="Ouvrir le menu" aria-expanded="false">MENU</button>
+    <ul class="nav__links">
+      <li><a href="index.html">Accueil</a></li>
+      <li><a href="ville.html">La Ville</a></li>
+      <li><a href="brochure.html" aria-current="page">Brochure</a></li>
+      <li><a href="evenements.html">Événements</a></li>
+    </ul>
+  </nav>
+
+  <section class="section">
+    <div class="section__head" style="margin:0 auto 3rem;text-align:center">
+      <span class="eyebrow">// Demande d'accès</span>
+      <h1 style="font-size:clamp(2rem,5vw,3rem)">Recevoir la brochure de Vespera</h1>
+      <p>Renseigne ton nom et ton adresse mail, le terminal municipal t'enverra le dossier complet sur la ville : quartiers, transports et démarches d'installation.</p>
+    </div>
+
+    <div class="terminal">
+      <div class="terminal__bar"><i></i> vespera_terminal — demande_brochure.exe</div>
+      <div class="terminal__body">
+        <form id="brochure-form" action="#" method="POST" novalidate>
+          <div class="field">
+            <label for="nom">Nom</label>
+            <input type="text" id="nom" name="nom" placeholder="Ton nom" autocomplete="name" required>
+          </div>
+          <div class="field">
+            <label for="email">Adresse mail</label>
+            <input type="email" id="email" name="email" placeholder="toi@exemple.com" autocomplete="email" required>
+            <small>Utilisée uniquement pour l'envoi de la brochure.</small>
+          </div>
+          <button type="submit" class="btn btn--fill">Envoyer la demande</button>
+          <div class="form-status" role="status"></div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <span>Autorité Métropolitaine de Vespera — Terminal d'accès civil v7.3</span>
+    <span>Ceci est une ville fictive, projet à but pédagogique.</span>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
