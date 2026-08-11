@@ -81,6 +81,7 @@ GlobalConfig parse_file(const std::string &str)
 
     allTokens.push_back(Token(End, ""));
 
+
     Parser parser(allTokens);
     return parser.parse();
 }
@@ -114,10 +115,6 @@ GlobalConfig Parser::parse()
             ServerConfig server = parseServer();
 
             applyInheritance(server, config);
-            std::vector<LocationConfig>& locs = server.getLocations();
-            for (size_t i = 0; i < locs.size(); i++)
-                applyInheritance(locs[i], server);
-
             config.addServer(server);
         }
         else if (current().type == Word)
@@ -234,7 +231,8 @@ LocationConfig Parser::parseLocation()
             + "', should be a 'right braket' type");
 
     next();
-
+    const std::map<int, std::string> &returnMap = location.getReturn();
+    std::cout << "parseLocation():" << returnMap.size() << std::endl;
     return location;
 }
 
@@ -437,7 +435,7 @@ void Parser::parseDirectiveErrorPage(AConfig &ref)
         std::ostringstream oss;
         oss << code;
         throw std::runtime_error("Invalid HTTP error code '" + oss.str()
-            + "', accepted values: 301, 302, 400, 403, 404, 405, 413, 414, 421, 500, 502");
+            + "', accepted values: 400, 403, 404, 405, 413, 414, 421, 500, 502");
     }
 
     if (current().type != Word)
@@ -594,13 +592,12 @@ void Parser::parseDirectiveReturn(LocationConfig &ref)
 
     int code = parseCode(next().value);
 
-    if (code != 301 && code != 302 && code != 400 && code != 403 && code != 404 && code != 405 && code != 413 && code != 414
-        && code != 421 && code != 500 && code != 502)
+    if (code != 301 && code != 302)
     {
         std::ostringstream oss;
         oss << code;
         throw std::runtime_error("Invalid HTTP error code '" + oss.str()
-            + "', accepted values: 301, 302, 400, 403, 404, 405, 413, 414, 421, 500, 502");
+            + "', accepted values: 301, 302");
     }
 
     if (current().type != Word)
@@ -608,7 +605,8 @@ void Parser::parseDirectiveReturn(LocationConfig &ref)
             + "', should be a 'word' type");
 
     std::string uri = next().value;
-    ref.addErrorPage(code, uri);
+
+    ref.addReturn(code, uri);
 
     if (current().type != Semicolon)
         throw std::runtime_error("Unexpected token '" +  current().value
@@ -629,7 +627,7 @@ void Parser::parseDirectiveCGI(LocationConfig &ref)
     if (current().value != ".py" && current().value != ".php")
         throw std::runtime_error("Invalid CGI file format: "
             "expected .py or .php");
-
+   
     std::string key = current().value;
 
     next();

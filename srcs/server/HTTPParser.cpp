@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HTTPParser.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: leazannis <leazannis@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/09 16:31:59 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/11 22:28:48 by leazannis        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -946,6 +946,8 @@ std::string HTTPParser::httpCodeToString( HttpCode code )
 {
     switch (code)
     {
+        case HTTP_301:          return "301";
+        case HTTP_302:          return "302";
         case HTTP_400:          return "400";
         case HTTP_403:          return "403";
         case HTTP_404:          return "404";
@@ -1018,8 +1020,60 @@ bool HTTPParser::compareMethodWithConfigFile() {
     return false;
 }
 
+bool HTTPParser::isRedir(){
+
+     const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
+    if (locs.size() == 0) {
+        _code = HTTP_INDEX;
+        _type = "text/html";
+
+        return true;
+    }
+    std::cout << "locs.size(): " << locs.size() << std::endl;
+
+    std::cout << "_requesttarget: " << _requesttarget << std::endl;
+    int bestIdx = -1;
+    size_t bestLen = 0;
+    for (size_t i = 0; i < locs.size(); i++)
+    {
+        const std::string &path = locs[i].getPath();
+        std::cout << "path: " << path << std::endl;
+        if (_requesttarget.find(path) == 0)
+        {
+            bestLen = path.size();
+            std::cout << "bestLen: " << bestLen << std::endl;
+            bestIdx = (int)i;
+        }
+    }
+    
+    std::cout << "bestIdx: "<< bestIdx << std::endl;
+    if (bestIdx == -1) {
+        _errors = true;
+        _code = HTTP_405;
+        _type = "text/html";
+        return false;
+    }
+    const std::map<int, std::string> &returnMap = locs[5].getReturn();
+    std::cout << returnMap.size() << std::endl;
+    
+    /*
+    std::map<int, std::string>::const_iterator it;
+    for (it == returnMap.begin(); it != returnMap.end(); it++)
+    {
+        std::cout << it->first << " : " << it->second << std::endl;
+    }
+    */
+    
+    
+    return true;
+    
+}
+
+
 bool HTTPParser::findMethods() {
 
+    if(isRedir() == false)
+        return false;
     if (compareMethodWithConfigFile() == true)
     {
         if (_method == "GET")
@@ -1037,6 +1091,7 @@ bool HTTPParser::findMethods() {
                         std::string index = locRoot + "/" + indexVector[j];
                         if (stat(index.c_str(), &sb) == 0) {
                             _fileName = indexVector[j];
+                            std::cout << "_filename:" <<_fileName << std::endl;
                             _code = HTTP_FILE;
                             break ;
                         }

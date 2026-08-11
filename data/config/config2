@@ -34,7 +34,7 @@ server {
     }
 
     location /image.html {
-        return          301 /new-page;   # redirection permanente
+        return          301 data/redirection/index.html;   # redirection permanente
     }
 
     location /google {
