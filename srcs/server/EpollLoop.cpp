@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/11 18:16:26 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/11 18:51:07 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -218,12 +218,8 @@ static RequestState dechunkBody( const std::string &body, std::string &decoded )
 static RequestState analyzeRequest( const std::string &acc, std::string &request)
 {
     size_t headerEnd = acc.find("\r\n\r\n");
-    if (headerEnd == std::string::npos)
-    {
-        if (acc.size() > BUF_SIZE)
-            return REQ_BAD_413;       
+    if (headerEnd == std::string::npos)     
         return REQ_INCOMPLETE;
-    }
     size_t bodyStart = headerEnd + 4;
     const std::string headerBlock = acc.substr(0, headerEnd);
 
@@ -290,11 +286,15 @@ bool EpollLoop::do_read_fd(
     char    buf[BUF_SIZE];
 
     ssize_t n_read = read(fd, buf, BUF_SIZE);
-    if (n_read <= 0)
+    if (n_read == 0)
     {
-        LOG_ERROR("Client closed connection or read error");
-        cleanupClient(fd, epollfd);
-        return false;
+        LOG_ERROR("Client closed connection");
+        return (close(fd), false);
+    }
+    if (n_read == -1)
+    {
+        LOG_ERROR("Error reading from client fd");
+        return (close(fd), false);
     }
     std::string &acc = _clientRequestBuffer[fd];
     acc.append(buf, n_read);
@@ -318,26 +318,26 @@ bool EpollLoop::do_read_fd(
         cleanupClient(fd, epollfd);
         return true;
     }
-    else if (state == REQ_BAD_411){
-        _clientResponseBuffer[fd] = 
-            "HTTP/1.1 411 Length Required\r\n"
-            "Content-Type: text/html\r\n"
-            "Content-Length: 0\r\n\r\n";
-        ev.events = EPOLLOUT;
-        ev.data.fd = fd;
-        cleanupClient(fd, epollfd);
-        return true;
-    }
-    else if (state == REQ_BAD_413){
-        _clientResponseBuffer[fd] = 
-            "HTTP/1.1 413 Content Too Large\r\n"
-            "Content-Type: text/html\r\n"
-            "Content-Length: 0\r\n\r\n";
-        ev.events = EPOLLOUT;
-        ev.data.fd = fd;
-        cleanupClient(fd, epollfd);
-        return true;
-    }
+    // else if (state == REQ_BAD_411){
+    //     _clientResponseBuffer[fd] = 
+    //         "HTTP/1.1 411 Length Required\r\n"
+    //         "Content-Type: text/html\r\n"
+    //         "Content-Length: 0\r\n\r\n";
+    //     ev.events = EPOLLOUT;
+    //     ev.data.fd = fd;
+    //     cleanupClient(fd, epollfd);
+    //     return true;
+    // }
+    // else if (state == REQ_BAD_413){
+    //     _clientResponseBuffer[fd] = 
+    //         "HTTP/1.1 413 Content Too Large\r\n"
+    //         "Content-Type: text/html\r\n"
+    //         "Content-Length: 0\r\n\r\n";
+    //     ev.events = EPOLLOUT;
+    //     ev.data.fd = fd;
+    //     cleanupClient(fd, epollfd);
+    //     return true;
+    // }
     _clientRequestBuffer.erase(fd);
 
     // find which listener accepted this client

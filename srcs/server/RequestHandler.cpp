@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/11 17:57:19 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/11 18:18:31 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -276,6 +276,7 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
 
         case(4):
         str = "411 LENGTH REQUIRED";
+        break;
         
         case(5):
         str = "413 CONTENT TOO LARGE";
