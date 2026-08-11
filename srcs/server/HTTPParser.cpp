@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/09 20:50:10 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/11 16:57:35 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -1057,7 +1057,7 @@ bool HTTPParser::findMethods() {
                     }
                 }
                 else {
-                    // _code = HTTP_INDEX;
+                    _code = HTTP_INDEX;
                     struct stat path_stat;
                     if (stat(_fullPath.c_str(), &path_stat) != -1 && S_ISDIR(path_stat.st_mode))
                     {
@@ -1070,7 +1070,7 @@ bool HTTPParser::findMethods() {
                         if (stat(indexPath.c_str(), &index_stat) == 0
                             && S_ISREG(index_stat.st_mode))
                         {
-                            _code = HTTP_AUTOINDEX;
+                            _code = HTTP_INDEX;
                             _type = "text/html";
 
                             return true;

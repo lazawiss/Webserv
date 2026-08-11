@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:27:21 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/11 14:29:47 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/11 17:46:18 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,17 +47,12 @@ class Server;
 
 class CGI;
 
-typedef enum ConnState
-{
-    READING_HEADER,
-    READING_BODY,
-    READING_INCOMPLETE
-}   ConnState;
-
 typedef enum RequestState
 {
     REQ_INCOMPLETE,
     REQ_READY,
+    REQ_BAD_413, // too big body
+    REQ_BAD_411, // CL definition needed
     REQ_BAD 
 } RequestState;
 

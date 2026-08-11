@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/09 20:33:00 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/11 17:57:19 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -229,12 +229,13 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
     
     LOG_DEBUG("Building response header, code: " + code);
 
-    std::string codeName[11] =
+    std::string codeName[12] =
     {
         "400",
         "403",
         "404",
         "405",
+        "411",
         "413",
         "414",
         "421",
@@ -272,20 +273,23 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
         case(3):
         str = "405 METHOD NOT ALLOWED\r\nAllow: GET, POST, DELETE";
         break;
-        
+
         case(4):
+        str = "411 LENGTH REQUIRED";
+        
+        case(5):
         str = "413 CONTENT TOO LARGE";
         break;
         
-        case(5):
+        case(6):
         str = "414 URI TOO LONG";
         break;
         
-        case(6):
+        case(7):
         str = "421 MISDIRECTED REQUEST";
         break;
         
-        case(7):
+        case(8):
         {
             std::string loc = _pathToFile;
             size_t pos = loc.find("data/upload/");
@@ -295,15 +299,15 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
         }
         break;
         
-        case(8):
+        case(9):
         str = "204 NO CONTENT";
         break;
 
-        case(9):
+        case(10):
         str = "500 INTERNAL SERVER ERROR";
         break;
 
-        case(10):
+        case(11):
         str = "502 BADGATEWAY";
         break;
 
@@ -773,7 +777,7 @@ RequestHandler::ByteRange RequestHandler::parseRangeHeader(std::string const& ra
 
     if (start < 0 || start >= fileSize || start > end)
     {
-        // 416; if start > end or start >= fileSize → the range is unsatisfiable
+        // 416; if start > end or start >= fileSize
         r.unsatisfiable = true;
         return r;
     }
