@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/09 20:06:36 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/11 14:43:28 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -79,6 +79,44 @@ int EpollLoop::setnonblocking( int fd ) {
     return result;
 }
 
+static RequestState analyzeRequest( const std::string &acc, std::string &prereq)
+{
+    size_t headerEnd = acc.find("\r\n\r\n");
+    if (headerEnd == std::string::npos)
+        return REQ_INCOMPLETE;
+    size_t bodyStart = headerEnd + 4;
+
+    std::string te;
+    if // (chunked defined by Transfer-encoding in header block)
+    {
+        std::string decoded;
+        RequestState st = dechunkBody(acc.substr(bodyStart), decoded);
+        if (st != REQ_READY)
+            return st;  // still arriving, or malformed
+        ready = rebuildWithContentLength(acc, headerEnd, decoded);
+        return REQ_READY;
+    }
+
+// if (content length then, have we go everything)
+    {
+        size_t expected = (size_t)strtoul(cl.c_str(), NULL, 10);
+        if (acc.size() - bodyStart < expected)
+            return REQ_INCOMPLETE;
+    }
+
+//etiehr no body or is complet
+    ready = acc;
+    return REQ_READY;
+}
+
+
+void    EpollLoop::cleanupClient(int fd, int epollfd)
+{
+    epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, NULL);
+    close(fd);
+    _clientResponseBuffer.erase(fd);
+    _clientToListener.erase(fd);
+}
 /**
 ** @brief Reads a request from a client fd and builds the response.
 **
@@ -100,19 +138,34 @@ bool EpollLoop::do_read_fd(
     char    buf[BUF_SIZE];
 
     ssize_t n_read = read(fd, buf, BUF_SIZE);
-    if (n_read == 0)
+    if (n_read <= 0)
     {
-        LOG_ERROR("Client closed connection");
-        return (close(fd), false);
+        LOG_ERROR("Client closed connectio or read error");
+        cleanupClient(fd, epollfd);
+        return false;
     }
-    if (n_read == -1)
+    // Like our repsonses, we create new entry in map; if not found, creates
+    std::string &acc = _clientRequestBuffer[fd];
+    acc.append(buf, n_read);
+    if (acc.size() > (size_t)BUF_SIZE)
     {
-        LOG_ERROR("Error reading from client fd");
-        return (close(fd), false);
+        cleanupClient(fd, epollfd);
+        return false;
     }
 
-    std::string request = std::string(buf, n_read);
-
+    std::string prereq;
+    RequestState state = analyzeRequest(acc, prereq);
+    if (state == REQ_INCOMPLETE)
+        return true;
+    if (state == REQ_BAD){
+        cleanupClient(fd, epollfd);
+        return false;
+    }
+    if (state == REQ_READY)
+    {
+        
+    }
+    
     // find which listener accepted this client
     int listenerSockfd = _clientToListener[fd];
     const ListenerManager *listener = NULL;

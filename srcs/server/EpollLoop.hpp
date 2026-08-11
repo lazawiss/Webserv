@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:27:21 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/09 19:27:08 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/11 14:29:47 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,19 +49,17 @@ class CGI;
 
 typedef enum ConnState
 {
-    ReadingHeaders,
-    ReadingBody,
-    Complete
-
+    READING_HEADER,
+    READING_BODY,
+    READING_INCOMPLETE
 }   ConnState;
 
-// struct Token
-// {
-//     TokenType   type;
-//     std::string value;
-
-//     Token (TokenType t, const std::string& v): type(t), value(v) {};
-// };
+typedef enum RequestState
+{
+    REQ_INCOMPLETE,
+    REQ_READY,
+    REQ_BAD 
+} RequestState;
 
 class EpollLoop {
 
