@@ -6,7 +6,7 @@
 /*   By: leazannis <leazannis@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/11 22:28:48 by leazannis        ###   ########.fr       */
+/*   Updated: 2026/08/11 23:18:00 by leazannis        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -1053,20 +1053,30 @@ bool HTTPParser::isRedir(){
         _type = "text/html";
         return false;
     }
-    const std::map<int, std::string> &returnMap = locs[5].getReturn();
+    
+    const std::map<int, std::string> &returnMap = locs[bestIdx].getReturn();
     std::cout << returnMap.size() << std::endl;
     
-    /*
-    std::map<int, std::string>::const_iterator it;
-    for (it == returnMap.begin(); it != returnMap.end(); it++)
-    {
+    if (returnMap.size() > 0){
+        
+        std::map<int, std::string>::const_iterator it = returnMap.begin();
         std::cout << it->first << " : " << it->second << std::endl;
+        
+        if (it->first == 301){
+            _code = HTTP_301;
+            _fileName = it->second;
+            _type = "text/html";
+            return true;
+        }
+        if (it->first == 302){
+            _code = HTTP_302;
+            _fileName = it->second;
+            _type = "text/uri-list";
+            return true;
+        }
     }
-    */
-    
-    
+
     return true;
-    
 }
 
 
