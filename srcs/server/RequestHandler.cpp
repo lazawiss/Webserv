@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/12 18:00:25 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/12 18:19:27 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -566,6 +566,7 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         return true;
 
     }
+    // we check for redirection first and foremost, if not a redir, continues to static website
     else if (HTTPParser.isRedir() == true){
         
         _pathToFile = HTTPParser.getFileName();

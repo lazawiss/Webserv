@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/12 17:11:56 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/12 18:22:52 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -1019,7 +1019,9 @@ bool HTTPParser::compareMethodWithConfigFile() {
 
     return false;
 }
-
+// Check every location from config file to confirm a match
+// then check map of return<code, name_of_the_new_file>
+// no for cause only one new location per redirection 
 bool HTTPParser::isRedir(){
 
      const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
