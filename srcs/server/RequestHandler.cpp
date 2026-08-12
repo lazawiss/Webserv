@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/12 17:26:15 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/12 17:47:04 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -270,8 +270,11 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
         }
         break;
         
-        case(1):
-        str = "302 FOUND";
+        case(1):{
+            
+            std::string loc = _pathToFile;
+            str = "302 FOUND\r\nLocation: " + loc;
+        }
         break;
         
         case(2):
@@ -636,7 +639,8 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     } else if (HTTPParser.getType() == "text/html"
         || HTTPParser.getType() == "text/css"
         || HTTPParser.getType() == "text/javascript"
-        || HTTPParser.getType() == "application/javascript") {
+        || HTTPParser.getType() == "application/javascript"
+        || HTTPParser.getType() == "text/uri-list") {
 
         if (HTTPParser.getCode() == HTTP_301 || HTTPParser.getCode() == HTTP_302){
             
