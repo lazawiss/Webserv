@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/12 17:47:04 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/12 18:00:25 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -566,7 +566,14 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         return true;
 
     }
-    else if (HTTPParser.isRedir() == false && HTTPParser.findMethods() == false) {
+    else if (HTTPParser.isRedir() == true){
+        
+        _pathToFile = HTTPParser.getFileName();
+        std::cout << "_pathToFile: " << _pathToFile << std::endl;
+        buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), HTTPParser.getType());
+        return true;
+    }
+    else if (HTTPParser.findMethods() == false) {
 
         LOG_ERROR("Method not implemented");
         sendError(HTTPParser, HTTPParser.getCode());
@@ -639,16 +646,8 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     } else if (HTTPParser.getType() == "text/html"
         || HTTPParser.getType() == "text/css"
         || HTTPParser.getType() == "text/javascript"
-        || HTTPParser.getType() == "application/javascript"
-        || HTTPParser.getType() == "text/uri-list") {
+        || HTTPParser.getType() == "application/javascript") {
 
-        if (HTTPParser.getCode() == HTTP_301 || HTTPParser.getCode() == HTTP_302){
-            
-            _pathToFile = HTTPParser.getFileName();
-            std::cout << "_pathToFile: " << _pathToFile << std::endl;
-            buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), HTTPParser.getType());
-            return true;
-        }
         std::string file = HTTPParser.getError()
             ? getFile(HTTPParser::httpCodeToString(HTTPParser.getCode()), true)
             : getFile(HTTPParser.getFileName(), false);
