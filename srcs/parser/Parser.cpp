@@ -231,8 +231,7 @@ LocationConfig Parser::parseLocation()
             + "', should be a 'right braket' type");
 
     next();
-    const std::map<int, std::string> &returnMap = location.getReturn();
-    std::cout << "parseLocation():" << returnMap.size() << std::endl;
+
     return location;
 }
 

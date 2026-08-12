@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/21 14:12:24 by lzannis           #+#    #+#             */
-/*   Updated: 2026/06/23 13:38:47 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/12 17:06:35 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,11 +46,11 @@ std::string logTimestamp();
 
 #define LOG_SYSTEM(msg) std::cout << logTimestamp() << " [System]  " << msg << std::endl
 #define LOG_INFO(msg)   std::cout << logTimestamp() << " [Info]    " << msg << std::endl
-#ifdef DEBUG
+// #ifdef DEBUG
 #define LOG_DEBUG(msg)  std::cout << logTimestamp() << " [Debug]   " << msg << std::endl
-#else
-#define LOG_DEBUG(msg)  (void)0
-#endif
+// #else
+// #define LOG_DEBUG(msg)  (void)0
+// #endif
 #define LOG_ERROR(msg)  std::cerr << logTimestamp() << " [Error]   " << msg << std::endl
 #define LOG_SEP()       std::cout << logTimestamp() << " ---------------------------------------------------" << std::endl
 

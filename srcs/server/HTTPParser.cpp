@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/12 16:39:09 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/12 17:11:56 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -1053,12 +1053,14 @@ bool HTTPParser::isRedir(){
         std::cout << it->first << " : " << it->second << std::endl;
         
         if (it->first == 301){
+            std::cout << "301" << std::endl;
             _code = HTTP_301;
             _fileName = it->second;
             _type = "text/html";
             return true;
         }
         if (it->first == 302){
+            std::cout << "302" << std::endl;
             _code = HTTP_302;
             _fileName = it->second;
             _type = "text/uri-list";
@@ -1066,7 +1068,7 @@ bool HTTPParser::isRedir(){
         }
     }
 
-    return true;
+    return false;
 }
 
 bool HTTPParser::findMethods() {
@@ -1088,7 +1090,6 @@ bool HTTPParser::findMethods() {
                         std::string index = locRoot + "/" + indexVector[j];
                         if (stat(index.c_str(), &sb) == 0) {
                             _fileName = indexVector[j];
-                            std::cout << "_filename:" <<_fileName << std::endl;
                             _code = HTTP_FILE;
                             break ;
                         }

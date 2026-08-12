@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/12 16:37:18 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/12 17:26:15 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -562,10 +562,8 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
 
         return true;
 
-    } 
-    else if (HTTPParser.isRedir() == false)
-        return false;
-    else if (HTTPParser.findMethods() == false) {
+    }
+    else if (HTTPParser.isRedir() == false && HTTPParser.findMethods() == false) {
 
         LOG_ERROR("Method not implemented");
         sendError(HTTPParser, HTTPParser.getCode());
@@ -640,15 +638,17 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         || HTTPParser.getType() == "text/javascript"
         || HTTPParser.getType() == "application/javascript") {
 
-        std::string file = HTTPParser.getError()
-            ? getFile(HTTPParser::httpCodeToString(HTTPParser.getCode()), true)
-            : getFile(HTTPParser.getFileName(), false);
-
         if (HTTPParser.getCode() == HTTP_301 || HTTPParser.getCode() == HTTP_302){
             
             _pathToFile = HTTPParser.getFileName();
             std::cout << "_pathToFile: " << _pathToFile << std::endl;
+            buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), HTTPParser.getType());
+            return true;
         }
+        std::string file = HTTPParser.getError()
+            ? getFile(HTTPParser::httpCodeToString(HTTPParser.getCode()), true)
+            : getFile(HTTPParser.getFileName(), false);
+
         if (answerFile(file) == false)
             sendError(HTTPParser);
 
