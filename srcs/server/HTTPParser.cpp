@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HTTPParser.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: leazannis <leazannis@student.42.fr>        +#+  +:+       +#+        */
+/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/11 23:18:00 by leazannis        ###   ########.fr       */
+/*   Updated: 2026/08/12 16:39:09 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -1029,24 +1029,15 @@ bool HTTPParser::isRedir(){
 
         return true;
     }
-    std::cout << "locs.size(): " << locs.size() << std::endl;
 
-    std::cout << "_requesttarget: " << _requesttarget << std::endl;
     int bestIdx = -1;
-    size_t bestLen = 0;
     for (size_t i = 0; i < locs.size(); i++)
     {
         const std::string &path = locs[i].getPath();
-        std::cout << "path: " << path << std::endl;
         if (_requesttarget.find(path) == 0)
-        {
-            bestLen = path.size();
-            std::cout << "bestLen: " << bestLen << std::endl;
             bestIdx = (int)i;
-        }
     }
     
-    std::cout << "bestIdx: "<< bestIdx << std::endl;
     if (bestIdx == -1) {
         _errors = true;
         _code = HTTP_405;
@@ -1055,7 +1046,6 @@ bool HTTPParser::isRedir(){
     }
     
     const std::map<int, std::string> &returnMap = locs[bestIdx].getReturn();
-    std::cout << returnMap.size() << std::endl;
     
     if (returnMap.size() > 0){
         
@@ -1079,12 +1069,9 @@ bool HTTPParser::isRedir(){
     return true;
 }
 
-
 bool HTTPParser::findMethods() {
 
-    if(isRedir() == false)
-        return false;
-    if (compareMethodWithConfigFile() == true)
+    if (compareMethodWithConfigFile() == true )
     {
         if (_method == "GET")
         {
