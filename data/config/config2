@@ -34,11 +34,12 @@ server {
     }
 
     location /image.html {
-        return      301 redirection/index.html;   # redirection permanente
+        return      301 redirection/index.html; # redirection permanente
+
     }
 
     location /google {
-        return          302 https://www.google.com; # redirection externe
+        return      302 https://www.google.com; # redirection externe
     }
 
     location /redirection {
