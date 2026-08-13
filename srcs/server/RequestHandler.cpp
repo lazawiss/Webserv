@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/11 18:18:31 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/13 21:37:42 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -350,11 +350,12 @@ bool    RequestHandler::answerFile( std::string const & file ){
     if (S_ISDIR(sb.st_mode))
     {
         LOG_DEBUG("Path is a directory: " + file);
+        // if ( )
+        // 
         return false; 
     }
     std::ostringstream dbg; dbg << "File size: " << sb.st_size;
     LOG_DEBUG(dbg.str());
-    std::cout << "YOOO" << std::endl;
     int indexfd = open(file.c_str(), O_RDONLY);
     if (indexfd == -1)
     {

@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/11 18:51:07 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/13 21:07:19 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -194,7 +194,7 @@ static RequestState dechunkBody( const std::string &body, std::string &decoded )
                 return REQ_BAD;
             chunkSize = chunkSize * 16 + (std::isdigit((unsigned char)c) ? c - '0' : std::tolower((unsigned char)c) - 'a' + 10); 
             if (decoded.size() + chunkSize > BUF_SIZE)
-                return REQ_BAD;// body too large ; 413 close
+                return REQ_BAD_413;// body too large ; 413 close
         }
 //      4\r\nWiki\r\n5\r\npedia\r\n0\r\n\r\n
         size_t dataStart = lineEnd + 2; // +/r/n
@@ -265,6 +265,7 @@ void    EpollLoop::cleanupClient(int fd, int epollfd)
     _clientResponseBuffer.erase(fd);
     _clientToListener.erase(fd);
 }
+
 /**
 ** @brief Reads a request from a client fd and builds the response.
 **

@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/11 16:57:35 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/13 21:31:05 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -775,15 +775,15 @@ void HTTPParser::buildFullPath() {
 
     const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
     const LocationConfig *bestLoc = NULL;
-    size_t bestLen = 0;
+    // size_t bestLen = 0;
 
     for (size_t i = 0; i < locs.size(); ++i)
     {
         const std::string &locPath = locs[i].getPath();
-        if (_requesttarget.compare(0, locPath.size(), locPath) == 0
-            && locPath.size() >= bestLen)
+        if (_requesttarget.compare(0, locPath.size(), locPath) == 0)
+            // && locPath.size() >= bestLen
         {
-            bestLen  = locPath.size();
+            // bestLen  = locPath.size();
             bestLoc  = &locs[i];
         }
     }

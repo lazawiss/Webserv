@@ -62,7 +62,7 @@ GlobalConfig parse_file(const std::string &str)
         throw std::runtime_error("Error: file '" + str + "' doesn't exist");
 
     if (file.peek() == std::ifstream::traits_type::eof())
-        throw std::runtime_error("Error: file '" + str + "' is empty");
+        throw std::runtime_error(" file '" + str + "' is empty");
 
     std::string line;
     std::vector<Token> allTokens;
