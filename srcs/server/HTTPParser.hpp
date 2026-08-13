@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HTTPParser.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
+/*   By: leazannis <leazannis@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/02 16:29:38 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/11 17:02:06 by leazannis        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,8 @@ enum ConnectionType
 
 enum HttpCode
 {
+    HTTP_301,
+    HTTP_302,
     HTTP_400,
     HTTP_403,
     HTTP_404,
@@ -179,6 +181,7 @@ public:
             
     std::string                 addSuffix(std::string suffix);
     bool                        compareMethodWithConfigFile();
+    bool                        isRedir();
 
     bool                        findMethods();
 

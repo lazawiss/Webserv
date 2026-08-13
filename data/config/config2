@@ -11,7 +11,7 @@ server {
         root        data/www/html;
         index       index2.html index.html;
         methods     GET;
-        autoindex   off;
+        autoindex   on;
     }
 
     location /cgi-bin/python {
@@ -32,5 +32,21 @@ server {
         methods     GET POST DELETE;
         autoindex   off;
     }
+
+    location /image.html {
+        return      301 redirection/index.html; # redirection permanente
+
+    }
+
+    location /google {
+        return      302 https://www.google.com; # redirection externe
+    }
+
+    location /redirection {
+        root        data/www;
+        index       index.html;
+        methods     GET;
+    }
+
 }
 
