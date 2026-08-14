@@ -12,13 +12,13 @@ server {
     location / {
         root        data/www;
         methods     GET;
-        autoindex   on;
+        autoindex   off;
     }
 
     location /api {
         root        data/www/html1;
         methods     GET;
-        autoindex   on;
+        autoindex   off;
     }
 
 

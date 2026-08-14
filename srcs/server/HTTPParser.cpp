@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/14 15:19:41 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/14 16:02:34 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -769,6 +769,8 @@ bool HTTPParser::checkContentDisposition( size_t & curPos ) {
     _fileName = line.substr(fnameStart, fnameEnd - fnameStart);
     // ------------ Debug ------------
     LOG_DEBUG("Upload filename: " + _fileName);
+    LOG_DEBUG(std::string("[HTTPParser] _fullPath: '") + _fullPath + 
+        "' autoindex=" + (_autoindexOn ? "on" : "off"));
 
     curPos = lineEnd + 2;
     return true;
@@ -922,79 +924,6 @@ void HTTPParser::buildFullPath() {
     _fileName = suffix;
     LOG_DEBUG(std::string("[HTTPParser] _fullPath: '") + _fullPath + "' autoindex=" + (_autoindexOn ? "on" : "off"));
     LOG_DEBUG(std::string("[HTTPParser] _fileName: '") + _fileName);
-}
-
-
-
-/*
-** ============================================================================
-** Parser HTTP - POST
-** ============================================================================
-*/
-
-// Parses "Content-Disposition: form-data; name="..."; filename="...""
-bool HTTPParser::checkContentDisposition( size_t & curPos ) {
-
-    size_t pos = _body.find("Content-Disposition:");
-    if (pos == std::string::npos) {
-        LOG_ERROR("Content-Disposition missing for POST method");
-
-        _errors = true;
-        _code = HTTP_400;
-        _type = "text/html";
-
-        return false;
-    }
-
-    size_t lineEnd = _body.find("\r\n", pos);
-    if (lineEnd == std::string::npos) {
-        LOG_ERROR("Malformed request: missing CRLF");
-
-        _errors = true;
-        _code = HTTP_400;
-        _type = "text/html";
-
-        return false;
-    }
-
-    std::string line = _body.substr(pos, lineEnd - pos);
-
-    if (line.find("form-data") == std::string::npos) {
-        LOG_ERROR("Content-Disposition is not a form-data type");
-
-        _errors = true;
-        _code = HTTP_400;
-        _type = "text/html";
-
-        return false;
-    }
-
-    size_t fnamePos = line.find("filename=\"");
-    if (fnamePos == std::string::npos) {
-        LOG_ERROR("Content-Disposition needs a filename");
-
-        _errors = true;
-        _code = HTTP_400;
-        _type = "text/html";
-
-        return false;
-    }
-
-    size_t fnameStart = fnamePos + 10;
-    size_t fnameEnd = line.find("\"", fnameStart);
-    if (fnameEnd == std::string::npos) {
-        _errors = true;
-        _code = HTTP_400;
-        _type = "text/html";
-
-        return false;
-    }
-
-    _fileName = line.substr(fnameStart, fnameEnd - fnameStart);
-
-    // ------------ Debug ------------
-    LOG_DEBUG(std::string("[HTTPParser] _fullPath: '") + _fullPath + 
-        "' autoindex=" + (_autoindexOn ? "on" : "off"));
 }
 
 std::string HTTPParser::addSuffix(std::string suffix) {
@@ -1166,35 +1095,20 @@ bool HTTPParser::findMethods() {
                         std::string index = locRoot + "/" + indexVector[j];
                         if (stat(index.c_str(), &sb) == 0) {
                             _fileName = indexVector[j];
-                            _code = HTTP_FILE;
+                            _code = HTTP_INDEX;
                             break ;
                         }
                     }
                 }
                 else {
-                    _code = HTTP_INDEX;
+                    _code = HTTP_FILE;
                     struct stat path_stat;
                     if (stat(_fullPath.c_str(), &path_stat) != -1 && S_ISDIR(path_stat.st_mode))
                     {
-                        std::string indexPath = _fullPath;
-                        if (indexPath[indexPath.size() - 1] != '/')
-                            indexPath += "/";
-                        indexPath += "index.html";
-
-                        struct stat index_stat;
-                        if (stat(indexPath.c_str(), &index_stat) == 0
-                            && S_ISREG(index_stat.st_mode))
-                        {
-                            _code = HTTP_INDEX;
-                            _type = "text/html";
-
-                            return true;
-                        }
                         if (_autoindexOn)
                         {
                             _code = HTTP_AUTOINDEX;
                             _type = "text/html";
-
                             return true;
                         }
                         // case of autoindex == off and index doesn't exist
