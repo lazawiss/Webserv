@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/14 16:02:34 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/14 17:19:36 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -1096,6 +1096,7 @@ bool HTTPParser::findMethods() {
                         if (stat(index.c_str(), &sb) == 0) {
                             _fileName = indexVector[j];
                             _code = HTTP_INDEX;
+                            _type = "text/html";
                             break ;
                         }
                     }
