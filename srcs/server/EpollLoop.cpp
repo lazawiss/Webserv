@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/14 14:57:38 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/14 15:13:49 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -376,9 +376,15 @@ bool EpollLoop::do_read_fd(
     if (serverConfig == NULL)
     {
         LOG_ERROR("No ServerConfig found for port " + listener->getService());
-        _clientToListener.erase(fd);  
+        _clientToListener.erase(fd);
         return (close(fd), false);
     }
+
+    std::string requestLine = request.substr(0, request.find("\r\n"));
+
+    const std::vector<std::string> &names = serverConfig->getServerNames();
+    std::string serverName = names.empty() ? listener->getService() : names[0];
+    LOG_INFO("[" + serverName + "] " + requestLine);
 
     RequestHandler requestHandler(request, *serverConfig);
 
@@ -390,7 +396,6 @@ bool EpollLoop::do_read_fd(
             "Content-Type: text/html\r\n"
             "Content-Length: 0\r\n\r\n";
         ev.events = EPOLLOUT;
-
         ev.data.fd = fd;
         epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &ev);
         
@@ -436,7 +441,8 @@ bool EpollLoop::do_read_fd(
     }
 
     std::ostringstream dbg;
-    dbg << "Response header built for fd=" << fd;
+    // ------------ Debug ------------
+    dbg << "\nResponse header:" << fd;
     LOG_DEBUG(dbg.str());
 
     _clientResponseBuffer[fd] += std::string(requestHandler.getHeader());
@@ -444,7 +450,6 @@ bool EpollLoop::do_read_fd(
         requestHandler.getBuffer().c_str(),
         requestHandler.getNReadIndex());
 
-    
     ev.events = EPOLLOUT;
 
     ev.data.fd = fd;
