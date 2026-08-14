@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/13 16:00:15 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/13 18:29:36 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -875,6 +875,8 @@ bool HTTPParser::containsCaseInsensitive( std::string const & haystack, std::str
     return true;
 }
 
+
+
 void HTTPParser::buildFullPath() {
 
     const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
@@ -1158,6 +1160,15 @@ bool HTTPParser::findMethods() {
                     return false;
                 std::string name = std::string(lastSlash, strlen(lastSlash));
                 name.erase(name.begin());
+                if (name.find("%20") != std::string::npos){
+                    
+                    size_t pos = 0;
+                    while ((pos = name.find("%20",pos)) != std::string::npos){
+                        name.replace(pos,3," ");
+                        pos++;
+                    }
+                }
+                std::cout << "name: " << name << std::endl;
                 _fileName = name;
                 _code = HTTP_FILE;
                 char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
@@ -1275,6 +1286,14 @@ bool HTTPParser::findMethods() {
 
                 std::string name = std::string(lastSlash, strlen(lastSlash));
                 name.erase(name.begin());
+                if (name.find("%20") != std::string::npos){
+                    
+                    size_t pos = 0;
+                    while ((pos = name.find("%20",pos)) != std::string::npos){
+                        name.replace(pos,3," ");
+                        pos++;
+                    }
+                }
 
                 // ------------ Debug ------------
                 LOG_DEBUG("DELETE target: " + name);
