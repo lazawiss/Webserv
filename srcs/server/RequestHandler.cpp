@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestHandler.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
+/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/14 15:20:42 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/14 15:30:10 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -233,7 +233,7 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
     // ------------ Debug ------------
     LOG_DEBUG("Building response header, code: " + code);
 
-    std::string codeName[13] =
+    std::string codeName[14] =
     {
         "301",
         "302",
@@ -252,7 +252,7 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
     };
     
     int index = -1;
-    for (int i = 0 ;i < 13; i++){
+    for (int i = 0 ;i < 14; i++){
         
         if (codeName[i] == code){
             index = i;
@@ -287,7 +287,6 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
         break;
 
         case(4):
-        str = "411 LENGTH REQUIRED";
         str = "404 Not Found";
         break;
 
@@ -296,18 +295,22 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
         break;
         
         case(6):
+        str = "411 LENGTH REQUIRED";
+        break;
+
+        case(7):
         str = "413 CONTENT TOO LARGE";
         break;
         
-        case(7):
+        case(8):
         str = "414 URI TOO LONG";
         break;
         
-        case(8):
+        case(9):
         str = "421 MISDIRECTED REQUEST";
         break;
         
-        case(9):
+        case(10):
         {
             std::string loc = _pathToFile;
             size_t pos = loc.find("data/upload/");
@@ -317,15 +320,15 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
         }
         break;
         
-        case(10):
+        case(11):
         str = "204 NO CONTENT";
         break;
 
-        case(11):
+        case(12):
         str = "500 INTERNAL SERVER ERROR";
         break;
 
-        case(12):
+        case(13):
         str = "502 BADGATEWAY";
         break;
 
@@ -645,7 +648,6 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         _body = generateAutoindex(HTTPParser.getPath(),
             HTTPParser.getRequestTarget());
         if (_body.empty()) {
-            std::cout << ":P1" << std::endl;
             HTTPParser.setError(true);
             HTTPParser.setCode(HTTP_403); // if real dir didn't open
             HTTPParser.setType("text/html");
@@ -658,9 +660,7 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
                 _body.resize(BUF_SIZE);
             memcpy(_buffer, _body.data(), _body.size());
             _n_read_index = (ssize_t)_body.size();
-            std::cout << "hello" << std::endl;
         }
-        std::cout << ":P:" << std::endl;
     } 
     else if (HTTPParser.getType() == "text/html"
         || HTTPParser.getType() == "text/css"
