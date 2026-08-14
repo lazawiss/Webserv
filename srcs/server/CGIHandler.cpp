@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CGIHandler.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 18:29:42 by andikim           #+#    #+#             */
-/*   Updated: 2026/07/26 14:00:14 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/09 16:46:51 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -187,8 +187,6 @@ bool CGI::start()
     _stdin_pipe[0] = -1;
     close(_stdout_pipe[1]); // child's stdout write end
     _stdout_pipe[1] = -1;
-
-    // every fd that goes through epoll must be non-blocking ; does this work @Lea?
     fcntl(_stdin_pipe[1], F_SETFL, O_NONBLOCK);
     fcntl(_stdout_pipe[0], F_SETFL, O_NONBLOCK);
 

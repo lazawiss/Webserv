@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestHandler.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/12 18:19:27 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/14 15:20:42 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -241,6 +241,7 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
         "403",
         "404",
         "405",
+        "411",
         "413",
         "414",
         "421",
@@ -284,8 +285,9 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
         case(3):
         str = "403 FORBIDDEN";
         break;
-        
+
         case(4):
+        str = "411 LENGTH REQUIRED";
         str = "404 Not Found";
         break;
 
@@ -362,11 +364,17 @@ bool    RequestHandler::answerFile( std::string const & file ){
         LOG_ERROR("stat failed: " + file + " - " + strerror(errno));
         return false;
     }
+    // if (S_ISDIR(sb.st_mode))
+    // {
+    //     LOG_DEBUG("Path is a directory: " + file);
+    //     // if ( )
+    //     // 
+    //     return false; 
+    // }
 
     std::ostringstream dbg; dbg << "File size: " << sb.st_size;
     // ------------ Debug ------------
     LOG_DEBUG(dbg.str());
-
     int indexfd = open(file.c_str(), O_RDONLY);
     if (indexfd == -1)
     {
@@ -512,7 +520,7 @@ std::string RequestHandler::generateAutoindex(const std::string &fullPath, const
 }
 
 void RequestHandler::sendError( HTTPParser & parser, HttpCode code ) {
-
+    
     parser.setError(true);
     parser.setCode(code);
     parser.setType("text/html");
@@ -540,13 +548,22 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");
         return true;
 
-    } else if (HTTPParser.isCGI()) {
+    } 
+    else if (HTTPParser.isCGI()) 
+    {
 
         if (HTTPParser.validateCGIRequest() == false)
         {
             LOG_ERROR("CGI request validation failed");
             sendError(HTTPParser, HTTP_502);
             buildAnswerHeader("502", "text/html");
+            return true;
+        }
+        if (HTTPParser.getMethod() != "GET" || HTTPParser.getMethod() != "POST")
+        {
+            LOG_ERROR("CGI request validation failed: Need GET or POST as method");
+            sendError(HTTPParser, HTTP_405);
+            buildAnswerHeader("405", "text/html");
             return true;
         }
 
@@ -582,12 +599,10 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         return true;
     }
 
-// need this for CGI no? so maybe before?
     if (_root.empty())
         _root = resolveRoot(_serverConfig, HTTPParser.getRequestTarget());
 
-    // When a range branch builds its own 206/416 header for the
-    // partial guys heehee skip buildAnswerHeader.
+
     bool rangeHandled = false;
 
     if (HTTPParser.getMethod() == "DELETE")
@@ -612,7 +627,8 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
             }
         }
 
-    } else if (HTTPParser.getMethod() == "POST") {
+    } 
+    else if (HTTPParser.getMethod() == "POST") {
 
         if (uploadFile(HTTPParser.getFileName(),
             HTTPParser.getFileBuf()) == false)
@@ -622,18 +638,19 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
             HTTPParser.setCode(HTTP_201);
             // TODO: set _content_type from HTTPParser.getType() if needed
         }
-
-    } else if (HTTPParser.getCode() == HTTP_AUTOINDEX) {
+    } 
+    else if (HTTPParser.getCode() == HTTP_AUTOINDEX) 
+    {
         // HTTPParser.getPath() is the resolved on-disk directory (root + URI).
         _body = generateAutoindex(HTTPParser.getPath(),
             HTTPParser.getRequestTarget());
         if (_body.empty()) {
-
+            std::cout << ":P1" << std::endl;
             HTTPParser.setError(true);
             HTTPParser.setCode(HTTP_403); // if real dir didn't open
             HTTPParser.setType("text/html");
-        
-        } else {
+        } 
+        else {
 
             // put the listing where epoll reads the response body
             // (getBuffer()/getNReadIndex()) and let Content-Length mirror
@@ -641,28 +658,35 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
                 _body.resize(BUF_SIZE);
             memcpy(_buffer, _body.data(), _body.size());
             _n_read_index = (ssize_t)_body.size();
-
+            std::cout << "hello" << std::endl;
         }
-    
-    } else if (HTTPParser.getType() == "text/html"
+        std::cout << ":P:" << std::endl;
+    } 
+    else if (HTTPParser.getType() == "text/html"
         || HTTPParser.getType() == "text/css"
         || HTTPParser.getType() == "text/javascript"
-        || HTTPParser.getType() == "application/javascript") {
-
+        || HTTPParser.getType() == "application/javascript") 
+    {
+        if (HTTPParser.getCode() == HTTP_AUTOINDEX)
+        {
+            std::cout << "are you realyl ayuto" << std::endl;
+        }
         std::string file = HTTPParser.getError()
             ? getFile(HTTPParser::httpCodeToString(HTTPParser.getCode()), true)
             : getFile(HTTPParser.getFileName(), false);
 
         if (answerFile(file) == false)
             sendError(HTTPParser);
-
-    } else if (HTTPParser.getType() == "text/plain") {
+    } 
+    else if (HTTPParser.getType() == "text/plain") 
+    {
 
         std::string file = getFileUpload(HTTPParser.getFileName());
         if (answerFile(file) == false)
             sendError(HTTPParser, HTTP_500);
 
-    } else if (HTTPParser.getType() == "image/jpeg"
+    } 
+    else if (HTTPParser.getType() == "image/jpeg"
         || HTTPParser.getType() == "image/png"
         || HTTPParser.getType() == "image/gif"
         || HTTPParser.getType() == "image/webp") {
@@ -785,7 +809,7 @@ RequestHandler::ByteRange RequestHandler::parseRangeHeader(std::string const& ra
 
     if (start < 0 || start >= fileSize || start > end)
     {
-        // 416; if start > end or start >= fileSize → the range is unsatisfiable
+        // 416; if start > end or start >= fileSize
         r.unsatisfiable = true;
         return r;
     }
@@ -832,7 +856,6 @@ bool RequestHandler::answerFilePartial(std::string const & file, ByteRange const
     return true;
 }
 
-// build the 206 header HEREEE; Content-Length is the SLICED length; content range's final number is the TOTAL file size
 std::string RequestHandler::buildPartialHeader(std::string const & type, ByteRange const & r, long fileSize)
 {
     std::stringstream ss;
@@ -846,7 +869,6 @@ std::string RequestHandler::buildPartialHeader(std::string const & type, ByteRan
     return _header;
 }
 
-// 416 : set body empty and content-range shows size
 std::string RequestHandler::build416Header(long fileSize)
 {
     std::stringstream ss;
@@ -854,6 +876,6 @@ std::string RequestHandler::build416Header(long fileSize)
        << "Content-Range: bytes */" << fileSize << "\r\n"
        << "Content-Length: 0\r\n\r\n";
     _header = ss.str();
-    _n_read_index = 0; // setting empty bod here
+    _n_read_index = 0;
     return _header;
 }

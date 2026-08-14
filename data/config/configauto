@@ -10,25 +10,21 @@ server {
     error_page 400 /errors/404.html;
 
     location / {
-<<<<<<< HEAD
         root        data/www;
         methods     GET;
         autoindex   on;
     }
 
     location /api {
-        root        data/www;
-=======
-        root        data/www/;
-        #index       index.html;
->>>>>>> dev
+        root        data/www/html1;
         methods     GET;
         autoindex   on;
     }
+
+
+    location /upload {
+        root        data/upload;
+        methods     GET POST DELETE;
+        autoindex   off;
+    }
 }
-
-
-// segmentation fault ./webserv data/config/configauto - data/www/images
-// check for also clickables to see if we have to actually list all or if it is ok 
-// cgi - page principale stuff
-// buttons to come back to the page principal

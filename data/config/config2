@@ -16,7 +16,7 @@ server {
 
     location /cgi-bin/python {
         root            data/cgi-bin;
-        methods         GET POST;
+        methods         DELETE;
         cgi_extension   .py  /usr/bin/python3;
         index           index.py;
     }
@@ -24,7 +24,7 @@ server {
     location /api {
         root        data/www/html1;
         methods     GET;
-        autoindex   off;
+        autoindex   on;
     }
 
     location /upload {

@@ -27,7 +27,7 @@ print("<head>")
 print("<title> List </title>")
 print("</head>")
 print("<body>")
-print(f"Saved {len(pairs)} fields to {upload_path}")
+print(f"Saved {len(body)} fields to {upload_path}")
 print("</body>")
 print("</html>")
 

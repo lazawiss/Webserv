@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   EpollLoop.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:27:21 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/29 22:49:27 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/11 17:46:18 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,13 +47,23 @@ class Server;
 
 class CGI;
 
+typedef enum RequestState
+{
+    REQ_INCOMPLETE,
+    REQ_READY,
+    REQ_BAD_413, // too big body
+    REQ_BAD_411, // CL definition needed
+    REQ_BAD 
+} RequestState;
+
 class EpollLoop {
 
 private:
-    std::map<int, int>          _clientToListener; // key value lookup 
+    std::map<int, int>          _clientToListener; // key value lookup
     // - key : client socketfd, - value: listener socketfd
     std::map<int, CGI*>         _fdToCGI;  // pipe fd, CGI value
-    std::map<int, std::string>  _clientResponseBuffer;  // int clientfd, std::string response 
+    std::map<int, std::string>  _clientResponseBuffer;  // int clientfd, std::string response, like Request
+    std::map<int, std::string>  _clientRequestBuffer;
     
     std::string                 _header;
     std::string                 _content;
@@ -72,6 +82,8 @@ public:
 
     bool        do_read_fd( int fd, std::vector<ListenerManager*> const & listeners, const GlobalConfig &config, int epollfd , epoll_event& ev);
     bool        do_write_fd( int fd, int epollfd, epoll_event &ev );
+
+    void        cleanupClient( int fd, int epollfd );
     
     // bool        do_use_fd( int fd, std::vector<ListenerManager*> const & listeners, const GlobalConfig &config, int epollfd , epoll_event& ev);
     bool        readingSocket( std::vector<ListenerManager*> const & listeners, const GlobalConfig &config );
