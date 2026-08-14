@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/13 21:07:19 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/14 14:57:38 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -135,7 +135,7 @@ static std::string rebuildWithContentLength(
         size_t end = headerBlock.find("\r\n", i);
         if (end == std::string::npos)
             end = headerBlock.size();
-        std::string line = headerBlock.substr(i, end - i); // beggining of line - \r\n
+        std::string line = headerBlock.substr(i, end - i); // beginning of line - \r\n
 
         bool drop = false;
         if (!firstLine)
@@ -145,7 +145,8 @@ static std::string rebuildWithContentLength(
             std::string lower;
             for (size_t k = 0; k < key.size(); k++)
                 lower += (char)std::tolower((unsigned char)key[k]);
-            if (lower == "transfer-encoding" || lower == "content-length") // is key one of these? if so, we drop
+            if (lower == "transfer-encoding" || lower == "content-length") 
+            // is key one of these? if so, we drop
             // get rid of them so we can have clean guy with just Content-Length already prepped
                 drop = true;
         }
