@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/14 15:15:07 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/14 15:19:41 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -878,6 +878,8 @@ bool HTTPParser::containsCaseInsensitive( std::string const & haystack, std::str
     return true;
 }
 
+
+
 void HTTPParser::buildFullPath() {
 
     const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
@@ -1021,6 +1023,8 @@ std::string HTTPParser::httpCodeToString( HttpCode code )
 {
     switch (code)
     {
+        case HTTP_301:          return "301";
+        case HTTP_302:          return "302";
         case HTTP_400:          return "400";
         case HTTP_403:          return "403";
         case HTTP_404:          return "404";
@@ -1092,10 +1096,60 @@ bool HTTPParser::compareMethodWithConfigFile() {
 
     return false;
 }
+// Check every location from config file to confirm a match
+// then check map of return<code, name_of_the_new_file>
+// no for cause only one new location per redirection 
+bool HTTPParser::isRedir(){
+
+     const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
+    if (locs.size() == 0) {
+        _code = HTTP_INDEX;
+        _type = "text/html";
+
+        return true;
+    }
+
+    int bestIdx = -1;
+    for (size_t i = 0; i < locs.size(); i++)
+    {
+        const std::string &path = locs[i].getPath();
+        if (_requesttarget.find(path) == 0)
+            bestIdx = (int)i;
+    }
+    
+    if (bestIdx == -1) {
+        _errors = true;
+        _code = HTTP_405;
+        _type = "text/html";
+        return false;
+    }
+    
+    const std::map<int, std::string> &returnMap = locs[bestIdx].getReturn();
+    
+    if (returnMap.size() > 0){
+        
+        std::map<int, std::string>::const_iterator it = returnMap.begin();
+        
+        if (it->first == 301){
+            _code = HTTP_301;
+            _fileName = it->second;
+            _type = "text/html";
+            return true;
+        }
+        if (it->first == 302){
+            _code = HTTP_302;
+            _fileName = it->second;
+            _type = "text/uri-list";
+            return true;
+        }
+    }
+
+    return false;
+}
 
 bool HTTPParser::findMethods() {
 
-    if (compareMethodWithConfigFile() == true)
+    if (compareMethodWithConfigFile() == true )
     {
         if (_method == "GET")
         {
@@ -1179,6 +1233,15 @@ bool HTTPParser::findMethods() {
                     return false;
                 std::string name = std::string(lastSlash, strlen(lastSlash));
                 name.erase(name.begin());
+                if (name.find("%20") != std::string::npos){
+                    
+                    size_t pos = 0;
+                    while ((pos = name.find("%20",pos)) != std::string::npos){
+                        name.replace(pos,3," ");
+                        pos++;
+                    }
+                }
+                std::cout << "name: " << name << std::endl;
                 _fileName = name;
                 _code = HTTP_FILE;
                 char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
@@ -1296,6 +1359,14 @@ bool HTTPParser::findMethods() {
 
                 std::string name = std::string(lastSlash, strlen(lastSlash));
                 name.erase(name.begin());
+                if (name.find("%20") != std::string::npos){
+                    
+                    size_t pos = 0;
+                    while ((pos = name.find("%20",pos)) != std::string::npos){
+                        name.replace(pos,3," ");
+                        pos++;
+                    }
+                }
 
                 // ------------ Debug ------------
                 LOG_DEBUG("DELETE target: " + name);

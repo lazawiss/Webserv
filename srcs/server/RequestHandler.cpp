@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/14 15:15:38 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/14 15:20:42 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -233,8 +233,10 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
     // ------------ Debug ------------
     LOG_DEBUG("Building response header, code: " + code);
 
-    std::string codeName[12] =
+    std::string codeName[13] =
     {
+        "301",
+        "302",
         "400",
         "403",
         "404",
@@ -250,7 +252,7 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
     };
     
     int index = -1;
-    for (int i = 0 ;i < 11; i++){
+    for (int i = 0 ;i < 13; i++){
         
         if (codeName[i] == code){
             index = i;
@@ -262,39 +264,50 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
 
     switch (index) {
         
-        case(0):
-        str = "400 BAD REQUEST";
+        case(0):{
+            
+            std::string loc = _pathToFile;
+            str = "301 MOVE PERMANENTLY\r\nLocation: " + loc;
+        }
         break;
-
-        case(1):
-        str = "403 FORBIDDEN";
+        
+        case(1):{
+            
+            std::string loc = _pathToFile;
+            str = "302 FOUND\r\nLocation: " + loc;
+        }
         break;
         
         case(2):
-        str = "404 Not Found";
+        str = "400 BAD REQUEST";
         break;
 
         case(3):
-        str = "405 METHOD NOT ALLOWED\r\nAllow: GET, POST, DELETE";
+        str = "403 FORBIDDEN";
         break;
 
         case(4):
         str = "411 LENGTH REQUIRED";
+        str = "404 Not Found";
         break;
-        
+
         case(5):
-        str = "413 CONTENT TOO LARGE";
+        str = "405 METHOD NOT ALLOWED\r\nAllow: GET, POST, DELETE";
         break;
         
         case(6):
-        str = "414 URI TOO LONG";
+        str = "413 CONTENT TOO LARGE";
         break;
         
         case(7):
-        str = "421 MISDIRECTED REQUEST";
+        str = "414 URI TOO LONG";
         break;
         
         case(8):
+        str = "421 MISDIRECTED REQUEST";
+        break;
+        
+        case(9):
         {
             std::string loc = _pathToFile;
             size_t pos = loc.find("data/upload/");
@@ -304,15 +317,15 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
         }
         break;
         
-        case(9):
+        case(10):
         str = "204 NO CONTENT";
         break;
 
-        case(10):
+        case(11):
         str = "500 INTERNAL SERVER ERROR";
         break;
 
-        case(11):
+        case(12):
         str = "502 BADGATEWAY";
         break;
 
@@ -569,14 +582,21 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
 
         return true;
 
-    } 
+    }
+    // we check for redirection first and foremost, if not a redir, continues to static website
+    else if (HTTPParser.isRedir() == true){
+        
+        _pathToFile = HTTPParser.getFileName();
+        std::cout << "_pathToFile: " << _pathToFile << std::endl;
+        buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), HTTPParser.getType());
+        return true;
+    }
     else if (HTTPParser.findMethods() == false) {
 
         LOG_ERROR("Method not implemented");
         sendError(HTTPParser, HTTPParser.getCode());
         buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");
         return true;
-
     }
 
     if (_root.empty())
@@ -654,6 +674,7 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         std::string file = HTTPParser.getError()
             ? getFile(HTTPParser::httpCodeToString(HTTPParser.getCode()), true)
             : getFile(HTTPParser.getFileName(), false);
+
         if (answerFile(file) == false)
             sendError(HTTPParser);
     } 
