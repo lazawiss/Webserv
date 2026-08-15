@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/15 18:33:57 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/15 18:41:16 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -1212,41 +1212,44 @@ bool HTTPParser::findMethods() {
             std::cout << "Hello from GET" << std::endl;
             int bestIdx = -1;
             size_t bestLen = 0;
-                for (size_t i = 0; i < locs.size(); i++)
+            for (size_t i = 0; i < locs.size(); i++)
+            {
+                const std::string &path = locs[i].getPath();
+                if (_requesttarget.find(path) == 0 && path.size() > bestLen
+                    && (path == "/" || _requesttarget.size() == path.size()
+                        || _requesttarget[path.size()] == '/' || _requesttarget[path.size()] == '?'))
                 {
-                    const std::string &path = locs[i].getPath();
-                    if (_requesttarget.find(path) == 0 && path.size() > bestLen
-                        && (path == "/" || _requesttarget.size() == path.size()
-                            || _requesttarget[path.size()] == '/' || _requesttarget[path.size()] == '?'))
-                    {
-                        bestLen = path.size();
-                        bestIdx = (int)i;
-                    }
+                    bestLen = path.size();
+                    bestIdx = (int)i;
                 }
-            
-                if (bestIdx == -1) {
-                    _errors = true;
-                    _code = HTTP_405;
-                    _type = "text/html";
-                    return false;
-                }
+            }
+        
+            if (bestIdx == -1) {
+                _errors = true;
+                _code = HTTP_405;
+                _type = "text/html";
+                return false;
+            }
 
-                const std::vector<std::string> &indexVector = locs[bestIdx].getIndex();
-                if (indexVector.size() > 0){
-                    for (size_t j = 0; j < indexVector.size(); j++)
-                    {
-                        struct stat sb;
-                        std::string locRoot = locs[bestIdx].getRoot().empty() ? _serverConfig.getRoot() : locs[bestIdx].getRoot();
-                        std::string index = locRoot + "/" + indexVector[j];
-                        if (stat(index.c_str(), &sb) == 0) {
-                            _fileName = indexVector[j];
-                            _code = HTTP_FILE;
-                            _type = "text/html";
-                            std::cout << "filename: " << _fileName << "_code: " << _code << "type: " << _type << std::endl;
-                            break ;
-                        }
+            const std::vector<std::string> &indexVector = locs[bestIdx].getIndex();
+            std::cout << " ARE WE IN THE GOOD PLACE " << indexVector.size() << std::endl;
+            if (indexVector.size() > 0)
+            {
+                for (size_t j = 0; j < indexVector.size(); j++)
+                {
+                    struct stat sb;
+                    std::string locRoot = locs[bestIdx].getRoot().empty() ? _serverConfig.getRoot() : locs[bestIdx].getRoot();
+                    std::string index = locRoot + "/" + indexVector[j];
+                    std::cout << "did you get int" << index << std::endl;
+                    if (stat(index.c_str(), &sb) == 0) {
+                        _fileName = indexVector[j];
+                        _code = HTTP_FILE;
+                        _type = "text/html";
+                        std::cout << "filename: " << _fileName << "_code: " << _code << "type: " << _type << std::endl;
+                        break ;
                     }
                 }
+            }
             // const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
 
             // for (size_t i = 0; i < locs.size(); i++)

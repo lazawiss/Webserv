@@ -10,18 +10,8 @@ server {
     error_page 400 /errors/404.html;
 
     location / {
-<<<<<<< HEAD
-        root        data/www;
-        methods     GET;
-        autoindex   on;
-    }
-
-    location /api {
-        root        data/www;
-=======
         root        data/www/;
         #index       index.html;
->>>>>>> dev
         methods     GET;
         autoindex   on;
     }
