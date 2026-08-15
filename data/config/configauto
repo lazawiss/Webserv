@@ -10,7 +10,8 @@ server {
     error_page 400 /errors/404.html;
 
     location / {
-        root        data/www;
+        root        data/www/html;
+        index       index2.html index.html;
         methods     GET;
         autoindex   off;
     }

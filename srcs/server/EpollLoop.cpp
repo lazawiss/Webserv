@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/14 15:13:49 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/15 16:33:34 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -387,7 +387,7 @@ bool EpollLoop::do_read_fd(
     LOG_INFO("[" + serverName + "] " + requestLine);
 
     RequestHandler requestHandler(request, *serverConfig);
-
+    std::cout << "REQUEST " << request << std::endl; 
     if (requestHandler.handleRequest(*listener) == false)
     {
         LOG_ERROR("handleRequest failed, sending 500");
