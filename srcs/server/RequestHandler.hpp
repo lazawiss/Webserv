@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:00:06 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/13 21:04:35 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/15 20:08:53 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -115,7 +115,6 @@ public:
     std::string         build416Header( long fileSize );
 ///
     bool                answerFile( std::string const & file );
-    bool                answerFileImage( std::string const & file );
     bool                answerFileIcon();
 
     bool                uploadFile( std::string const & filename, std::string const & buf );
