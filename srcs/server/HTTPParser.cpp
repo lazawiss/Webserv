@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/14 17:19:36 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/15 18:02:35 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,8 @@ HTTPParser::HTTPParser( std::string const & request,
     _errors(false), _upload(false), _content_length(0), 
     _connectionType(CONN_KEEP_ALIVE), _host("8080"),
     _isCGI(false), _fullPath(), _query_string(), _scriptFilename(),
-    _body(), _content_type(), _content_int(0), _isContentLengthFound(false),
+    _body(), _content_type(), _content_int(0), _autoindexOn(false),
+    _rangeHeader(), _autoInt(0), _isContentLengthFound(false),
     _isHostFound(false), _isContentTypeFound(false), _fileContentType() {}
 
 HTTPParser::HTTPParser( HTTPParser const & src ) :
@@ -49,6 +50,8 @@ HTTPParser::HTTPParser( HTTPParser const & src ) :
     _scriptFilename(src._scriptFilename), _body(src._body),
     _content_type(src._content_type),
     _content_int(src._content_int),
+    _autoindexOn(src._autoindexOn), _rangeHeader(src._rangeHeader),
+    _autoInt(src._autoInt),
     _isContentLengthFound(src._isContentLengthFound),
     _isHostFound(src._isHostFound),
     _isContentTypeFound(src._isContentTypeFound), 
@@ -84,6 +87,7 @@ HTTPParser &    HTTPParser::operator=( HTTPParser const & other )
         _content_int        = other._content_int;
         _autoindexOn        = other._autoindexOn;
         _rangeHeader        = other._rangeHeader;
+        _autoInt            = other._autoInt;
         _isContentLengthFound = other._isContentLengthFound;
         _isHostFound        = other._isHostFound;
         _isContentTypeFound = other._isContentTypeFound;
@@ -211,6 +215,11 @@ std::string     HTTPParser::getPath() const
 std::string     HTTPParser::getRange() const
 {
     return _rangeHeader;
+}
+
+int              HTTPParser::getautoInt() const
+{
+    return _autoInt;
 }
 
 // ── cgi ─────────────────────────────────────────────────────────────────────
@@ -341,7 +350,6 @@ bool HTTPParser::isRequestValid( ListenerManager const & listen ) {
         return LOG_ERROR("Host header missing"), false;
     
     resolveConnectionType();
-
     buildFullPath();
     return true;
 }
@@ -892,7 +900,7 @@ void HTTPParser::buildFullPath() {
     {
         const std::string &locPath = locs[i].getPath();
         if (_requesttarget.compare(0, locPath.size(), locPath) == 0)
-            // && locPath.size() >= bestLen
+        // && locPath.size() >= bestLen
         {
             // bestLen  = locPath.size();
             bestLoc  = &locs[i];
@@ -1030,7 +1038,7 @@ bool HTTPParser::compareMethodWithConfigFile() {
 // no for cause only one new location per redirection 
 bool HTTPParser::isRedir(){
 
-     const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
+    const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
     if (locs.size() == 0) {
         _code = HTTP_INDEX;
         _type = "text/html";
@@ -1076,6 +1084,124 @@ bool HTTPParser::isRedir(){
     return false;
 }
 
+
+int HTTPParser::findAutoIndex()
+{
+    const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
+
+    int bestIdx = -1;
+    size_t bestLen = 0;
+    for (size_t i = 0; i < locs.size(); i++)
+    {
+        const std::string &path = locs[i].getPath();
+        if (_requesttarget.find(path) == 0 && path.size() > bestLen
+            && (path == "/" || _requesttarget.size() == path.size()
+                || _requesttarget[path.size()] == '/' || _requesttarget[path.size()] == '?'))
+        {
+            bestLen = path.size();
+            bestIdx = (int)i;
+        }
+    }
+
+    if (bestIdx == -1) {
+        _errors = true;
+        _code = HTTP_405;
+        _type = "text/html";
+        return -1;
+    }
+
+    // for (size_t i = 0; i < locs.size(); i++)
+    // {
+        const std::vector<std::string> &indexVector = locs[bestIdx].getIndex();
+        std::cout << indexVector.size() << "SIZE OF INDEXVEC" << std::endl;
+        if (indexVector.size() == 0){
+            std::cout << " Are we finding auto index?" << std::endl;
+            _code = HTTP_FILE;
+            struct stat path_stat;
+            if (stat(_fullPath.c_str(), &path_stat) != -1 && S_ISDIR(path_stat.st_mode))
+            {
+                if (_autoindexOn)
+                {
+                    _code = HTTP_AUTOINDEX;
+                    _type = "text/html";
+                    _autoInt = 1;
+                    std::cout << "are we http_auto on ? " << std::endl;
+                    return 2;
+                }
+                // case of autoindex == off and index doesn't exist
+                _errors = true;
+                _code = HTTP_403;
+                _type = "text/html";
+                std::cout << " are we http " << std::endl;
+                return -1;
+            }
+
+        // }
+        
+    }
+    // _autoInt = 2;
+    return 1;
+}
+
+// bool HTTPParser::findAutoIndex()
+// {
+//     const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
+
+//     int bestIdx = -1;
+//     size_t bestLen = 0;
+//     for (size_t i = 0; i < locs.size(); i++)
+//     {
+//         const std::string &path = locs[i].getPath();
+//         if (_requesttarget.find(path) == 0 && path.size() > bestLen
+//             && (path == "/" || _requesttarget.size() == path.size()
+//                 || _requesttarget[path.size()] == '/' || _requesttarget[path.size()] == '?'))
+//         {
+//             bestLen = path.size();
+//             bestIdx = (int)i;
+//         }
+//     }
+
+//     if (bestIdx == -1) {
+//         _errors = true;
+//         _code = HTTP_405;
+//         _type = "text/html";
+//         return false;
+//     }
+
+//     for (size_t i = 0; i < locs.size(); i++)
+//     {
+//         const std::vector<std::string> &indexVector = locs[bestIdx].getIndex();
+//         std::cout << indexVector.size() << "SIZE OF INDEXVEC" << std::endl;
+//         if (indexVector.size() == 0){
+//             std::cout << " Are we finding auto index?" << std::endl;
+//             _code = HTTP_FILE;
+//             struct stat path_stat;
+//             if (stat(_fullPath.c_str(), &path_stat) != -1 && S_ISDIR(path_stat.st_mode))
+//             {
+//                 if (_autoindexOn)
+//                 {
+//                     _code = HTTP_AUTOINDEX;
+//                     _type = "text/html";
+//                     _autoInt = 1;
+//                     std::cout << "are we http_auto on ? " << std::endl;
+//                     return true;
+//                 }
+//                 // case of autoindex == off and index doesn't exist
+//                 _errors = true;
+//                 _code = HTTP_403;
+//                 _type = "text/html";
+//                 std::cout << " are we http " << std::endl;
+//                 return false;
+//             }
+
+//         }
+        
+//     }
+//     // _autoInt = 2;
+//     std::cout << "filename: " << _fileName << "_code: " << _code << "type: " << _type << std::endl;
+//     return true;
+// }
+
 bool HTTPParser::findMethods() {
 
     if (compareMethodWithConfigFile() == true )
@@ -1083,48 +1209,77 @@ bool HTTPParser::findMethods() {
         if (_method == "GET")
         {
             const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
+            std::cout << "Hello from GET" << std::endl;
+            int bestIdx = -1;
+            size_t bestLen = 0;
+                for (size_t i = 0; i < locs.size(); i++)
+                {
+                    const std::string &path = locs[i].getPath();
+                    if (_requesttarget.find(path) == 0 && path.size() > bestLen
+                        && (path == "/" || _requesttarget.size() == path.size()
+                            || _requesttarget[path.size()] == '/' || _requesttarget[path.size()] == '?'))
+                    {
+                        bestLen = path.size();
+                        bestIdx = (int)i;
+                    }
+                }
+            
+                if (bestIdx == -1) {
+                    _errors = true;
+                    _code = HTTP_405;
+                    _type = "text/html";
+                    return false;
+                }
 
-            for (size_t i = 0; i < locs.size(); i++)
-            {
-                const std::vector<std::string> &indexVector = locs[i].getIndex();
+                const std::vector<std::string> &indexVector = locs[bestIdx].getIndex();
                 if (indexVector.size() > 0){
                     for (size_t j = 0; j < indexVector.size(); j++)
                     {
                         struct stat sb;
-                        std::string locRoot = locs[i].getRoot().empty() ? _serverConfig.getRoot() : locs[i].getRoot();
+                        std::string locRoot = locs[bestIdx].getRoot().empty() ? _serverConfig.getRoot() : locs[bestIdx].getRoot();
                         std::string index = locRoot + "/" + indexVector[j];
                         if (stat(index.c_str(), &sb) == 0) {
                             _fileName = indexVector[j];
-                            _code = HTTP_INDEX;
+                            _code = HTTP_FILE;
                             _type = "text/html";
+                            std::cout << "filename: " << _fileName << "_code: " << _code << "type: " << _type << std::endl;
                             break ;
                         }
                     }
                 }
-                else {
-                    _code = HTTP_FILE;
-                    struct stat path_stat;
-                    if (stat(_fullPath.c_str(), &path_stat) != -1 && S_ISDIR(path_stat.st_mode))
-                    {
-                        if (_autoindexOn)
-                        {
-                            _code = HTTP_AUTOINDEX;
-                            _type = "text/html";
-                            return true;
-                        }
-                        // case of autoindex == off and index doesn't exist
-                        _errors = true;
-                        _code = HTTP_403;
-                        _type = "text/html";
+            // const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
 
-                        return false;
-                    }
+            // for (size_t i = 0; i < locs.size(); i++)
+            // {
+            //     const std::vector<std::string> &indexVector = locs[i].getIndex();
+            //     if (indexVector.size() > 0){
+            //         for (size_t j = 0; j < indexVector.size(); j++)
+            //         {
+            //             struct stat sb;
+            //             std::string locRoot = locs[i].getRoot().empty() ? _serverConfig.getRoot() : locs[i].getRoot();
+            //             std::string index = locRoot + "/" + indexVector[j];
+            //             if (stat(index.c_str(), &sb) == 0) {
+            //                 _fileName = indexVector[j];
+            //                 _code = HTTP_FILE;
+            //                 break ;
+            //             }
+            //         }
+            //     }
+            //     else {
+            //         _code = HTTP_INDEX;
+            //     }
+            // }
+            if (_requesttarget == "/")
+            {
+                std::cout << "JUST SLASH" << std::endl;
+                std::cout << "Index filename: " << _fileName << " _code: " << _code << " type: " << _type << std::endl;
 
-                }
+                return true;
             }
-
             if (_requesttarget.find("/images") == 0)
             {
+                
+                std::cout << "HELLO FROM IMAGES IN FINDMETHODS" << std::endl;
                 char const *lastSlash = strrchr(_requesttarget.c_str(), '/');
                 if (doesCharCExist400(lastSlash) == false)
                     return false;
@@ -1156,7 +1311,7 @@ bool HTTPParser::findMethods() {
                         pos++;
                     }
                 }
-                std::cout << "name: " << name << std::endl;
+                std::cout << "FROM FINDMETHODS name: " << name << std::endl;
                 _fileName = name;
                 _code = HTTP_FILE;
                 char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
@@ -1183,8 +1338,10 @@ bool HTTPParser::findMethods() {
 
                 return true;
 
-            } else {
-
+            }
+            
+            else {
+                std::cout << "print at end FROM FINDMETHODS" << std::endl;
                 _fileName = _requesttarget;
                 _fileName.erase(_fileName.begin());
                 char const *lastPoint = strrchr(_requesttarget.c_str(), '.');

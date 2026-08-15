@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/14 17:18:22 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/15 18:10:13 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -480,9 +480,14 @@ bool    RequestHandler::removeFile( std::string const & filename ){
 
 std::string RequestHandler::generateAutoindex(const std::string &fullPath, const std::string &requestTarget)
 {
+    std::cout << "are u gonna gen" << std::endl;
+    
     DIR *dir = opendir(fullPath.c_str());
     if (dir == NULL)
+    {
+        std::cout << "are u gona gengen" << std::endl;        
         return ("");
+    }
     // and then after should be 403? or 500, is it an error unexpected though?
     std::string html;
     html += "<!DOCTYPE html>\n<html>\n<head><title>Index of ";
@@ -544,7 +549,8 @@ void RequestHandler::sendError( HTTPParser & parser, HttpCode code ) {
 bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     
     HTTPParser HTTPParser(_request, _serverConfig);
-
+    int status = 0; 
+    
     if (HTTPParser.isRequestValid(listen) == false)
     {
         sendError(HTTPParser, HTTPParser.getCode());
@@ -594,13 +600,128 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), HTTPParser.getType());
         return true;
     }
-    else if (HTTPParser.findMethods() == false) {
 
-        LOG_ERROR("Method not implemented");
+
+    
+
+    // else if (HTTPParser.findAutoIndex() == true)
+    // {
+    //     if (HTTPParser.getautoInt() == 1)
+    //     {
+    //           std::cout << "HELLO FROM AUTOINDEX ON" << std::endl;
+    //         _body = generateAutoindex(HTTPParser.getPath(),
+    //         HTTPParser.getRequestTarget());
+    //         if (_body.empty()) {
+    //             HTTPParser.setError(true);
+    //             HTTPParser.setCode(HTTP_403); // if real dir didn't open
+    //             HTTPParser.setType("text/html");
+    //         } 
+    //         else {
+                
+    //             // put the listing where epoll reads the response body
+    //             // (getBuffer()/getNReadIndex()) and let Content-Length mirror
+    //             if (_body.size() > (size_t)BUF_SIZE)
+    //             _body.resize(BUF_SIZE);
+    //             memcpy(_buffer, _body.data(), _body.size());
+    //             _n_read_index = (ssize_t)_body.size();
+    //         }
+    //     }
+    //     else
+    //         {
+    //             LOG_ERROR("Autoindex is on but code is not auto-index");
+    //             sendError(HTTPParser, HTTPParser.getCode());
+    //             buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");
+    //             return true;
+    //         }
+    //         // return true;
+    // }
+    status = HTTPParser.findAutoIndex();
+    if (status == 2)
+    {
+        if (HTTPParser.getCode() == HTTP_AUTOINDEX)
+        {
+            // HTTPParser.getPath() is the resolved on-disk directory (root + URI).
+            std::cout << "HELLO FROM AUTOINDEX ON" << std::endl;
+            _body = generateAutoindex(HTTPParser.getPath(),
+            HTTPParser.getRequestTarget());
+            if (_body.empty()) {
+                HTTPParser.setError(true);
+                HTTPParser.setCode(HTTP_403); // if real dir didn't open
+                HTTPParser.setType("text/html");
+            } 
+            else {
+                
+                // put the listing where epoll reads the response body
+                // (getBuffer()/getNReadIndex()) and let Content-Length mirror
+                if (_body.size() > (size_t)BUF_SIZE)
+                _body.resize(BUF_SIZE);
+                memcpy(_buffer, _body.data(), _body.size());
+                _n_read_index = (ssize_t)_body.size();
+                std::cout << "building here?" << " " << _body << std::endl;
+                buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");
+            }
+        }
+        return true;
+    }
+
+    if (status == -1)
+    {
+        LOG_ERROR("AutoIndex is off and Index does not exist.");
         sendError(HTTPParser, HTTPParser.getCode());
         buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");
         return true;
     }
+    
+    if (status == 1)
+    {
+        if (HTTPParser.findMethods() == false) {
+        LOG_ERROR("Method not implemented");
+        sendError(HTTPParser, HTTPParser.getCode());
+        buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");
+        return true;
+        }
+    }
+
+    // else if (status == HTTPParser.findIndex()) 
+    // {
+    //     if (status == 2){
+    //         if (HTTPParser.getCode() == HTTP_AUTOINDEX)
+    //         {
+    //             // HTTPParser.getPath() is the resolved on-disk directory (root + URI).
+    //             std::cout << "HELLO FROM AUTOINDEX ON" << std::endl;
+    //             _body = generateAutoindex(HTTPParser.getPath(),
+    //             HTTPParser.getRequestTarget());
+    //             if (_body.empty()) {
+    //                 HTTPParser.setError(true);
+    //                 HTTPParser.setCode(HTTP_403); // if real dir didn't open
+    //                 HTTPParser.setType("text/html");
+    //             } 
+    //             else {
+                    
+    //                 // put the listing where epoll reads the response body
+    //                 // (getBuffer()/getNReadIndex()) and let Content-Length mirror
+    //                 if (_body.size() > (size_t)BUF_SIZE)
+    //                 _body.resize(BUF_SIZE);
+    //                 memcpy(_buffer, _body.data(), _body.size());
+    //                 _n_read_index = (ssize_t)_body.size();
+    //             }
+    //         }
+    //     }   
+    //     if (status == -1){
+            
+    //         LOG_ERROR("AutoIndex is off and Index does not exist.");
+    //         sendError(HTTPParser, HTTPParser.getCode());
+    //         buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");
+    //         return true;
+    //     }
+    // } 
+    // else if (HTTPParser.findMethods() == false) {
+
+    //     LOG_ERROR("Method not implemented");
+    //     sendError(HTTPParser, HTTPParser.getCode());
+    //     buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");
+    //     return true;
+    // }
 
     if (_root.empty())
         _root = resolveRoot(_serverConfig, HTTPParser.getRequestTarget());
@@ -642,26 +763,7 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
             // TODO: set _content_type from HTTPParser.getType() if needed
         }
     } 
-    else if (HTTPParser.getCode() == HTTP_AUTOINDEX) 
-    {
-        // HTTPParser.getPath() is the resolved on-disk directory (root + URI).
-        _body = generateAutoindex(HTTPParser.getPath(),
-            HTTPParser.getRequestTarget());
-        if (_body.empty()) {
-            HTTPParser.setError(true);
-            HTTPParser.setCode(HTTP_403); // if real dir didn't open
-            HTTPParser.setType("text/html");
-        } 
-        else {
 
-            // put the listing where epoll reads the response body
-            // (getBuffer()/getNReadIndex()) and let Content-Length mirror
-            if (_body.size() > (size_t)BUF_SIZE)
-                _body.resize(BUF_SIZE);
-            memcpy(_buffer, _body.data(), _body.size());
-            _n_read_index = (ssize_t)_body.size();
-        }
-    } 
     else if (HTTPParser.getType() == "text/html"
         || HTTPParser.getType() == "text/css"
         || HTTPParser.getType() == "text/javascript"
