@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestHandler.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
+/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/15 18:50:28 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/15 21:11:19 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -480,14 +480,10 @@ bool    RequestHandler::removeFile( std::string const & filename ){
 
 std::string RequestHandler::generateAutoindex(const std::string &fullPath, const std::string &requestTarget)
 {
-    std::cout << "are u gonna gen" << std::endl;
     
     DIR *dir = opendir(fullPath.c_str());
     if (dir == NULL)
-    {
-        std::cout << "are u gona gengen" << std::endl;        
         return ("");
-    }
     // and then after should be 403? or 500, is it an error unexpected though?
     std::string html;
     html += "<!DOCTYPE html>\n<html>\n<head><title>Index of ";
@@ -559,7 +555,6 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     } 
     else if (HTTPParser.isCGI()) 
     {
-
         if (HTTPParser.validateCGIRequest() == false)
         {
             LOG_ERROR("CGI request validation failed");
@@ -567,7 +562,7 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
             buildAnswerHeader("502", "text/html");
             return true;
         }
-        if (HTTPParser.getMethod() != "GET" || HTTPParser.getMethod() != "POST")
+        if (HTTPParser.getMethod() != "GET" && HTTPParser.getMethod() != "POST")
         {
             LOG_ERROR("CGI request validation failed: Need GET or POST as method");
             sendError(HTTPParser, HTTP_405);
@@ -595,7 +590,6 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     else if (HTTPParser.isRedir() == true){
         
         _pathToFile = HTTPParser.getFileName();
-        std::cout << "_pathToFile: " << _pathToFile << std::endl;
         buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), HTTPParser.getType());
         return true;
     }
@@ -605,7 +599,6 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         if (HTTPParser.getCode() == HTTP_AUTOINDEX)
         {
             // HTTPParser.getPath() is the resolved on-disk directory (root + URI).
-            std::cout << "HELLO FROM AUTOINDEX ON" << std::endl;
             _body = generateAutoindex(HTTPParser.getPath(),
             HTTPParser.getRequestTarget());
             if (_body.empty()) {
@@ -621,7 +614,6 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
                 _body.resize(BUF_SIZE);
                 memcpy(_buffer, _body.data(), _body.size());
                 _n_read_index = (ssize_t)_body.size();
-                std::cout << "building here?" << " " << _body << std::endl;
                 buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");
             }
         }
@@ -769,7 +761,6 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
 
     if (!rangeHandled) // a 206/416 header was already built by the range path
         buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), HTTPParser.getType());
-
     return true;
 }
 

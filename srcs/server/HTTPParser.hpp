@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HTTPParser.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
+/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/15 18:58:00 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/15 21:07:38 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -125,7 +125,6 @@ private:
 
     std::string                 _fileContentType;
 
-
 public:
 
                                 HTTPParser( std::string const & request, const ServerConfig &serverConfig  );
@@ -176,7 +175,10 @@ public:
                 
     bool                        checkContentDisposition( size_t & curPos );
     bool                        gatherFile( size_t curPos );
-            
+    // bool                        checkContentDisposition();
+    // std::vector<size_t>         collectSpace( std::string::iterator start, std::string::iterator end );
+    // std::vector<std::string>    collectString(std::string & line, std::vector<size_t> & space_inter );
+    
     std::string                 addSuffix(std::string suffix);
     bool                        compareMethodWithConfigFile();
     bool                        isRedir();

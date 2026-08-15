@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HTTPParser.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
+/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/15 18:58:36 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/15 21:07:24 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,7 @@ HTTPParser::HTTPParser( std::string const & request,
     _isCGI(false), _fullPath(), _query_string(), _scriptFilename(),
     _body(), _content_type(), _content_int(0), _autoindexOn(false),
     _rangeHeader(), _isContentLengthFound(false),
-    _isHostFound(false), _isContentTypeFound(false), _fileContentType() {}
+    _isHostFound(false), _isContentTypeFound(false), _fileContentType(){}
 
 HTTPParser::HTTPParser( HTTPParser const & src ) :
     _request(src._request), _serverConfig(src._serverConfig),
@@ -90,7 +90,6 @@ HTTPParser &    HTTPParser::operator=( HTTPParser const & other )
         _isHostFound        = other._isHostFound;
         _isContentTypeFound = other._isContentTypeFound;
         _fileContentType    = other._fileContentType;
-
     }
 
     return *this;
@@ -746,7 +745,7 @@ size_t HTTPParser::parseBodySize( std::string const & s ) {
 // Parses "Content-Disposition: form-data; name="..."; filename="...""
 bool HTTPParser::checkContentDisposition( size_t & curPos ) {
 
-    size_t pos = _body.find("Content-Disposition:");
+    size_t pos = _body.find("Content-Disposition:", 0);
     if (varNotFound400(pos) == false)
         return LOG_ERROR("Content-Disposition missing for POST method"), false;
 
@@ -1107,9 +1106,7 @@ int HTTPParser::findAutoIndex()
 
 
     const std::vector<std::string> &indexVector = locs[bestIdx].getIndex();
-    std::cout << indexVector.size() << "SIZE OF INDEX VEC" << std::endl;
     if (indexVector.size() == 0){
-        std::cout << " Are we finding auto index?" << std::endl;
         _code = HTTP_FILE;
         struct stat path_stat;
         if (stat(_fullPath.c_str(), &path_stat) != -1 && S_ISDIR(path_stat.st_mode))
@@ -1118,15 +1115,12 @@ int HTTPParser::findAutoIndex()
             {
                 _code = HTTP_AUTOINDEX;
                 _type = "text/html";
-                _autoInt = 1;
-                std::cout << "are we http_auto on ? " << std::endl;
                 return 2;
             }
             // case of autoindex == off and index doesn't exist
             _errors = true;
             _code = HTTP_403;
             _type = "text/html";
-            std::cout << " are we http " << std::endl;
             return -1;
         }
     }
@@ -1142,7 +1136,6 @@ bool HTTPParser::findMethods() {
         if (_method == "GET")
         {
             const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
-            std::cout << "Hello from GET" << std::endl;
             int bestIdx = -1;
             size_t bestLen = 0;
             for (size_t i = 0; i < locs.size(); i++)
@@ -1165,7 +1158,6 @@ bool HTTPParser::findMethods() {
             }
 
             const std::vector<std::string> &indexVector = locs[bestIdx].getIndex();
-            std::cout << " ARE WE IN THE GOOD PLACE " << indexVector.size() << std::endl;
             if (indexVector.size() > 0)
             {
                 for (size_t j = 0; j < indexVector.size(); j++)
@@ -1173,12 +1165,10 @@ bool HTTPParser::findMethods() {
                     struct stat sb;
                     std::string locRoot = locs[bestIdx].getRoot().empty() ? _serverConfig.getRoot() : locs[bestIdx].getRoot();
                     std::string index = locRoot + "/" + indexVector[j];
-                    std::cout << "did you get int" << index << std::endl;
                     if (stat(index.c_str(), &sb) == 0) {
                         _fileName = indexVector[j];
                         _code = HTTP_FILE;
                         _type = "text/html";
-                        std::cout << "filename: " << _fileName << "_code: " << _code << "type: " << _type << std::endl;
                         break ;
                     }
                 }
@@ -1186,7 +1176,6 @@ bool HTTPParser::findMethods() {
 
             if (_requesttarget == "/")
             {
-                std::cout << "JUST SLASH" << std::endl;
                 std::cout << "Index filename: " << _fileName << " _code: " << _code << " type: " << _type << std::endl;
 
                 return true;
@@ -1194,7 +1183,6 @@ bool HTTPParser::findMethods() {
             if (_requesttarget.find("/images") != std::string::npos)
             {
                 
-                std::cout << "HELLO FROM IMAGES IN FINDMETHODS" << std::endl;
                 char const *lastSlash = strrchr(_requesttarget.c_str(), '/');
                 if (doesCharCExist400(lastSlash) == false)
                     return false;
@@ -1226,7 +1214,6 @@ bool HTTPParser::findMethods() {
                         pos++;
                     }
                 }
-                std::cout << "FROM FINDMETHODS name: " << name << std::endl;
                 _fileName = name;
                 _code = HTTP_FILE;
                 char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
@@ -1256,7 +1243,6 @@ bool HTTPParser::findMethods() {
             }
             
             else {
-                std::cout << "print at end FROM FINDMETHODS" << std::endl;
                 _fileName = _requesttarget;
                 _fileName.erase(_fileName.begin());
                 char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
@@ -1290,7 +1276,7 @@ bool HTTPParser::findMethods() {
                         return false;
                     }
                     size_t curPos = 0;
-                    if (checkContentDisposition(curPos) == false) {
+                    if (checkContentDisposition( curPos ) == false) {
                         LOG_ERROR("POST upload: missing Content-Disposition");
                         return false;
                     }

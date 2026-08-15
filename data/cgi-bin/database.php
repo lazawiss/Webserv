@@ -119,16 +119,24 @@ if ($method === "POST") {
             exit;
         }
     }
+    if (!save_record($DB_DIR, $DB_PATH, $FIELDS, $name, $email)) {
+        header("Status: 500 Internal Server Error");
+        header("Content-Type: text/html; charset=utf-8");
+        echo render_page(
+            $existing,
+            "<p style='color:red'>ERROR: Could not write to the database.</p>"
+        );
+        exit;
+    }
 
-    save_record($DB_DIR, $DB_PATH, $FIELDS, $name, $email);
     header("Content-Type: text/html; charset=utf-8");
-    echo render_page(load_records($DB_PATH, $FIELDS),
+    echo render_page(
+        load_records($DB_PATH, $FIELDS),
         "<p style='color:green'>Saved " . htmlspecialchars($name)
-        . " &lt;" . htmlspecialchars($email) . "&gt;.</p>");
-    exit;
+        . " &lt;" . htmlspecialchars($email) . "&gt;.</p>"
+    );
 }
-
 // GET (or anything else): just display the current database
-header("Content-Type: text/html; charset=utf-8");
-echo render_page(load_records($DB_PATH, $FIELDS));
+// header("Content-Type: text/html; charset=utf-8");
+// echo render_page(load_records($DB_PATH, $FIELDS));
 ?>
