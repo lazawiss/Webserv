@@ -13,7 +13,7 @@ server {
         root        data/www/html;
         index       index2.html index.html;
         methods     GET;
-        autoindex   on;
+        autoindex   off;
     }
 
     location /api {
