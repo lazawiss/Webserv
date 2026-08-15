@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestHandler.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
+/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/15 20:35:41 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/15 21:11:19 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -480,14 +480,10 @@ bool    RequestHandler::removeFile( std::string const & filename ){
 
 std::string RequestHandler::generateAutoindex(const std::string &fullPath, const std::string &requestTarget)
 {
-    std::cout << "are u gonna gen" << std::endl;
     
     DIR *dir = opendir(fullPath.c_str());
     if (dir == NULL)
-    {
-        std::cout << "are u gona gengen" << std::endl;        
         return ("");
-    }
     // and then after should be 403? or 500, is it an error unexpected though?
     std::string html;
     html += "<!DOCTYPE html>\n<html>\n<head><title>Index of ";
@@ -594,7 +590,6 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     else if (HTTPParser.isRedir() == true){
         
         _pathToFile = HTTPParser.getFileName();
-        std::cout << "_pathToFile: " << _pathToFile << std::endl;
         buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), HTTPParser.getType());
         return true;
     }
@@ -604,7 +599,6 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         if (HTTPParser.getCode() == HTTP_AUTOINDEX)
         {
             // HTTPParser.getPath() is the resolved on-disk directory (root + URI).
-            std::cout << "HELLO FROM AUTOINDEX ON" << std::endl;
             _body = generateAutoindex(HTTPParser.getPath(),
             HTTPParser.getRequestTarget());
             if (_body.empty()) {
@@ -767,7 +761,6 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
 
     if (!rangeHandled) // a 206/416 header was already built by the range path
         buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), HTTPParser.getType());
-    std::cout << "ARE WE LEAvING" << std::endl;
     return true;
 }
 

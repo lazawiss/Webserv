@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HTTPParser.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
+/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/15 20:35:31 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/15 21:07:24 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,7 @@ HTTPParser::HTTPParser( std::string const & request,
     _isCGI(false), _fullPath(), _query_string(), _scriptFilename(),
     _body(), _content_type(), _content_int(0), _autoindexOn(false),
     _rangeHeader(), _isContentLengthFound(false),
-    _isHostFound(false), _isContentTypeFound(false), _fileContentType(), _pos(0) {}
+    _isHostFound(false), _isContentTypeFound(false), _fileContentType(){}
 
 HTTPParser::HTTPParser( HTTPParser const & src ) :
     _request(src._request), _serverConfig(src._serverConfig),
@@ -54,7 +54,7 @@ HTTPParser::HTTPParser( HTTPParser const & src ) :
     _isContentLengthFound(src._isContentLengthFound),
     _isHostFound(src._isHostFound),
     _isContentTypeFound(src._isContentTypeFound), 
-    _fileContentType(src._fileContentType), _pos(src._pos) {}
+    _fileContentType(src._fileContentType) {}
 
 HTTPParser::~HTTPParser() {}
 
@@ -90,7 +90,6 @@ HTTPParser &    HTTPParser::operator=( HTTPParser const & other )
         _isHostFound        = other._isHostFound;
         _isContentTypeFound = other._isContentTypeFound;
         _fileContentType    = other._fileContentType;
-        _pos                = other._pos;
     }
 
     return *this;
@@ -777,104 +776,6 @@ bool HTTPParser::checkContentDisposition( size_t & curPos ) {
     curPos = lineEnd + 2;
     return true;
 }
-
-// static bool isSimpleSpace( int found ){
-
-//     return found == ' ';
-// }
-
-// std::vector<size_t> HTTPParser::collectSpace( std::string::iterator start, std::string::iterator end ) {
-
-//     std::vector<size_t> space_inter;
-//     std::string::iterator pos = start;
-//     while(pos != end){
-
-//         pos = find_if(pos, end, isSimpleSpace);
-//         if (pos == end)
-//             break;
-
-//         space_inter.push_back(distance(start, pos));
-
-//         if (*pos == '\r' || *pos == '\n')
-//                 break;
-
-//         pos++;
-//     }
-
-//     return space_inter;
-// }
-
-// std::vector<std::string> HTTPParser::collectString(std::string & line,
-//     std::vector<size_t> & space_inter ) {
-
-//     std::vector<std::string> subss;
-
-//     for(size_t i = 0; i < space_inter.size(); ++i){
-
-//         size_t start = (i == 0) ? 0 : space_inter[i - 1] + 1;
-//         size_t end = space_inter[i];
-
-//         subss.push_back(line.substr(start, end - start));
-//     }
-
-//     if (!space_inter.empty()){
-//         size_t separator = space_inter.back();
-//         if (separator < line.size())
-//             subss.push_back(line.substr(separator + 1));
-//     }
-
-//     return subss;
-// }
-
-// bool HTTPParser::checkContentDisposition() {
-
-//     size_t pos = _request.find("Content-Disposition:");
-//     if (varNotFound400(pos) == false)
-//         return false;
-
-//     size_t requestLineEnd = _request.find("\r\n", pos);
-//     if (varNotFound400(requestLineEnd) == false)
-//         return false;
-
-//     std::string line = _request.substr(pos, requestLineEnd - pos);
-
-//     std::string::iterator newpos = line.begin();
-//     std::string::iterator end = line.end();
-
-//     std::vector<size_t> space_inter = collectSpace(newpos, end);
-
-//     std::vector<std::string> subsss = collectString(line,space_inter);
-
-//      if (subsss.size() == 4) {
-
-//         std::string type = subsss[1];
-//         char const *slash = strchr(_type.c_str(), '/');
-//         if (doesCharCExist400(slash) == false)
-//             return false;
-
-//         std::string checktype = std::string(slash, strlen(slash));
-//         checktype.erase(checktype.begin());
-//         checktype.erase(checktype.end() - 1);
-//         std::string name = subsss[2];
-//         name.erase(name.end() - 2);
-//         name.erase(name.begin(), name.begin() + 6);
-//         _fileName = subsss[3];
-//         _fileName.erase(_fileName.end() - 1);
-//         _fileName.erase(_fileName.begin(), _fileName.begin() + 10 );
-//         LOG_DEBUG("Disposition type: " + checktype);
-//         LOG_DEBUG("Disposition name: " + name);
-//         LOG_DEBUG("Upload filename: " + _fileName);
-
-//         // _pos = _request.begin() + requestLineEnd; 
-//         return true;
-//     }
-
-//     _errors = true;
-//     _code = HTTP_400;
-//     _type = "text/html";
-
-//     return false;
-// }
 
 bool HTTPParser::gatherFile( size_t curPos ) {
 

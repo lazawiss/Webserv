@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   EpollLoop.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
+/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/15 19:31:33 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/15 21:14:51 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -284,7 +284,6 @@ bool EpollLoop::do_read_fd(
     int fd, std::vector<ListenerManager*> const & listeners,
     const GlobalConfig & config, int epollfd, epoll_event & ev)
 {
-    std::cout << "strrkkkkk" << std::endl;
     char    buf[BUF_SIZE];
 
     ssize_t n_read = read(fd, buf, BUF_SIZE);
@@ -308,7 +307,6 @@ bool EpollLoop::do_read_fd(
 
     std::string request;
     request.append(buf, n_read);
-    std::cout << "DEPUIS DO READ" << request << std::endl;
     // RequestState state = analyzeRequest(acc, request);
     // if (state == REQ_INCOMPLETE) // needs to check if it is finished
     //     return true;
@@ -389,7 +387,6 @@ bool EpollLoop::do_read_fd(
     LOG_INFO("[" + serverName + "] " + requestLine);
 
     RequestHandler requestHandler(request, *serverConfig);
-    std::cout << "REQUEST " << request << std::endl; 
     if (requestHandler.handleRequest(*listener) == false)
     {
         LOG_ERROR("handleRequest failed, sending 500");
