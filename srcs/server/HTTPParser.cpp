@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/15 18:02:35 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/15 18:33:57 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -1276,7 +1276,7 @@ bool HTTPParser::findMethods() {
 
                 return true;
             }
-            if (_requesttarget.find("/images") == 0)
+            if (_requesttarget.find("/images") != std::string::npos)
             {
                 
                 std::cout << "HELLO FROM IMAGES IN FINDMETHODS" << std::endl;
@@ -1296,7 +1296,7 @@ bool HTTPParser::findMethods() {
                 return true;
             }
 
-            if (_requesttarget.find("/upload") != std::string::npos)
+            if (_requesttarget.find("/upload/") != std::string::npos)
             {
                 char const *lastSlash = strrchr(_requesttarget.c_str(), '/');
                 if (doesCharCExist400(lastSlash) == false)
