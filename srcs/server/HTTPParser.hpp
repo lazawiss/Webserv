@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/15 17:54:49 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/15 18:58:00 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -119,7 +119,6 @@ private:
 
     bool                        _autoindexOn;       // true if autoindex is enabled for the matched location
     std::string                 _rangeHeader;       // Range header value (bytes=X-Y)
-    int                         _autoInt;
     bool                        _isContentLengthFound;
     bool                        _isHostFound;
     bool                        _isContentTypeFound;
@@ -150,7 +149,6 @@ public:
     size_t                      getContentLength() const;
     std::string                 getRequestTarget() const;
     std::string                 getRange() const;
-    int                         getautoInt() const;
     HttpCode                    setCode( HttpCode code );
     std::string                 setType( std::string const & type );
     bool                        setError( bool error );    
@@ -183,8 +181,7 @@ public:
     bool                        compareMethodWithConfigFile();
     bool                        isRedir();
     bool                        findMethods();
-    int                        findAutoIndex();
-    // bool                        findAutoIndex();
+    int                         findAutoIndex();
 
     static std::string          httpCodeToString( HttpCode code );
 
