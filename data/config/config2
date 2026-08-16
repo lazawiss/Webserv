@@ -23,8 +23,9 @@ server {
 
     location /api {
         root        data/www/html1;
+        index       index.html;
         methods     GET;
-        autoindex   on;
+        autoindex   off;
     }
 
     location /upload {

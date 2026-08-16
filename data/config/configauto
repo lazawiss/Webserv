@@ -9,6 +9,8 @@ server {
 
     error_page 400 /errors/404.html;
 
+    root            data/www;
+
     location / {
         root        data/www/html;
         index       index2.html index.html;

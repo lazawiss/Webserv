@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HTTPParser.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/15 21:07:24 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/16 20:11:02 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -887,16 +887,17 @@ void HTTPParser::buildFullPath() {
 
     const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
     const LocationConfig *bestLoc = NULL;
-    // size_t bestLen = 0;
+    size_t bestLen = 0;
 
     for (size_t i = 0; i < locs.size(); ++i)
     {
         const std::string &locPath = locs[i].getPath();
-        if (_requesttarget.compare(0, locPath.size(), locPath) == 0)
-        // && locPath.size() >= bestLen
+        if (_requesttarget.compare(0, locPath.size(), locPath) == 0 
+            && locPath.size() >= bestLen)
         {
-            // bestLen  = locPath.size();
+            bestLen  = locPath.size();
             bestLoc  = &locs[i];
+            std::cout << bestLoc->getPath() << "BEST LOC " << std::endl;
         }
     }
 
@@ -1109,6 +1110,7 @@ int HTTPParser::findAutoIndex()
     if (indexVector.size() == 0){
         _code = HTTP_FILE;
         struct stat path_stat;
+    
         if (stat(_fullPath.c_str(), &path_stat) != -1 && S_ISDIR(path_stat.st_mode))
         {
             if (_autoindexOn)
@@ -1174,12 +1176,29 @@ bool HTTPParser::findMethods() {
                 }
             }
 
-            if (_requesttarget == "/")
+            std::string indexPath = _fullPath;
+            // if (indexPath[indexPath.size() - 1] != '/')
+            indexPath += "/";
+            indexPath += "index.html";
+            std::cout << "index full name "<< indexPath << std::endl;
+
+            struct stat index_stat;
+            if (stat(indexPath.c_str(), &index_stat) == 0
+                && S_ISREG(index_stat.st_mode))
             {
-                std::cout << "Index filename: " << _fileName << " _code: " << _code << " type: " << _type << std::endl;
+                _code = HTTP_INDEX;
+                _type = "text/html";
+                _fileName = indexPath;
 
                 return true;
             }
+
+            // if (_requesttarget == "/" || _requesttarget == "/api")
+            // {
+            //     std::cout << "Index filename: " << _fileName << " _code: " << _code << " type: " << _type << std::endl;
+
+            //     return true;
+            // }
             if (_requesttarget.find("/images") != std::string::npos)
             {
                 

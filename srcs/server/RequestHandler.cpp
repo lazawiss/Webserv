@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestHandler.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/15 21:11:19 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/16 20:25:56 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -198,6 +198,8 @@ std::string RequestHandler::getFile( std::string const & code, bool const & erro
         file = _root;
         file += "/";
         file += code;
+
+        std::cout << "FULL PATH FROM get FILE " << code << std::endl;
     }
 
     // ------------ Debug ------------
@@ -683,10 +685,16 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         || HTTPParser.getType() == "text/javascript"
         || HTTPParser.getType() == "application/javascript") 
     {
+        
+      
         std::string file = HTTPParser.getError()
             ? getFile(HTTPParser::httpCodeToString(HTTPParser.getCode()), true)
             : getFile(HTTPParser.getFileName(), false);
 
+        if (HTTPParser.getCode() == HTTP_INDEX){
+            file = HTTPParser.getFileName();
+            std::cout << file << std::endl;
+        }
         if (answerFile(file) == false)
             sendError(HTTPParser);
     } 

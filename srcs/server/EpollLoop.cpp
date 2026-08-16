@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   EpollLoop.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/15 21:14:51 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/16 22:10:33 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -78,194 +78,207 @@ int EpollLoop::setnonblocking( int fd ) {
     return result;
 }
 
-// static bool getHeaderValue(
-//     const std::string &headerBlock, const std::string &name, std::string &out)
-// {
-//     size_t i = headerBlock.find("\r\n");
-//     if (i == std::string::npos)
-//         return false;
-//     i += 2;
-
-//     if (i < headerBlock.size() && (headerBlock[i] == ' ' || headerBlock[i] == '\t'))
-//         return LOG_ERROR("{PARTIAL REQUESTS} : Leading whitespace after request-line"), false;
-
-//     while (i < headerBlock.size())
-//     {
-//         size_t end = headerBlock.find("\r\n", i);
-//         if (end == std::string::npos)
-//             end = headerBlock.size();
-
-//         size_t colon = headerBlock.find(':', i);
-//         if (colon != std::string::npos && colon < end)
-//         {
-//             std::string key = headerBlock.substr(i, colon - i);
-//             if (key.size() == name.size())
-//             {
-//                 bool match = true;
-//                 for (size_t k = 0; k < key.size(); k++)
-//                 {
-//                     if (std::tolower((unsigned char)key[k])
-//                         != std::tolower((unsigned char)name[k]))
-//                     { match = false; break; }
-//                 }
-//                 if (match)
-//                 {
-//                     out = headerBlock.substr(colon + 1);
-//                     return true;
-//                 }
-//             }
-//         }
-//         if (end == headerBlock.size())
-//             break;
-//         i = end + 2;
-//     }
-//     return false;
-// }
-
-// static std::string rebuildWithContentLength(
-//     const std::string &acc, size_t headerEnd, const std::string &decoded)
-// {
-//     const std::string headerBlock = acc.substr(0, headerEnd);
-//     std::string out;
-
-//     size_t i = 0;
-//     bool firstLine = true;
-//     while (i <= headerBlock.size())
-//     {
-//         size_t end = headerBlock.find("\r\n", i);
-//         if (end == std::string::npos)
-//             end = headerBlock.size();
-//         std::string line = headerBlock.substr(i, end - i); // beginning of line - \r\n
-
-//         bool drop = false;
-//         if (!firstLine)
-//         {
-//             size_t colon = line.find(':');
-//             std::string key = (colon == std::string::npos)? line : line.substr(0, colon);
-//             std::string lower;
-//             for (size_t k = 0; k < key.size(); k++)
-//                 lower += (char)std::tolower((unsigned char)key[k]);
-//             if (lower == "transfer-encoding" || lower == "content-length") 
-//             // is key one of these? if so, we drop
-//             // get rid of them so we can have clean guy with just Content-Length already prepped
-//                 drop = true;
-//         }
-//         if (!drop)
-//         {
-//             out += line;
-//             out += "\r\n";
-//         }
-//         firstLine = false;
-//         if (end == headerBlock.size())
-//             break;
-//         i = end + 2; // next line
-//     }
-
-//     std::ostringstream cl;
-//     cl << "Content-Length: " << decoded.size() << "\r\n";
-//     out += cl.str();
-//     out += "\r\n";
-//     out += decoded;
-//     return out;
-// }
-
-// static RequestState dechunkBody( const std::string &body, std::string &decoded )
-// {
-//     size_t pos = 0;
-//     decoded.clear();
-
-//     while (true)
-//     {
-//         size_t lineEnd = body.find("\r\n", pos);
-//         if (lineEnd == std::string::npos)
-//             return REQ_INCOMPLETE; // line not complete
-
-//         std::string sizeStr = body.substr(pos, lineEnd - pos);
-//         size_t semi = sizeStr.find(';'); //chunk smuggle do we need ot take care?
-//         if (semi != std::string::npos)
-//             sizeStr = sizeStr.substr(0, semi);
-//         if (sizeStr.empty())
-//             return REQ_BAD;
-
-//         size_t chunkSize = 0;
-//         for (size_t k = 0; k < sizeStr.size(); k++)
-//         {
-//             char c = sizeStr[k];
-//             if (!std::isxdigit((unsigned char)c)) // has to be hex
-//                 return REQ_BAD;
-//             chunkSize = chunkSize * 16 + (std::isdigit((unsigned char)c) ? c - '0' : std::tolower((unsigned char)c) - 'a' + 10); 
-//             if (decoded.size() + chunkSize > BUF_SIZE)
-//                 return REQ_BAD_413;// body too large ; 413 close
-//         }
-// //      4\r\nWiki\r\n5\r\npedia\r\n0\r\n\r\n
-//         size_t dataStart = lineEnd + 2; // +/r/n
-//         if (chunkSize == 0)
-//         {
-//             // final chunk require the \r\n
-//             if (body.size() < dataStart + 2)
-//                 return REQ_INCOMPLETE;
-//             return REQ_READY;
-//         }
-//         if (body.size() < dataStart + chunkSize + 2)
-//             return REQ_INCOMPLETE;
-//         if (body.compare(dataStart + chunkSize, 2, "\r\n") != 0)
-//             return REQ_BAD;
-
-//         decoded.append(body, dataStart, chunkSize);
-//         pos = dataStart + chunkSize + 2;
-//     }
-// }
-
-// static RequestState analyzeRequest( const std::string &acc, std::string &request)
-// {
-//     size_t headerEnd = acc.find("\r\n\r\n");
-//     if (headerEnd == std::string::npos)     
-//         return REQ_INCOMPLETE;
-//     size_t bodyStart = headerEnd + 4;
-//     const std::string headerBlock = acc.substr(0, headerEnd);
-
-//     //BODY PART:
-//     // chunking here
-//     std::string te;
-//     if (getHeaderValue(headerBlock, "Transfer-Encoding", te)
-//         && HTTPParser::containsCaseInsensitive(te, "chunked"))
-//     {
-//         std::string decoded;
-//         RequestState st = dechunkBody(acc.substr(bodyStart), decoded);
-//         if (st != REQ_READY)
-//             return st; 
-//         request = rebuildWithContentLength(acc, headerEnd, decoded);
-//         return REQ_READY;
-//     }
-//     //content length given 
-//     std::string cl;
-//     if (getHeaderValue(headerBlock, "Content-Length", cl))
-//     {
-//         for (size_t k = 0; k < cl.size(); k++)
-//             if (!std::isdigit((unsigned char)cl[k]))
-//                 return REQ_BAD_411;
-//         size_t expected = (size_t)strtoul(cl.c_str(), NULL, 10);
-//         if (expected > BUF_SIZE)
-//             return REQ_BAD_413; // parser would 413 anyway
-//         if (acc.size() - bodyStart < expected)
-//             return REQ_INCOMPLETE; // body not full yet
-//         // hand over exactly the header block + declared body
-//         request = acc.substr(0, bodyStart + expected);
-//         return REQ_READY;
-//     }
-//     // if no body request ends at the header term
-//     request = acc.substr(0, bodyStart);
-//     return REQ_READY;
-// }
-
-
-void    EpollLoop::cleanupClient(int fd, int epollfd)
+static bool getHeaderValue(
+    const std::string &headerBlock, const std::string &name, std::string &out)
 {
-    epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, NULL);
-    close(fd);
-    _clientResponseBuffer.erase(fd);
-    _clientToListener.erase(fd);
+    size_t i = headerBlock.find("\r\n");
+    if (i == std::string::npos)
+        return false;
+    i += 2;
+
+    if (i < headerBlock.size() && (headerBlock[i] == ' ' || headerBlock[i] == '\t'))
+        return LOG_ERROR("{PARTIAL REQUESTS} : Leading whitespace after request-line"), false;
+
+    while (i < headerBlock.size())
+    {
+        size_t end = headerBlock.find("\r\n", i);
+        if (end == std::string::npos)
+            end = headerBlock.size();
+
+        size_t colon = headerBlock.find(':', i);
+        if (colon != std::string::npos && colon < end)
+        {
+            std::string key = headerBlock.substr(i, colon - i);
+            if (key.size() == name.size())
+            {
+                bool match = true;
+                for (size_t k = 0; k < key.size(); k++)
+                {
+                    if (std::tolower((unsigned char)key[k])
+                        != std::tolower((unsigned char)name[k]))
+                    { match = false; break; }
+                }
+                if (match)
+                {
+                    out = headerBlock.substr(colon + 1);
+                    return true;
+                }
+            }
+        }
+        if (end == headerBlock.size())
+            break;
+        i = end + 2;
+    }
+    return false;
 }
+
+static std::string rebuildWithContentLength(
+    const std::string &acc, size_t headerEnd, const std::string &decoded)
+{
+    const std::string headerBlock = acc.substr(0, headerEnd);
+    std::string out;
+
+    size_t i = 0;
+    bool firstLine = true;
+    while (i <= headerBlock.size())
+    {
+        size_t end = headerBlock.find("\r\n", i);
+        if (end == std::string::npos)
+            end = headerBlock.size();
+        std::string line = headerBlock.substr(i, end - i); // beginning of line - \r\n
+
+        bool drop = false;
+        if (!firstLine)
+        {
+            size_t colon = line.find(':');
+            std::string key = (colon == std::string::npos)? line : line.substr(0, colon);
+            std::string lower;
+            for (size_t k = 0; k < key.size(); k++)
+                lower += (char)std::tolower((unsigned char)key[k]);
+            if (lower == "transfer-encoding" || lower == "content-length") 
+            // is key one of these? if so, we drop
+            // get rid of them so we can have clean guy with just Content-Length already prepped
+                drop = true;
+        }
+        if (!drop)
+        {
+            out += line;
+            out += "\r\n";
+        }
+        firstLine = false;
+        if (end == headerBlock.size())
+            break;
+        i = end + 2; // next line
+    }
+
+    std::ostringstream cl;
+    cl << "Content-Length: " << decoded.size() << "\r\n";
+    out += cl.str();
+    out += "\r\n";
+    out += decoded;
+    return out;
+}
+
+static RequestState dechunkBody( const std::string &body, std::string &decoded )
+{
+
+    size_t pos = 0;
+    std::cout <<  "dechunk BODY " << body << std::endl;
+    decoded.clear();
+    size_t lineEnd = body.find("\r\n", pos);
+    if (lineEnd == std::string::npos)
+        return REQ_INCOMPLETE; // line not complete
+
+    std::string sizeStr = body.substr(pos, lineEnd - pos);
+    std::cout << sizeStr << "size Str " << std::endl;
+    size_t semi = sizeStr.find(';'); //chunk smuggle do we need ot take care?
+    if (semi != std::string::npos)
+        sizeStr = sizeStr.substr(0, semi);
+    if (sizeStr.empty())
+    {
+        std::cout << "why " << std::endl;            
+        return REQ_BAD;
+    }
+
+    size_t chunkSize = 0;
+
+    std::stringstream ss;
+    ss << sizeStr; 
+    size_t num;
+    ss >> std::hex >> num;
+
+    std::cout << "what is num : " << num << std::endl;
+    chunkSize = num; 
+
+    while (true)
+    {   
+        size_t dataStart = lineEnd + 2; // +/r/n
+        if (dataStart == 0)
+        {
+            // final chunk require the \r\n
+            if (body.size() < dataStart + 2)
+                return REQ_INCOMPLETE;
+            return REQ_READY;
+        }
+        if (body.size() < dataStart)
+        {
+            std::cout << "BODY " << body << std::endl;
+            std::cout << "chunkSize" << chunkSize << std::endl;
+            std::cout << "body size " << body.size() << std::endl; 
+            return REQ_INCOMPLETE;
+        }
+        if (body.compare(dataStart + chunkSize, 2, "\r\n") != 0)
+            return REQ_BAD;
+
+        decoded.append(body, dataStart, chunkSize);
+        std::cout << "END OF BODY" << decoded << std::endl;
+        pos = dataStart + chunkSize + 2;
+    }
+}
+
+static RequestState analyzeRequest( const std::string &acc, std::string &request)
+{
+    size_t headerEnd = acc.find("\r\n\r\n");
+    if (headerEnd == std::string::npos)     
+        return REQ_INCOMPLETE;
+    size_t bodyStart = headerEnd + 4;
+    const std::string headerBlock = acc.substr(0, headerEnd);
+    std::cout << "HEADER" << headerBlock << std::endl;
+
+    //BODY PART:
+    // chunking here
+    std::string te;
+    if (getHeaderValue(headerBlock, "Transfer-Encoding", te)
+        && HTTPParser::containsCaseInsensitive(te, "chunked"))
+    {
+        std::string decoded;
+        RequestState st = dechunkBody(acc.substr(bodyStart), decoded);
+        std::cout << "ENUM request" << st << std::endl;
+
+        if (st != REQ_READY)
+            return st; 
+        request = rebuildWithContentLength(acc, headerEnd, decoded);
+        return REQ_READY;
+    }
+    //content length given 
+    std::string cl;
+    if (getHeaderValue(headerBlock, "Content-Length", cl))
+    {
+        for (size_t k = 0; k < cl.size(); k++)
+            if (!std::isdigit((unsigned char)cl[k]))
+                return REQ_BAD_411;
+        size_t expected = (size_t)strtoul(cl.c_str(), NULL, 10);
+        if (expected > BUF_SIZE)
+            return REQ_BAD_413; // parser would 413 anyway
+        if (acc.size() - bodyStart < expected)
+            return REQ_INCOMPLETE; // body not full yet
+        // hand over exactly the header block + declared body
+        request = acc.substr(0, bodyStart + expected);
+        return REQ_READY;
+    }
+    // if no body request ends at the header term
+    request = acc.substr(0, bodyStart);
+    return REQ_READY;
+}
+
+
+// void    EpollLoop::cleanupClient(int fd, int epollfd)
+// {
+//     epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, NULL);
+//     close(fd);
+//     _clientResponseBuffer.erase(fd);
+//     _clientToListener.erase(fd);
+// }
 
 /**
 ** @brief Reads a request from a client fd and builds the response.
@@ -297,8 +310,8 @@ bool EpollLoop::do_read_fd(
         LOG_ERROR("Error reading from client fd");
         return (close(fd), false);
     }
-    // std::string &acc = _clientRequestBuffer[fd];
-    // acc.append(buf, n_read);
+    std::string &acc = _clientRequestBuffer[fd];
+    acc.append(buf, n_read);
     // if (acc.size() > (size_t)BUF_SIZE)
     // {
     //     cleanupClient(fd, epollfd);
@@ -307,39 +320,40 @@ bool EpollLoop::do_read_fd(
 
     std::string request;
     request.append(buf, n_read);
-    // RequestState state = analyzeRequest(acc, request);
-    // if (state == REQ_INCOMPLETE) // needs to check if it is finished
-    //     return true;
-    // if (state == REQ_BAD){
-    //     _clientResponseBuffer[fd] = 
-    //         "HTTP/1.1 400 Bad Request\r\n"
-    //         "Content-Type: text/html\r\n"
-    //         "Content-Length: 0\r\n\r\n";
-    //     ev.events = EPOLLOUT;
-    //     ev.data.fd = fd;
-    //     cleanupClient(fd, epollfd);
-    //     return true;
-    // }
-    // else if (state == REQ_BAD_411){
-    //     _clientResponseBuffer[fd] = 
-    //         "HTTP/1.1 411 Length Required\r\n"
-    //         "Content-Type: text/html\r\n"
-    //         "Content-Length: 0\r\n\r\n";
-    //     ev.events = EPOLLOUT;
-    //     ev.data.fd = fd;
-    //     cleanupClient(fd, epollfd);
-    //     return true;
-    // }
-    // else if (state == REQ_BAD_413){
-    //     _clientResponseBuffer[fd] = 
-    //         "HTTP/1.1 413 Content Too Large\r\n"
-    //         "Content-Type: text/html\r\n"
-    //         "Content-Length: 0\r\n\r\n";
-    //     ev.events = EPOLLOUT;
-    //     ev.data.fd = fd;
-    //     cleanupClient(fd, epollfd);
-    //     return true;
-    // }
+    RequestState state = analyzeRequest(acc, request);
+    if (state == REQ_INCOMPLETE) // needs to check if it is finished
+        return true;
+    if (state == REQ_BAD){
+        _clientResponseBuffer[fd] = 
+            "HTTP/1.1 400 Bad Request\r\n"
+            "Content-Type: text/html\r\n"
+            "Content-Length: 0\r\n\r\n";
+        ev.events = EPOLLOUT;
+        ev.data.fd = fd;
+        epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, NULL);
+        // cleanupClient(fd, epollfd);
+        return true;
+    }
+    else if (state == REQ_BAD_411){
+        _clientResponseBuffer[fd] = 
+            "HTTP/1.1 411 Length Required\r\n"
+            "Content-Type: text/html\r\n"
+            "Content-Length: 0\r\n\r\n";
+        ev.events = EPOLLOUT;
+        ev.data.fd = fd;
+        epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, NULL);
+        return true;
+    }
+    else if (state == REQ_BAD_413){
+        _clientResponseBuffer[fd] = 
+            "HTTP/1.1 413 Content Too Large\r\n"
+            "Content-Type: text/html\r\n"
+            "Content-Length: 0\r\n\r\n";
+        ev.events = EPOLLOUT;
+        ev.data.fd = fd;
+        epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, NULL);
+        return true;
+    }
     _clientRequestBuffer.erase(fd);
 
     // find which listener accepted this client
