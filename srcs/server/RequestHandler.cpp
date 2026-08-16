@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/16 20:25:56 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/17 00:04:13 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -548,6 +548,8 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     
     HTTPParser HTTPParser(_request, _serverConfig);
     
+    std::cout << "[LOG FROM PARTIAL REQUESTS:] BODY " << _request << std::endl;
+
     if (HTTPParser.isRequestValid(listen) == false)
     {
         sendError(HTTPParser, HTTPParser.getCode());

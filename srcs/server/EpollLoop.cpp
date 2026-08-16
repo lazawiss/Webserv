@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/16 22:10:33 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/17 01:02:47 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -99,20 +99,10 @@ static bool getHeaderValue(
         if (colon != std::string::npos && colon < end)
         {
             std::string key = headerBlock.substr(i, colon - i);
-            if (key.size() == name.size())
+            if (key == name)
             {
-                bool match = true;
-                for (size_t k = 0; k < key.size(); k++)
-                {
-                    if (std::tolower((unsigned char)key[k])
-                        != std::tolower((unsigned char)name[k]))
-                    { match = false; break; }
-                }
-                if (match)
-                {
-                    out = headerBlock.substr(colon + 1);
-                    return true;
-                }
+                out = headerBlock.substr(colon + 1);
+                return true;
             }
         }
         if (end == headerBlock.size())
@@ -135,19 +125,14 @@ static std::string rebuildWithContentLength(
         size_t end = headerBlock.find("\r\n", i);
         if (end == std::string::npos)
             end = headerBlock.size();
-        std::string line = headerBlock.substr(i, end - i); // beginning of line - \r\n
+        std::string line = headerBlock.substr(i, end - i);
 
         bool drop = false;
         if (!firstLine)
         {
             size_t colon = line.find(':');
             std::string key = (colon == std::string::npos)? line : line.substr(0, colon);
-            std::string lower;
-            for (size_t k = 0; k < key.size(); k++)
-                lower += (char)std::tolower((unsigned char)key[k]);
-            if (lower == "transfer-encoding" || lower == "content-length") 
-            // is key one of these? if so, we drop
-            // get rid of them so we can have clean guy with just Content-Length already prepped
+            if (key == "Transfer-Encoding" || key == "Content-Length")
                 drop = true;
         }
         if (!drop)
@@ -166,62 +151,63 @@ static std::string rebuildWithContentLength(
     out += cl.str();
     out += "\r\n";
     out += decoded;
+    std::cout << " Return 'out' var" << out << std::endl;
     return out;
 }
 
+
 static RequestState dechunkBody( const std::string &body, std::string &decoded )
 {
-
     size_t pos = 0;
-    std::cout <<  "dechunk BODY " << body << std::endl;
     decoded.clear();
-    size_t lineEnd = body.find("\r\n", pos);
-    if (lineEnd == std::string::npos)
-        return REQ_INCOMPLETE; // line not complete
-
-    std::string sizeStr = body.substr(pos, lineEnd - pos);
-    std::cout << sizeStr << "size Str " << std::endl;
-    size_t semi = sizeStr.find(';'); //chunk smuggle do we need ot take care?
-    if (semi != std::string::npos)
-        sizeStr = sizeStr.substr(0, semi);
-    if (sizeStr.empty())
-    {
-        std::cout << "why " << std::endl;            
-        return REQ_BAD;
-    }
-
-    size_t chunkSize = 0;
-
-    std::stringstream ss;
-    ss << sizeStr; 
-    size_t num;
-    ss >> std::hex >> num;
-
-    std::cout << "what is num : " << num << std::endl;
-    chunkSize = num; 
-
+    std::cout << "FULL BODY :" << std::endl;
     while (true)
-    {   
+    {
+        size_t lineEnd = body.find("\r\n", pos);
+        if (lineEnd == std::string::npos)
+            return REQ_INCOMPLETE; // line not complete
+
+        std::string sizeStr = body.substr(pos, lineEnd - pos);
+        size_t semi = sizeStr.find(';');
+        if (semi != std::string::npos)
+            sizeStr = sizeStr.substr(0, semi);
+        if (sizeStr.empty())
+            return REQ_BAD;
+
+        size_t chunkSize = 0;
+
+
+        std::stringstream ss;
+        ss << sizeStr; 
+        size_t num = 0;
+        ss >> std::hex >> num;
+        std::cout << "what is num : " << num << std::endl;
+        chunkSize = num; 
+        if (decoded.size() + chunkSize > BUF_SIZE)
+            return REQ_BAD_413;
+        
+
+        std::cout << "Real chunk size in non hex: " << chunkSize << std::endl;
+
         size_t dataStart = lineEnd + 2; // +/r/n
-        if (dataStart == 0)
+        
+        if (chunkSize == 0)
         {
             // final chunk require the \r\n
             if (body.size() < dataStart + 2)
                 return REQ_INCOMPLETE;
+            if (body.compare(dataStart, 2, "\r\n") != 0)
+                return REQ_BAD;
+            std::cout << "Decoded so full body done here: " << decoded << std::endl;
             return REQ_READY;
         }
-        if (body.size() < dataStart)
-        {
-            std::cout << "BODY " << body << std::endl;
-            std::cout << "chunkSize" << chunkSize << std::endl;
-            std::cout << "body size " << body.size() << std::endl; 
+        
+        if (body.size() < dataStart + chunkSize + 2)
             return REQ_INCOMPLETE;
-        }
         if (body.compare(dataStart + chunkSize, 2, "\r\n") != 0)
             return REQ_BAD;
 
         decoded.append(body, dataStart, chunkSize);
-        std::cout << "END OF BODY" << decoded << std::endl;
         pos = dataStart + chunkSize + 2;
     }
 }
@@ -243,8 +229,7 @@ static RequestState analyzeRequest( const std::string &acc, std::string &request
     {
         std::string decoded;
         RequestState st = dechunkBody(acc.substr(bodyStart), decoded);
-        std::cout << "ENUM request" << st << std::endl;
-
+        std::cout << "ENUM request \n" << st << std::endl;
         if (st != REQ_READY)
             return st; 
         request = rebuildWithContentLength(acc, headerEnd, decoded);
@@ -259,10 +244,9 @@ static RequestState analyzeRequest( const std::string &acc, std::string &request
                 return REQ_BAD_411;
         size_t expected = (size_t)strtoul(cl.c_str(), NULL, 10);
         if (expected > BUF_SIZE)
-            return REQ_BAD_413; // parser would 413 anyway
+            return REQ_BAD_413;
         if (acc.size() - bodyStart < expected)
-            return REQ_INCOMPLETE; // body not full yet
-        // hand over exactly the header block + declared body
+            return REQ_INCOMPLETE; 
         request = acc.substr(0, bodyStart + expected);
         return REQ_READY;
     }
