@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/17 16:14:53 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/17 20:28:21 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -436,6 +436,7 @@ bool EpollLoop::do_read_fd(
         // stdin pipe: WE write the body into it -> watch for EPOLLOUT
         ev.events = EPOLLOUT;
         ev.data.fd = cgi->getStdinFd();
+      
         epoll_ctl(epollfd, EPOLL_CTL_ADD, cgi->getStdinFd(), &ev);
         _fdToCGI[cgi->getStdinFd()] = cgi;
 

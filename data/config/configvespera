@@ -10,4 +10,11 @@ server {
         methods     GET;
         autoindex   on;
     }
+
+    location /vespera {
+        root        data/www;
+        index       index2.html index.html;
+        methods     GET;
+        autoindex   on;
+    }
 }
