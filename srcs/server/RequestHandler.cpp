@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/17 18:48:08 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/17 18:53:04 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -360,7 +360,7 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
 // content = text
 bool    RequestHandler::answerFile( std::string const & file ){
 
-    struct stat sb;
+    // struct stat sb;
     
     // if (stat(file.c_str(), &sb) == -1 && S_IFREG(sb.st_mode)|| access(file.c_str(), R_OK) != 0)
     // {
@@ -380,9 +380,9 @@ bool    RequestHandler::answerFile( std::string const & file ){
         return false;
     }
 
-    std::ostringstream dbg; dbg << "File size: " << sb.st_size;
+    // std::ostringstream dbg; dbg << "File size: " << sb.st_size;
     // ------------ Debug ------------
-    LOG_DEBUG(dbg.str());
+    // LOG_DEBUG(dbg.str());
     int indexfd = open(file.c_str(), O_RDONLY);
     if (indexfd == -1)
     {

@@ -441,8 +441,8 @@ void Parser::parseDirectiveErrorPage(AConfig &ref)
         throw std::runtime_error("Unexpected token '" +  current().value
             + "', should be a 'word' type");
 
-    std::string path = next().value;
-
+    std::string path = "data" + next().value;
+   
     struct stat info;
     if (stat(path.c_str(), &info) != 0)
         throw std::runtime_error("Error path does not exist: '" + path + "'");
