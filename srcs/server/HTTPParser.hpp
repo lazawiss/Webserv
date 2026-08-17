@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/17 10:16:51 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/17 13:07:01 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -177,10 +177,10 @@ public:
     bool                        gatherFile( size_t curPos );
     
     std::string                 addSuffix(std::string suffix);
-    bool                        compareMethodWithConfigFile();
+    bool                        compareMethodWithConfigFile(const std::vector<LocationConfig> &locs, int bestIdx);
     bool                        isRedir();
-    bool                        findMethods();
-    int                         findAutoIndex();
+    bool                        findMethods(const std::vector<LocationConfig> &locs, int bestIdx);
+    int                         findAutoIndex(const std::vector<LocationConfig> &locs, int bestIdx);
 
     static std::string          httpCodeToString( HttpCode code );
 

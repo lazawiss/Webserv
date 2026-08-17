@@ -23,6 +23,7 @@ server {
 
     location /api {
         root        data/www/html1;
+        index       index2.html index.html;
         methods     GET;
         autoindex   on;
     }
@@ -47,6 +48,13 @@ server {
         root        data/www;
         index       index.html;
         methods     GET;
+    }
+
+    location /vespera {
+        root        data/www/vespera;
+        # index       index.html;
+        methods     GET;
+        autoindex   on;
     }
 
 }

@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/15 21:11:19 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/17 13:12:42 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -409,6 +409,8 @@ bool    RequestHandler::answerFileIcon(){
     int indexfd = open(faviconPath.c_str(), O_RDONLY);
     if (indexfd == -1){
         LOG_ERROR("Failed to open favicon: " + std::string(strerror(errno)));
+
+
         return false;
     }
     _n_read_index = read(indexfd, _buffer, BUF_SIZE);
@@ -552,8 +554,34 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");
         return true;
 
-    } 
-    else if (HTTPParser.isCGI()) 
+    }
+    const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
+    
+    int bestIdx = -1;
+    size_t bestLen = 0;
+    for (size_t i = 0; i < locs.size(); i++)
+    {
+        const std::string &path = locs[i].getPath();
+        if (HTTPParser.getRequestTarget().find(path) == 0 && path.size() > bestLen
+            && (path == "/" || HTTPParser.getRequestTarget().size() == path.size()
+                || HTTPParser.getRequestTarget()[path.size()] == '/' || HTTPParser.getRequestTarget()[path.size()] == '?'))
+        {
+            bestLen = path.size();
+            bestIdx = (int)i;
+        }
+    }
+
+    if (bestIdx == -1) {
+        HTTPParser.setError(true);
+        HTTPParser.setCode(HTTP_405);
+        HTTPParser.setType("text/html"); 
+        return false;
+    }
+
+    _root = locs[bestIdx].getRoot();
+    std::cout << "handleRequest" <<_root << std::endl;
+    
+    if (HTTPParser.isCGI()) 
     {
         if (HTTPParser.validateCGIRequest() == false)
         {
@@ -593,7 +621,7 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), HTTPParser.getType());
         return true;
     }
-    int status = HTTPParser.findAutoIndex();
+    int status = HTTPParser.findAutoIndex(locs, bestIdx);
     if (status == 2)
     {
         if (HTTPParser.getCode() == HTTP_AUTOINDEX)
@@ -630,15 +658,19 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     
     if (status == 1)
     {
-        if (HTTPParser.findMethods() == false) {
+        if (HTTPParser.findMethods(locs, bestIdx) == false) {
         LOG_ERROR("Method not implemented");
         sendError(HTTPParser, HTTPParser.getCode());
         buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");
         return true;
         }
     }
-    if (_root.empty())
+    
+    if (_root.empty()){
+        
+        std::cout << "ROOT EMPTY" << std::endl;
         _root = resolveRoot(_serverConfig, HTTPParser.getRequestTarget());
+    }
 
 
     bool rangeHandled = false;

@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/17 10:36:05 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/17 13:15:26 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -993,37 +993,7 @@ std::string HTTPParser::httpCodeToString( HttpCode code )
 ** ============================================================================
 */
 
-bool HTTPParser::compareMethodWithConfigFile() {
-
-    const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
-    if (locs.size() == 0) {
-        _code = HTTP_INDEX;
-        _type = "text/html";
-
-        return true;
-    }
-
-    // Find the best matching location for the current URI (longest prefix match)
-    int bestIdx = -1;
-    size_t bestLen = 0;
-    for (size_t i = 0; i < locs.size(); i++)
-    {
-        const std::string &path = locs[i].getPath();
-        if (_requesttarget.find(path) == 0 && path.size() > bestLen
-            && (path == "/" || _requesttarget.size() == path.size()
-                || _requesttarget[path.size()] == '/' || _requesttarget[path.size()] == '?'))
-        {
-            bestLen = path.size();
-            bestIdx = (int)i;
-        }
-    }
-
-    if (bestIdx == -1) {
-        _errors = true;
-        _code = HTTP_405;
-        _type = "text/html";
-        return false;
-    }
+bool HTTPParser::compareMethodWithConfigFile(const std::vector<LocationConfig> &locs, int bestIdx) {
 
     const std::vector<std::string> &methodVector = locs[bestIdx].getMethods();
     for (size_t j = 0; j < methodVector.size(); j++)
@@ -1090,32 +1060,8 @@ bool HTTPParser::isRedir(){
 }
 
 
-int HTTPParser::findAutoIndex()
+int HTTPParser::findAutoIndex(const std::vector<LocationConfig> &locs, int bestIdx)
 {
-    const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
-
-    int bestIdx = -1;
-    size_t bestLen = 0;
-    for (size_t i = 0; i < locs.size(); i++)
-    {
-        const std::string &path = locs[i].getPath();
-        if (_requesttarget.find(path) == 0 && path.size() > bestLen
-            && (path == "/" || _requesttarget.size() == path.size()
-                || _requesttarget[path.size()] == '/' || _requesttarget[path.size()] == '?'))
-        {
-            bestLen = path.size();
-            bestIdx = (int)i;
-        }
-    }
-
-    if (bestIdx == -1) 
-    {
-        _errors = true;
-        _code = HTTP_405;
-        _type = "text/html";
-        return -1;
-    }
-
 
     const std::vector<std::string> &indexVector = locs[bestIdx].getIndex();
     if (indexVector.size() == 0){
@@ -1141,57 +1087,61 @@ int HTTPParser::findAutoIndex()
 }
 
 
-bool HTTPParser::findMethods() {
+bool HTTPParser::findMethods(const std::vector<LocationConfig> &locs, int bestIdx) {
 
-    if (compareMethodWithConfigFile() == true )
+    if (compareMethodWithConfigFile(locs, bestIdx) == true )
     {
         if (_method == "GET")
         {
-            const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
-            int bestIdx = -1;
-            size_t bestLen = 0;
-            for (size_t i = 0; i < locs.size(); i++)
-            {
-                const std::string &path = locs[i].getPath();
-                if (_requesttarget.find(path) == 0 && path.size() > bestLen
-                    && (path == "/" || _requesttarget.size() == path.size()
-                        || _requesttarget[path.size()] == '/' || _requesttarget[path.size()] == '?'))
-                {
-                    bestLen = path.size();
-                    bestIdx = (int)i;
-                }
-            }
-        
-            if (bestIdx == -1) {
-                _errors = true;
-                _code = HTTP_405;
-                _type = "text/html";
-                return false;
-            }
-
-            const std::vector<std::string> &indexVector = locs[bestIdx].getIndex();
-            if (indexVector.size() > 0)
-            {
-                for (size_t j = 0; j < indexVector.size(); j++)
-                {
-                    struct stat sb;
-                    std::string locRoot = locs[bestIdx].getRoot().empty() ? _serverConfig.getRoot() : locs[bestIdx].getRoot();
-                    std::string index = locRoot + "/" + indexVector[j];
-                    if (stat(index.c_str(), &sb) == 0) {
-                        _fileName = indexVector[j];
-                        _code = HTTP_FILE;
-                        _type = "text/html";
-                        break ;
+     
+                const std::vector<std::string> &indexVector = locs[bestIdx].getIndex();
+                if (indexVector.size() > 0){
+                    for (size_t j = 0; j < indexVector.size(); j++)
+                    {
+                        struct stat sb;
+                        std::string locRoot = locs[bestIdx].getRoot().empty() ? _serverConfig.getRoot() : locs[bestIdx].getRoot();
+                        std::cout << "locRoot: " << locRoot << std::endl;
+                        std::string index = locRoot + "/" + indexVector[j];
+                        if (stat(index.c_str(), &sb) == 0) {
+                            _fileName = indexVector[j];
+                            _code = HTTP_FILE;
+                            break ;
+                        }
                     }
                 }
-            }
+                else {
+                    _code = HTTP_INDEX;
+                }
 
-            if (_requesttarget == "/")
             {
-                std::cout << "Index filename: " << _fileName << " _code: " << _code << " type: " << _type << std::endl;
+                struct stat path_stat;
+                if (stat(_fullPath.c_str(), &path_stat) != -1 && S_ISDIR(path_stat.st_mode))
+                {
+                    std::string indexPath = _fullPath;
+                    if (indexPath[indexPath.size() - 1] != '/')
+                        indexPath += "/";
+                    // indexPath += "index.html";
+                    indexPath += _fileName;
 
-                return true;
+                    struct stat index_stat;
+                    if (stat(indexPath.c_str(), &index_stat) == 0
+                        && S_ISREG(index_stat.st_mode))
+                    {
+                        _code = HTTP_INDEX;
+                        _type = "text/html";
+
+                        return true;
+                    }
+
+                }
             }
+
+            // if (_requesttarget == "/"|| _requesttarget == "/vespera")
+            // {
+            //     std::cout << "Index filename: " << _fileName << " _code: " << _code << " type: " << _type << std::endl;
+
+            //     return true;
+            // }
             if (_requesttarget.find("/images") != std::string::npos)
             {
                 
@@ -1371,5 +1321,6 @@ bool HTTPParser::findMethods() {
 
         return false;
     }
+    
     return false;
 }
