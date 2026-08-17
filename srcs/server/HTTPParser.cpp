@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/17 14:48:59 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/17 15:30:06 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -1094,78 +1094,52 @@ bool HTTPParser::findMethods(const std::vector<LocationConfig> &locs, int bestId
         if (_method == "GET")
         {
      
-                const std::vector<std::string> &indexVector = locs[bestIdx].getIndex();
-                if (indexVector.size() > 0){
-                    for (size_t j = 0; j < indexVector.size(); j++)
-                    {
-                        struct stat sb;
-                        std::string locRoot = locs[bestIdx].getRoot().empty() ? _serverConfig.getRoot() : locs[bestIdx].getRoot();
-                        std::cout << "locRoot: " << locRoot << std::endl;
-                        std::string index = locRoot + "/" + indexVector[j];
-                        if (stat(index.c_str(), &sb) == 0) {
-                            _fileName = indexVector[j];
-                            _code = HTTP_FILE;
-                            break ;
+             struct stat path_stat_check;
+             bool isDirRequest = (stat(_fullPath.c_str(), &path_stat_check) != -1
+             && S_ISDIR(path_stat_check.st_mode));
+             
+             if (isDirRequest) {
+                 const std::vector<std::string> &indexVector = locs[bestIdx].getIndex();
+                 if (indexVector.size() > 0){
+                     for (size_t j = 0; j < indexVector.size(); j++)
+                     {
+                         struct stat sb;
+                         std::string locRoot = locs[bestIdx].getRoot().empty() ? _serverConfig.getRoot() : locs[bestIdx].getRoot();
+                         std::cout << "locRoot: " << locRoot << std::endl;
+                         std::string index = locRoot + "/" + indexVector[j];
+                         if (stat(index.c_str(), &sb) == 0) {
+                             _fileName = indexVector[j];
+                             _code = HTTP_FILE;
+                             break ;
+                            }
                         }
                     }
+                    else {
+                        _code = HTTP_INDEX;
+                    }
                 }
-                else {
-                    _code = HTTP_INDEX;
-                }
-                
                 {
                     struct stat path_stat;
-                    std::cout << "fileName AVT STAT:" << _fileName << std::endl;
                     if (stat(_fullPath.c_str(), &path_stat) != -1 && S_ISDIR(path_stat.st_mode))
                     {
-                    std::string indexPath = _fullPath;
-                    if (indexPath[indexPath.size() - 1] != '/')
+                        std::string indexPath = _fullPath;
+                        if (indexPath[indexPath.size() - 1] != '/')
                         indexPath += "/";
-                    // indexPath += "index.html";
-                    indexPath += _fileName;
-                    std::cout << "INDEXPATH: " << indexPath << std::endl;
-
-                    struct stat index_stat;
-                    if (stat(indexPath.c_str(), &index_stat) == 0
+                        indexPath += _fileName;
+                        
+                        struct stat index_stat;
+                        if (stat(indexPath.c_str(), &index_stat) == 0
                         && S_ISREG(index_stat.st_mode))
-                    {
-                        _code = HTTP_INDEX;
-                        _type = "text/html";
-
-                        return true;
+                        {
+                            _code = HTTP_INDEX;
+                            _type = "text/html";
+                            
+                            return true;
+                        }
                     }
 
-                }
-                // if (stat(locR.c_str(), &path_stat) != -1 && S_ISDIR(path_stat.st_mode))
-                // {
-                //     std::string indexPath = _fullPath;
-                //     if (indexPath[indexPath.size() - 1] != '/')
-                //         indexPath += "/";
-                //     // indexPath += "index.html";
-                //     indexPath += _fileName;
-                //     std::cout << "INDEXPATH: " << indexPath << std::endl;
-
-                //     struct stat index_stat;
-                //     if (stat(indexPath.c_str(), &index_stat) == 0
-                //         && S_ISREG(index_stat.st_mode))
-                //     {
-                //         _code = HTTP_INDEX;
-                //         _type = "text/html";
-
-                //         return true;
-                //     }
-
-                // }
-            
-                 
+        
             }
-
-            // if (_requesttarget == "/"|| _requesttarget == "/vespera")
-            // {
-            //     std::cout << "Index filename: " << _fileName << " _code: " << _code << " type: " << _type << std::endl;
-
-            //     return true;
-            // }
             if (_requesttarget.find("/images") != std::string::npos)
             {
                 
@@ -1229,8 +1203,8 @@ bool HTTPParser::findMethods(const std::vector<LocationConfig> &locs, int bestId
             }
             
             else {
-                _fileName = _requesttarget;
-                _fileName.erase(_fileName.begin());
+                if (!_fileName.empty() && _fileName[0] == '/')
+                    _fileName.erase(_fileName.begin());
                 char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
                 if (lastPoint)
                     _type = addSuffix(std::string(lastPoint, strlen(lastPoint)));

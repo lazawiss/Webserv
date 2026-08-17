@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/15 21:14:51 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/17 16:14:53 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -391,9 +391,17 @@ bool EpollLoop::do_read_fd(
     {
         LOG_ERROR("handleRequest failed, sending 500");
         _clientResponseBuffer[fd] =
-            "HTTP/1.1 500 Internal Server Error\r\n"
-            "Content-Type: text/html\r\n"
-            "Content-Length: 0\r\n\r\n";
+        "HTTP/1.1 500 Internal Server Error\r\n"
+        "Content-Type: text/html\r\n"
+        "Content-Length: 237\r\n\r\n"
+        "<html>\r\n"
+        "<head><title>500 Internal Server Error</title></head>\r\n"
+        "<body>\r\n"
+        "<h1>Internal Server Error</h1>\r\n"
+        "<p>-___-The server failed -___-</p>\r\n"
+        "</body>\r\n"
+        "</html>\r\n\r\n";
+        
         ev.events = EPOLLOUT;
         ev.data.fd = fd;
         epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &ev);
@@ -407,15 +415,18 @@ bool EpollLoop::do_read_fd(
         {
             delete cgi;
             _clientResponseBuffer[fd] =
-              "HTTP/1.1 502 Bad Gateway\r\n"
+           "HTTP/1.1 502 Bad Gateway\r\n"
             "Content-Type: text/html\r\n"
-            "Content-Length: 0\r\n\r\n";
-
-            // send(fd, err.c_str(), err.size(), 0);
-            // _clientToListener.erase(fd);
-            // return (close(fd), false);
+            "Content-Length: 237\r\n\r\n"
+            "<html>\r\n"
+            "<head><title>502 Bad Gateway</title></head>\r\n"
+            "<body>\r\n"
+            "<h1>502 Bad Gateway</h1>\r\n"
+            "<p>-___- yOU TOOk thE wRoNg turN sOMEwherE -___-</p>\r\n"
+            "</body>\r\n"
+            "</html>\r\n\r\n";
+            
             ev.events = EPOLLOUT;
-
             ev.data.fd = fd;
             epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &ev);
             
