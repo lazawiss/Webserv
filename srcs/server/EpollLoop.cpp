@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/17 01:02:47 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/17 13:58:37 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -101,7 +101,15 @@ static bool getHeaderValue(
             std::string key = headerBlock.substr(i, colon - i);
             if (key == name)
             {
-                out = headerBlock.substr(colon + 1);
+                size_t valLineStart = colon + 1;
+                while (valLineStart < end && (headerBlock[valLineStart] == ' ' || headerBlock[valLineStart] == '\t'))
+                    valLineStart++;
+
+                size_t valLineEnd = end;
+                while (valLineEnd > valLineStart && (headerBlock[valLineEnd - 1] == ' ' || headerBlock[valLineEnd - 1] == '\t'))
+                    valLineEnd--;
+
+                out = headerBlock.substr(valLineStart, valLineEnd - valLineStart);
                 return true;
             }
         }
@@ -260,6 +268,7 @@ static RequestState analyzeRequest( const std::string &acc, std::string &request
 // {
 //     epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, NULL);
 //     close(fd);
+//     _clientRequestBuffer.erase(fd);
 //     _clientResponseBuffer.erase(fd);
 //     _clientToListener.erase(fd);
 // }
@@ -325,7 +334,7 @@ bool EpollLoop::do_read_fd(
             "Content-Length: 0\r\n\r\n";
         ev.events = EPOLLOUT;
         ev.data.fd = fd;
-        epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, NULL);
+        epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &ev);
         return true;
     }
     else if (state == REQ_BAD_413){
@@ -335,7 +344,7 @@ bool EpollLoop::do_read_fd(
             "Content-Length: 0\r\n\r\n";
         ev.events = EPOLLOUT;
         ev.data.fd = fd;
-        epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, NULL);
+        epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &ev);
         return true;
     }
     _clientRequestBuffer.erase(fd);
