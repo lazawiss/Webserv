@@ -428,21 +428,41 @@ void Parser::parseDirectiveErrorPage(AConfig &ref)
 
     int code = parseCode(next().value);
 
-    if (code != 400 && code != 404 && code != 405 && code != 413 && code != 414
-        && code != 421 && code != 500 && code != 502)
+    if (code != 400 && code != 403 && code != 404 && code != 405 && code != 411 
+        && code != 413 && code != 414 && code != 421 && code != 500 && code != 502)
     {
         std::ostringstream oss;
         oss << code;
         throw std::runtime_error("Invalid HTTP error code '" + oss.str()
-            + "', accepted values: 400, 403, 404, 405, 413, 414, 421, 500, 502");
+            + "', accepted values: 400, 403, 404, 405, 411, 413, 414, 421, 500, 502");
     }
 
     if (current().type != Word)
         throw std::runtime_error("Unexpected token '" +  current().value
             + "', should be a 'word' type");
 
-    std::string uri = next().value;
-    ref.addErrorPage(code, uri);
+    std::string path = next().value;
+
+    struct stat info;
+    if (stat(path.c_str(), &info) != 0)
+        throw std::runtime_error("Error path does not exist: '" + path + "'");
+    if (!S_ISREG(info.st_mode))
+        throw std::runtime_error("Error path isn't a file: '" + path + "'");
+
+    std::ostringstream oss;
+    oss << code;
+    std::string expectedFilename = oss.str() + ".html";
+    const char *filename = strrchr(path.c_str(), '/');
+    if (!filename)
+        throw std::runtime_error("Invalid error_page path: '" + path + "'");
+
+    std::string basename = filename + 1;
+    if (basename != expectedFilename)
+        throw std::runtime_error("Error page file '" + path
+            + "' does not match error code " + oss.str()
+            + " (expected filename: '" + expectedFilename + "')");
+
+    ref.addErrorPage(code, path);
 
     if (current().type != Semicolon)
         throw std::runtime_error("Unexpected token '" +  current().value
