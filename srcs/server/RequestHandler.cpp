@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/17 00:04:13 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/17 14:06:36 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -439,8 +439,8 @@ bool    RequestHandler::uploadFile( std::string const & filename, std::string co
         LOG_ERROR("Failed to write upload file: " + std::string(strerror(errno)));
         return false;
     }
-    _n_read_index = buf.size();
-
+    // _n_read_index = buf.size();
+    _n_read_index = 0;
     outfile.close();
 
     struct stat sb;
@@ -672,8 +672,11 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     } 
     else if (HTTPParser.getMethod() == "POST") {
 
-        if (uploadFile(HTTPParser.getFileName(),
-            HTTPParser.getFileBuf()) == false)
+        std::string content = HTTPParser.getFileBuf();
+        if (content.empty())
+            content = HTTPParser.getBody();
+
+        if (uploadFile(HTTPParser.getFileName(), content) == false)
             sendError(HTTPParser, HTTP_500);
         else {
 
