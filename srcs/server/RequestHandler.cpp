@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/15 21:11:19 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/17 18:48:08 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -362,11 +362,11 @@ bool    RequestHandler::answerFile( std::string const & file ){
 
     struct stat sb;
     
-    if (stat(file.c_str(), &sb) == -1)
-    {
-        LOG_ERROR("stat failed: " + file + " - " + strerror(errno));
-        return false;
-    }
+    // if (stat(file.c_str(), &sb) == -1 && S_IFREG(sb.st_mode)|| access(file.c_str(), R_OK) != 0)
+    // {
+    //     LOG_ERROR("stat failed: " + file + " - " + strerror(errno));
+    //     return false;
+    // }
     // if (S_ISDIR(sb.st_mode))
     // {
     //     LOG_DEBUG("Path is a directory: " + file);
@@ -374,6 +374,11 @@ bool    RequestHandler::answerFile( std::string const & file ){
     //     // 
     //     return false; 
     // }
+    if (access(file.c_str(), R_OK) != 0)
+    {
+        LOG_ERROR("acccess failed: " + file + " - " + strerror(errno));
+        return false;
+    }
 
     std::ostringstream dbg; dbg << "File size: " << sb.st_size;
     // ------------ Debug ------------
@@ -529,7 +534,10 @@ void RequestHandler::sendError( HTTPParser & parser, HttpCode code ) {
     parser.setCode(code);
     parser.setType("text/html");
     std::string file = getFile(HTTPParser::httpCodeToString(parser.getCode()), parser.getError());
-    answerFile(file);
+    if (answerFile(file) == false){
+        if (errno == EACCES)
+            parser.setCode(HTTP_403);
+    }
 }
 
 /**
