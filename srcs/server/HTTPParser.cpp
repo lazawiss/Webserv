@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/17 15:30:06 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/17 16:41:35 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -922,8 +922,12 @@ void HTTPParser::buildFullPath() {
     _autoindexOn = (bestLoc && bestLoc->getAutoindex() == "on");
 
     std::string suffix = _requesttarget;
-    if (bestLoc)
-        suffix = _requesttarget.substr(bestLoc->getPath().size());
+    std::cout << "buildFullPath() suffix avt: " << suffix << std::endl;
+    // if (bestLoc){
+    //     suffix = _requesttarget.substr(bestLoc->getPath().size());
+    //     std::cout << "buildFullPath() SUFFIX IF BESTLOC: " << suffix << std::endl;
+        
+    // }
 
     _fullPath = root;
 
@@ -1120,6 +1124,7 @@ bool HTTPParser::findMethods(const std::vector<LocationConfig> &locs, int bestId
                 }
                 {
                     struct stat path_stat;
+                    std::cout << "FILENAME: "<< _fileName<< std::endl;
                     if (stat(_fullPath.c_str(), &path_stat) != -1 && S_ISDIR(path_stat.st_mode))
                     {
                         std::string indexPath = _fullPath;
@@ -1133,6 +1138,7 @@ bool HTTPParser::findMethods(const std::vector<LocationConfig> &locs, int bestId
                         {
                             _code = HTTP_INDEX;
                             _type = "text/html";
+                            std::cout << "HERE "<< std::endl;
                             
                             return true;
                         }
