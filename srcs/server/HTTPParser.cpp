@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/17 16:41:35 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/17 16:56:54 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -923,11 +923,11 @@ void HTTPParser::buildFullPath() {
 
     std::string suffix = _requesttarget;
     std::cout << "buildFullPath() suffix avt: " << suffix << std::endl;
-    // if (bestLoc){
-    //     suffix = _requesttarget.substr(bestLoc->getPath().size());
-    //     std::cout << "buildFullPath() SUFFIX IF BESTLOC: " << suffix << std::endl;
+    if (bestLoc){
+        suffix = _requesttarget.substr(bestLoc->getPath().size());
+        std::cout << "buildFullPath() SUFFIX IF BESTLOC: " << suffix << std::endl;
         
-    // }
+    }
 
     _fullPath = root;
 
@@ -1099,9 +1099,12 @@ bool HTTPParser::findMethods(const std::vector<LocationConfig> &locs, int bestId
         {
      
              struct stat path_stat_check;
+             std::cout << "_fullPath entree GET:" << _fullPath << std::endl;
              bool isDirRequest = (stat(_fullPath.c_str(), &path_stat_check) != -1
              && S_ISDIR(path_stat_check.st_mode));
              
+             std::cout << " isDirRequest bool:" << std::boolalpha << isDirRequest << std::endl;
+
              if (isDirRequest) {
                  const std::vector<std::string> &indexVector = locs[bestIdx].getIndex();
                  if (indexVector.size() > 0){
