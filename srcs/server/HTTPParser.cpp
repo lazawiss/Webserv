@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/17 13:15:26 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/17 14:48:59 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -899,15 +899,15 @@ void HTTPParser::buildFullPath() {
 
     const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
     const LocationConfig *bestLoc = NULL;
-    // size_t bestLen = 0;
+    size_t bestLen = 0;
 
     for (size_t i = 0; i < locs.size(); ++i)
     {
         const std::string &locPath = locs[i].getPath();
-        if (_requesttarget.compare(0, locPath.size(), locPath) == 0)
-        // && locPath.size() >= bestLen
+        if (_requesttarget.compare(0, locPath.size(), locPath) == 0
+        && locPath.size() >= bestLen)
         {
-            // bestLen  = locPath.size();
+            bestLen  = locPath.size();
             bestLoc  = &locs[i];
         }
     }
@@ -1112,16 +1112,18 @@ bool HTTPParser::findMethods(const std::vector<LocationConfig> &locs, int bestId
                 else {
                     _code = HTTP_INDEX;
                 }
-
-            {
-                struct stat path_stat;
-                if (stat(_fullPath.c_str(), &path_stat) != -1 && S_ISDIR(path_stat.st_mode))
+                
                 {
+                    struct stat path_stat;
+                    std::cout << "fileName AVT STAT:" << _fileName << std::endl;
+                    if (stat(_fullPath.c_str(), &path_stat) != -1 && S_ISDIR(path_stat.st_mode))
+                    {
                     std::string indexPath = _fullPath;
                     if (indexPath[indexPath.size() - 1] != '/')
                         indexPath += "/";
                     // indexPath += "index.html";
                     indexPath += _fileName;
+                    std::cout << "INDEXPATH: " << indexPath << std::endl;
 
                     struct stat index_stat;
                     if (stat(indexPath.c_str(), &index_stat) == 0
@@ -1134,6 +1136,28 @@ bool HTTPParser::findMethods(const std::vector<LocationConfig> &locs, int bestId
                     }
 
                 }
+                // if (stat(locR.c_str(), &path_stat) != -1 && S_ISDIR(path_stat.st_mode))
+                // {
+                //     std::string indexPath = _fullPath;
+                //     if (indexPath[indexPath.size() - 1] != '/')
+                //         indexPath += "/";
+                //     // indexPath += "index.html";
+                //     indexPath += _fileName;
+                //     std::cout << "INDEXPATH: " << indexPath << std::endl;
+
+                //     struct stat index_stat;
+                //     if (stat(indexPath.c_str(), &index_stat) == 0
+                //         && S_ISREG(index_stat.st_mode))
+                //     {
+                //         _code = HTTP_INDEX;
+                //         _type = "text/html";
+
+                //         return true;
+                //     }
+
+                // }
+            
+                 
             }
 
             // if (_requesttarget == "/"|| _requesttarget == "/vespera")

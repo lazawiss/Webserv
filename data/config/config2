@@ -7,6 +7,13 @@ server {
 
     error_page 400 /errors/404.html;
 
+    location /vespera {
+        root        data/www/vespera;
+        index       index.html;
+        methods     GET;
+        autoindex   on;
+    }
+
     location / {
         root        data/www/html;
         index       index2.html index.html;
@@ -50,12 +57,6 @@ server {
         methods     GET;
     }
 
-    location /vespera {
-        root        data/www/vespera;
-        # index       index.html;
-        methods     GET;
-        autoindex   on;
-    }
-
+  
 }
 
