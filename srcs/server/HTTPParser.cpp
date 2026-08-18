@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/17 20:31:36 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/18 12:57:14 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,7 @@
 
 HTTPParser::HTTPParser( std::string const & request,
     const ServerConfig & serverConfig) :
-    _request(request), _serverConfig(serverConfig),
+    _request(request), _serverConfig(serverConfig), _httpRoot(_serverConfig.getRoot()),
     _code(HTTP_INDEX), _type(), _method(),
     _requesttarget(), _httpversion(), _boundary(),
     _fileLength(), _fileName(), _fileBuf(),
@@ -38,7 +38,7 @@ HTTPParser::HTTPParser( std::string const & request,
 
 HTTPParser::HTTPParser( HTTPParser const & src ) :
     _request(src._request), _serverConfig(src._serverConfig),
-    _code(src._code), _type(src._type),
+    _httpRoot(src._httpRoot), _code(src._code), _type(src._type),
     _method(src._method), _requesttarget(src._requesttarget),
     _httpversion(src._httpversion), _boundary(src._boundary),
     _fileLength(src._fileLength), _fileName(src._fileName),
@@ -62,34 +62,35 @@ HTTPParser &    HTTPParser::operator=( HTTPParser const & other )
 {
     if (this != &other )
     {
-        _request            = other._request;
-        _code               = other._code;
-        _type               = other._type;
-        _method             = other._method;
-        _requesttarget      = other._requesttarget;
-        _httpversion        = other._httpversion;
-        _boundary           = other._boundary;
-        _fileLength         = other._fileLength;
-        _fileName           = other._fileName;
-        _fileBuf            = other._fileBuf;
-        _errors             = other._errors;
-        _upload             = other._upload;
-        _connectionType     = other._connectionType;
-        _content_length     = other._content_length;
-        _host               = other._host;
-        _isCGI              = other._isCGI;
-        _fullPath           = other._fullPath;
-        _query_string       = other._query_string;
-        _scriptFilename     = other._scriptFilename;
-        _body               = other._body;
-        _content_type       = other._content_type;
-        _content_int        = other._content_int;
-        _autoindexOn        = other._autoindexOn;
-        _rangeHeader        = other._rangeHeader;
-        _isContentLengthFound = other._isContentLengthFound;
-        _isHostFound        = other._isHostFound;
-        _isContentTypeFound = other._isContentTypeFound;
-        _fileContentType    = other._fileContentType;
+        _request                = other._request;
+        _code                   = other._code;
+        _httpRoot               = other._httpRoot;
+        _type                   = other._type;
+        _method                 = other._method;
+        _requesttarget          = other._requesttarget;
+        _httpversion            = other._httpversion;
+        _boundary               = other._boundary;
+        _fileLength             = other._fileLength;
+        _fileName               = other._fileName;
+        _fileBuf                = other._fileBuf;
+        _errors                 = other._errors;
+        _upload                 = other._upload;
+        _connectionType         = other._connectionType;
+        _content_length         = other._content_length;
+        _host                   = other._host;
+        _isCGI                  = other._isCGI;
+        _fullPath               = other._fullPath;
+        _query_string           = other._query_string;
+        _scriptFilename         = other._scriptFilename;
+        _body                   = other._body;
+        _content_type           = other._content_type;
+        _content_int            = other._content_int;
+        _autoindexOn            = other._autoindexOn;
+        _rangeHeader            = other._rangeHeader;
+        _isContentLengthFound   = other._isContentLengthFound;
+        _isHostFound            = other._isHostFound;
+        _isContentTypeFound     = other._isContentTypeFound;
+        _fileContentType        = other._fileContentType;
     }
 
     return *this;
@@ -113,6 +114,16 @@ HttpCode HTTPParser::setCode( HttpCode code )
     return _code;
 }
 
+std::string HTTPParser::getHttpRoot() const
+{
+    return _httpRoot;
+}
+
+std::string HTTPParser::setHttpRoot( std::string httpRoot )
+{
+    _httpRoot = httpRoot;
+    return _httpRoot;
+}
 // ── type ────────────────────────────────────────────────────────────────────
 std::string HTTPParser::getType() const
 {        

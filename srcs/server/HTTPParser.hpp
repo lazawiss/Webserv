@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/17 13:07:01 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/18 12:57:33 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,6 +93,7 @@ private:
 
     std::string                 _request;           // raw request received from the buffer
     const ServerConfig          &_serverConfig;     // server config matched to this request
+    std::string                 _httpRoot;             // get _root from RequestHandler
     HttpCode                    _code;              // HTTP response code to send
     std::string                 _type;              // MIME type for the response
     std::string                 _method;            // GET || POST || DELETE
@@ -133,6 +134,7 @@ public:
     HTTPParser &                operator=( HTTPParser const & other );
             
     HttpCode                    getCode() const;
+    std::string                 getHttpRoot() const;
     std::string                 getType() const;
     std::string                 getMethod() const;
     std::string                 getBoundary() const;
@@ -149,6 +151,7 @@ public:
     std::string                 getRequestTarget() const;
     std::string                 getRange() const;
     HttpCode                    setCode( HttpCode code );
+    std::string                 setHttpRoot( std::string httpRoot );
     std::string                 setType( std::string const & type );
     bool                        setError( bool error );    
 
