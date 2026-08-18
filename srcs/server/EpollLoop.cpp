@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/17 13:58:37 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/18 16:14:43 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -417,12 +417,7 @@ bool EpollLoop::do_read_fd(
               "HTTP/1.1 502 Bad Gateway\r\n"
             "Content-Type: text/html\r\n"
             "Content-Length: 0\r\n\r\n";
-
-            // send(fd, err.c_str(), err.size(), 0);
-            // _clientToListener.erase(fd);
-            // return (close(fd), false);
             ev.events = EPOLLOUT;
-
             ev.data.fd = fd;
             epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &ev);
             
@@ -568,7 +563,8 @@ bool EpollLoop::readingSocket(
                 }
             }
 
-            if (listenerSockfd != -1) {
+            if (listenerSockfd != -1) 
+            {
                 // create a dedicated fd for this client
                 // peer_addr holds the client IP address
                 int clientfd = accept(listenerSockfd,
@@ -602,25 +598,36 @@ bool EpollLoop::readingSocket(
                 }
                 _clientToListener[clientfd] = listenerSockfd;
             
-            } else {
-                
+            } 
+            else 
+            {    
                 std::map<int, CGI*>::iterator it =
                     _fdToCGI.find(events[n].data.fd);
                 if (it != _fdToCGI.end())
                 {
                     CGI *cgi = it->second;
                     int activeFd = events[n].data.fd;
-                    // event only carries raw fd, not why you registered
+                    int i;
                     if (activeFd == cgi->getStdinFd())
                     {
-                        if (cgi->onWritable())
+                        i = cgi->onWritable();
+                        if (i == SUCCESS)
                         {
                             epoll_ctl(epollfd, EPOLL_CTL_DEL, activeFd, NULL);
                             _fdToCGI.erase(it);
                             cgi->closeStdin();
                         }
+                        else if (i == ERR)
+                        {
+                            epoll_ctl(epollfd, EPOLL_CTL_DEL, activeFd, NULL);
+                            _fdToCGI.erase(it);
+                            cgi->closeStdin();
+                            // send ERROR 500 
+                        }
                     
-                    } else {
+                    } 
+                    else 
+                    {
                         // collecting the script's output stdout pipe until EOF
                         if (cgi->onReadable())
                         {
@@ -640,15 +647,20 @@ bool EpollLoop::readingSocket(
                         }
                     }
                 
-                } else {
+                } 
+                else 
+                {
                     
-                    if ( events[n].events & EPOLLIN ) {  
+                    if ( events[n].events & EPOLLIN ) 
+                    {  
 
                         if (!do_read_fd(events[n].data.fd,
                                 listeners, config, epollfd, ev))
                             break;
                     
-                    } else if ( events[n].events & EPOLLOUT ) {
+                    } 
+                    else if ( events[n].events & EPOLLOUT ) 
+                    {
 
                         if (!do_write_fd(events[n].data.fd,
                                 epollfd, ev))

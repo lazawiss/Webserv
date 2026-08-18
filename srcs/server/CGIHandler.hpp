@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 18:29:28 by andikim           #+#    #+#             */
-/*   Updated: 2026/07/12 18:05:48 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/18 16:20:05 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,15 @@ class ListenerManager;
 // onReadable()  : collect script output from child's stdout (EPOLLIN on stdout pipe)
 // buildResponse(): CGI output -> full HTTP response, sent to _client_fd
 // EpollLoop owns the object and is the only one who closes fds / deletes it.
+
+enum Result
+{
+    HOLD,
+    ERR,
+    SUCCESS,
+};
+
+
 class CGI
 {
 public:
@@ -37,8 +46,9 @@ public:
     bool        start();
     // both return true when their side is finished:
     // onWritable -> whole body written / onReadable -> EOF (script done)
-    bool        onWritable();
-    bool        onReadable();
+    // bool        onWritable();
+    Result      onWritable();
+    Result      onReadable();
 
     void        closeStdin();   // sends EOF to the script
     void        closeStdout();  // called after EOF; also reaps the child

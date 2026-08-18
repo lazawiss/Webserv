@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 18:29:42 by andikim           #+#    #+#             */
-/*   Updated: 2026/08/09 16:46:51 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/18 16:19:12 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -202,23 +202,35 @@ bool CGI::start()
 // EPOLLOUT on _stdin_pipe[1]: the pipe has room, write more of the body.
 // Returns true when the whole body has been handed to the script —
 // EpollLoop then deregisters the fd and calls closeStdin() (= EOF).
-bool CGI::onWritable()
+Result CGI::onWritable()
 {
     if (_bytesWritten >= _body.size())
-        return true; // nothing left to send because all body complete
+        return SUCCESS; // nothing left to send because all body complete
 
     ssize_t n = write(_stdin_pipe[1],
                       _body.c_str() + _bytesWritten,
                       _body.size() - _bytesWritten); // for remaining bytes
+    // if (n > 0)
+    //     _bytesWritten += static_cast<size_t>(n);
+    
     if (n > 0)
+    {
         _bytesWritten += static_cast<size_t>(n);
-    // n == -1 means the pipe is full for the moment; epoll will fire again.
-
-    return _bytesWritten >= _body.size();
+        if (_bytesWritten >= _body.size())
+            return SUCCESS;
+    }
+    if (n == -1)
+    {
+        if (errno == EAGAIN || errno == EWOULDBLOCK)
+            return HOLD; 
+        else
+            return ERR;
+    }
+    return HOLD;
+    // return _bytesWritten >= _body.size();
 }
 
-
-bool CGI::onReadable()
+Result CGI::onReadable()
 {
     char    buf[4096];
     ssize_t n = read(_stdout_pipe[0], buf, sizeof(buf));
@@ -226,9 +238,20 @@ bool CGI::onReadable()
     if (n > 0)
     {
         _output.append(buf, static_cast<size_t>(n));
-        return false; // maybe more coming; epoll will tell us
+        return HOLD;
+        // return false; // maybe more coming; epoll will tell us
     }
-    return (n == 0); // 0 = EOF ; -1 = epoll woke me up but nothing to read
+    else if (n == -1)
+    {
+        if (errno == EAGAIN || errno == EWOULDBLOCK)
+            return HOLD;
+        else
+            return ERR;
+    }
+    if (n == 0)
+        return SUCCESS;
+    return HOLD;
+    // return (n == 0); // 0 = EOF ; -1 = epoll woke me up but nothing to read
 }
 
 void CGI::closeStdin()
