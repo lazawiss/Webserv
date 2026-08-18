@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/17 14:06:36 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/18 14:27:27 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -364,22 +364,21 @@ bool    RequestHandler::answerFile( std::string const & file ){
 
     struct stat sb;
     
-    if (stat(file.c_str(), &sb) == -1)
+    if (stat(file.c_str(), &sb) == -1 && S_ISREG(sb.st_mode))
     {
         LOG_ERROR("stat failed: " + file + " - " + strerror(errno));
         return false;
     }
-    // if (S_ISDIR(sb.st_mode))
-    // {
-    //     LOG_DEBUG("Path is a directory: " + file);
-    //     // if ( )
-    //     // 
-    //     return false; 
-    // }
+    if (access(file.c_str(), R_OK) != 0)
+    {
+        LOG_ERROR("acccess failed: " + file + " - " + strerror(errno));
+        return false;
+    }
 
     std::ostringstream dbg; dbg << "File size: " << sb.st_size;
     // ------------ Debug ------------
     LOG_DEBUG(dbg.str());
+    
     int indexfd = open(file.c_str(), O_RDONLY);
     if (indexfd == -1)
     {
@@ -388,7 +387,7 @@ bool    RequestHandler::answerFile( std::string const & file ){
     }
     _n_read_index = read(indexfd, _buffer, BUF_SIZE);
     close(indexfd);
-    if (_n_read_index == -1)
+    if (_n_read_index == -1 || _n_read_index > BUF_SIZE || _n_read_index == 0)
         return false;
 
     return true;
@@ -403,8 +402,13 @@ bool    RequestHandler::answerFileIcon(){
     struct stat sb;
     
     std::string faviconPath = "data/www/favicon.ico/favicon-16x16.png";
-    if (stat(faviconPath.c_str(), &sb) == -1){
+    if (stat(faviconPath.c_str(), &sb) == -1 && S_ISREG(sb.st_mode)){
         LOG_ERROR("Stat failed for favicon: " + std::string(strerror(errno)));
+        return false;
+    }
+    if (access(faviconPath.c_str(), R_OK) != 0)
+    {
+        LOG_ERROR("acccess failed: " + faviconPath + " - " + strerror(errno));
         return false;
     }
 
@@ -415,7 +419,7 @@ bool    RequestHandler::answerFileIcon(){
     }
     _n_read_index = read(indexfd, _buffer, BUF_SIZE);
     close(indexfd);
-    if (_n_read_index == -1)
+    if (_n_read_index == -1 || _n_read_index > BUF_SIZE || _n_read_index == 0)
         return false;
 
     return true;
@@ -531,7 +535,12 @@ void RequestHandler::sendError( HTTPParser & parser, HttpCode code ) {
     parser.setCode(code);
     parser.setType("text/html");
     std::string file = getFile(HTTPParser::httpCodeToString(parser.getCode()), parser.getError());
-    answerFile(file);
+    if (answerFile(file) == false){
+        if (errno == EACCES)
+            parser.setCode(HTTP_403);
+        if (errno == ENOENT)
+            parser.setCode(HTTP_404);
+    }
 }
 
 /**
@@ -654,7 +663,15 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
 
             std::string file = getFile(HTTPParser::httpCodeToString(HTTPParser.getCode()),
                 HTTPParser.getError());
-            answerFile(file);
+            if (answerFile(file) == false){
+                
+                if (errno == EACCES)
+                    sendError(HTTPParser, HTTPParser.setCode(HTTP_403));
+                else if (errno == ENOENT)
+                    sendError(HTTPParser, HTTPParser.setCode(HTTP_404));
+                else 
+                    sendError(HTTPParser, HTTPParser.setCode(HTTP_500));
+            }
 
         } else {
 
@@ -696,19 +713,29 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
             ? getFile(HTTPParser::httpCodeToString(HTTPParser.getCode()), true)
             : getFile(HTTPParser.getFileName(), false);
 
-        if (HTTPParser.getCode() == HTTP_INDEX){
-            file = HTTPParser.getFileName();
-            std::cout << file << std::endl;
-        }
-        if (answerFile(file) == false)
-            sendError(HTTPParser);
+            if (answerFile(file) == false){
+                if (errno == EACCES)
+                    sendError(HTTPParser, HTTPParser.setCode(HTTP_403));
+                else if (errno == ENOENT)
+                    sendError(HTTPParser, HTTPParser.setCode(HTTP_404));
+                else 
+                    sendError(HTTPParser, HTTPParser.setCode(HTTP_500));
+            }
+            
     } 
     else if (HTTPParser.getType() == "text/plain") 
     {
 
         std::string file = getFileUpload(HTTPParser.getFileName());
-        if (answerFile(file) == false)
-            sendError(HTTPParser, HTTP_500);
+        if (answerFile(file) == false){
+            
+            if (errno == EACCES)
+                sendError(HTTPParser, HTTPParser.setCode(HTTP_403));
+            else if (errno == ENOENT)
+                sendError(HTTPParser, HTTPParser.setCode(HTTP_404));
+            else 
+                sendError(HTTPParser, HTTPParser.setCode(HTTP_500));
+        }
 
     } 
     else if (HTTPParser.getType() == "image/jpeg"
@@ -716,7 +743,9 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         || HTTPParser.getType() == "image/gif"
         || HTTPParser.getType() == "image/webp") {
 
+            
         std::string file = getFileImage(HTTPParser.getFileName());
+        std::cout << "FILE: "<< file << std::endl;
 
         //  206 Partial Content path (only range set)
         struct stat sb;
@@ -738,21 +767,46 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         if (HTTPParser.getUpload() == true) {
 
             std::string uploadFile = getFileUpload(HTTPParser.getFileName());
-            if (answerFile(uploadFile) == false)
-                sendError(HTTPParser, HTTP_500);
+            std::cout << "uploadFile: "<< uploadFile << std::endl;
+            
+            if (answerFile(uploadFile) == false){
+                
+                if (errno == EACCES)
+                    sendError(HTTPParser, HTTPParser.setCode(HTTP_403));
+                else if (errno == ENOENT)
+                    sendError(HTTPParser, HTTPParser.setCode(HTTP_404));
+                else 
+                    sendError(HTTPParser, HTTPParser.setCode(HTTP_500));
+            }
 
         }
         else {
 
             std::string imgFile = getFileImage(HTTPParser.getFileName());
-            if (answerFile(imgFile) == false)
-                sendError(HTTPParser, HTTP_500);
+            std::cout << "imgFile: "<< imgFile<< std::endl;
+
+            if (answerFile(imgFile) == false){
+                
+                if (errno == EACCES)
+                    sendError(HTTPParser, HTTPParser.setCode(HTTP_403));
+                else if (errno == ENOENT)
+                    sendError(HTTPParser, HTTPParser.setCode(HTTP_404));
+                else 
+                    sendError(HTTPParser, HTTPParser.setCode(HTTP_500));
+            }
         }
 
     } else if (HTTPParser.getType() == "image/x-icon") {
 
-        if (answerFileIcon() == false)
-            sendError(HTTPParser, HTTP_500);
+        if (answerFileIcon() == false){
+            
+            if (errno == EACCES)
+                sendError(HTTPParser, HTTPParser.setCode(HTTP_403));
+            else if (errno == ENOENT)
+                sendError(HTTPParser, HTTPParser.setCode(HTTP_404));
+            else 
+                sendError(HTTPParser, HTTPParser.setCode(HTTP_500));
+        }
 
     } else if (HTTPParser.getType() == "multipart/form-data") {
 
@@ -870,7 +924,7 @@ bool RequestHandler::answerFilePartial(std::string const & file, ByteRange const
         close(fd);
         return false;
     }
-    _n_read_index = read(fd, _buffer, length);
+    _n_read_index = read(fd, _buffer, length); // CHECK -1 / 0
     close(fd);
     if (_n_read_index != length)
     {

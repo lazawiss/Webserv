@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/15 21:07:38 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/17 10:16:51 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -175,9 +175,6 @@ public:
                 
     bool                        checkContentDisposition( size_t & curPos );
     bool                        gatherFile( size_t curPos );
-    // bool                        checkContentDisposition();
-    // std::vector<size_t>         collectSpace( std::string::iterator start, std::string::iterator end );
-    // std::vector<std::string>    collectString(std::string & line, std::vector<size_t> & space_inter );
     
     std::string                 addSuffix(std::string suffix);
     bool                        compareMethodWithConfigFile();

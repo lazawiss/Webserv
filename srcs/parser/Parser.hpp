@@ -17,6 +17,8 @@
 # include <string>
 # include <sys/stat.h>
 # include <vector>
+# include <cstring>
+
 
 
 GlobalConfig parse_file(const std::string& path);

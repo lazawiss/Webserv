@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/17 00:02:37 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/18 14:26:56 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -693,8 +693,10 @@ int HTTPParser::checkContentLength( std::string const & value ) {
     }
 
     size_t limit = parseBodySize(_serverConfig.getClientMaxBodySize());
+    std::cout << "limit: " << limit << std::endl;
     if (limit == 0)
         limit = BUF_SIZE;
+ 
     if (len > limit) {
         LOG_ERROR("Content-Length exceeds limit");
 
@@ -710,7 +712,17 @@ int HTTPParser::checkContentLength( std::string const & value ) {
     oss << _content_length;
     // ------------ Debug ------------
     LOG_DEBUG("Content-Length: " + oss.str());
+    if (_content_length > 110000){
+        
+        LOG_ERROR("Content-Length exceeds limit");
 
+        _errors = true;
+        _code   = HTTP_413;
+        _type   = "text/html";
+
+        return SERVER_ERROR;
+    }
+    
     return SERVER_OK;
 }
 

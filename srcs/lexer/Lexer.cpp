@@ -59,9 +59,9 @@ std::vector<Token> Lexer::tokenize()
     while (i < _line.size())
     {
         if (std::isspace(static_cast<unsigned char>(_line[i])))
-        {
             i++;
-        }
+        else if (i + 1 < _line.size() && _line[i] == '/' && _line[i + 1] == '/')
+            break;
         else if (isSign(_line[i]))
         {
             if (_line[i] == '#')
