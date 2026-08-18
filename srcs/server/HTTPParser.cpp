@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/18 18:28:33 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/18 20:43:04 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -154,6 +154,12 @@ std::string HTTPParser::getFileName() const
     return _fileName;
 }
 
+std::string HTTPParser::setFileName(std::string filename)
+{        
+    _fileName = filename;
+
+    return _fileName;
+}
 // ── file buff ───────────────────────────────────────────────────────────────
 std::string HTTPParser::getFileBuf() const
 {        

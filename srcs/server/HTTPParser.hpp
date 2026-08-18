@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/18 12:57:33 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/18 20:42:22 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -151,6 +151,7 @@ public:
     std::string                 getRequestTarget() const;
     std::string                 getRange() const;
     HttpCode                    setCode( HttpCode code );
+    std::string                 setFileName(std::string filename);
     std::string                 setHttpRoot( std::string httpRoot );
     std::string                 setType( std::string const & type );
     bool                        setError( bool error );    
