@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/21 14:12:24 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/17 10:32:44 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/18 14:32:31 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,6 +53,12 @@ std::string logTimestamp();
 // #endif
 #define LOG_ERROR(msg)  std::cerr << logTimestamp() << " [Error]   " << msg << std::endl
 #define LOG_SEP()       std::cout << logTimestamp() << " ---------------------------------------------------" << std::endl
+
+#define COLOR_PINK "\033[95m"
+#define COLOR_RESET "\033[0m"
+#define COLOR_RED "\033[31m"
+#define COLOR_CYAN  "\033[36m"
+#define COLOR_RESET "\033[0m"
 
 #define BUF_SIZE 800000
 #define LISTEN_BACKLOG 50 //max connections accepted by socket

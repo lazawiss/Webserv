@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/17 20:42:30 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/18 18:35:41 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -164,24 +164,80 @@ std::string RequestHandler::getMethod() const
 ** ============================================================================
 */
 
-static std::string resolveRoot(const ServerConfig &cfg, const std::string &uri)
-{
-    const std::vector<LocationConfig> &locs = cfg.getLocations();
-    size_t bestLen = 0;
-    std::string root;
-    for (size_t i = 0; i < locs.size(); ++i)
-    {
-        const std::string &path = locs[i].getPath();
-        if (uri.find(path) == 0 && path.size() > bestLen
-            && (path == "/" || uri.size() == path.size() || uri[path.size()] == '/' || uri[path.size()] == '?'))
-        {
-            bestLen = path.size();
-            root = locs[i].getRoot();
-        }
-    }
+// static std::string resolveRoot(const ServerConfig &cfg, const std::string &uri)
+// {
+    // const std::vector<LocationConfig> &locs = cfg.getLocations();
+    // size_t bestLen = 0;
+    // std::string root;
+    // for (size_t i = 0; i < locs.size(); ++i)
+    // {
+    //     const std::string &path = locs[i].getPath();
+    //     if (uri.find(path) == 0 && path.size() > bestLen
+    //         && (path == "/" || uri.size() == path.size() || uri[path.size()] == '/' || uri[path.size()] == '?'))
+    //     {
+    //         bestLen = path.size();
+    //         root = locs[i].getRoot();
+    //     }
+    // }
 
-    return root;
-}
+    // const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
+    // // std::cout << locs;
+    // size_t bestLen = 0;
+
+    // std::string root;
+    // std::string uri = _requesttarget;
+
+    // LOG_INFO(COLOR_PINK + std::string("URI: ") + uri + COLOR_RESET);
+
+    // char const *lastSlash = strrchr(uri.c_str(), '/');
+    //         if (doesCharCExist400(lastSlash) == false)
+    //                         return;
+    // LOG_INFO(COLOR_PINK + std::string("lasttSlash: ") + lastSlash + COLOR_RESET);
+    
+    // int len = strlen(lastSlash);
+    // std::cout << "len: " << len << std::endl;
+   
+    // int urilen = uri.size(); 
+    // std::cout << "urilen: " << urilen << std::endl;
+    
+    // std::string newSlash = uri.substr(0, urilen - len);
+    // LOG_INFO(COLOR_PINK + std::string("newSlash : ") + newSlash  + COLOR_RESET);
+
+    
+    // for (size_t i = 0; i < locs.size(); ++i)
+    // {
+    //     const std::string &path = locs[i].getPath();
+    //     if (uri.find(path) == 0 && path.size() > bestLen && (path == "/" || uri.size() == path.size() || uri[path.size()] == '/' || uri[path.size()] == '?'))
+    //     {
+    //         bestLen = path.size();
+    //         root = locs[i].getRoot();
+
+    //         char const *lastSlash = strrchr(root.c_str(), '/');
+    //         if (doesCharCExist400(lastSlash) == false)
+    //                         return;
+
+    //         LOG_INFO(COLOR_PINK + std::string("lastSlash: ") + lastSlash + COLOR_RESET);
+
+    //         if (newSlash.compare(lastSlash) == 0)
+    //         {
+    //             std::cout << "C EST UN MATCH" << std::endl;
+    //             HTTPParser.getHttpRoot() = locs[i].getRoot();
+    //             break;
+    //         }
+    //     }
+    // }
+
+    
+    // LOG_INFO(COLOR_PINK + std::string("ROOT: ") + _httpRoot + COLOR_RESET);
+
+    // // MARQUE
+    // if (root.empty())
+    // {
+    //     // root = bestLen->getRoot();
+    //     LOG_INFO(COLOR_CYAN + std::string("ROOT (buildFullPath(1)): ") + root + COLOR_RESET);
+    // }
+//     return root;
+// }
 
 std::string RequestHandler::getFile( std::string const & code, bool const & error ){
 
@@ -362,7 +418,7 @@ bool    RequestHandler::answerFile( std::string const & file ){
 
     struct stat sb;
     
-    if (stat(file.c_str(), &sb) == -1 && S_ISREG(sb.st_mode))
+    if (stat(file.c_str(), &sb) == -1)
     {
         LOG_ERROR("stat failed: " + file + " - " + strerror(errno));
         return false;
@@ -675,13 +731,81 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         }
     }
     
-    if (_root.empty()){
+    // if (_root.empty()){
         
-        std::cout << "ROOT EMPTY" << std::endl;
-        _root = resolveRoot(_serverConfig, HTTPParser.getRequestTarget());
+    //     std::cout << "ROOT EMPTY" << std::endl;
+    //     _root = resolveRoot(_serverConfig, HTTPParser.getRequestTarget());
+    // }
+
+    // const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
+    // std::cout << locs;
+    // size_t pathLen = 0;
+
+    std::string root;
+    std::string uri = HTTPParser.getRequestTarget();
+
+    LOG_INFO(COLOR_PINK + std::string("URI: ") + uri + COLOR_RESET);
+
+    char const *lastSlash = strrchr(uri.c_str(), '/');
+    if (!lastSlash){
+        
+        HTTPParser.setError(true);
+        HTTPParser.setCode(HTTP_400);
+        HTTPParser.setType("text/html");
+        
+        return false;
+    }
+    LOG_INFO(COLOR_PINK + std::string("lasttSlash: ") + lastSlash + COLOR_RESET);
+    
+    int len = strlen(lastSlash);
+    std::cout << "len: " << len << std::endl;
+   
+    int urilen = uri.size(); 
+    std::cout << "urilen: " << urilen << std::endl;
+    
+    std::string newSlash = uri.substr(0, urilen - len);
+    LOG_INFO(COLOR_PINK + std::string("newSlash : ") + newSlash  + COLOR_RESET);
+
+    
+    for (size_t i = 0; i < locs.size(); ++i)
+    {
+        const std::string &path = locs[i].getPath();
+        if (uri.find(path) == 0 && path.size() > bestLen && (path == "/" || uri.size() == path.size() || uri[path.size()] == '/' || uri[path.size()] == '?'))
+        {
+            // pathLen = path.size();
+            root = locs[i].getRoot();
+
+            char const *lastSlashroot = strrchr(root.c_str(), '/');
+            if (!lastSlashroot){
+                
+                HTTPParser.setError(true);
+                HTTPParser.setCode(HTTP_400);
+                HTTPParser.setType("text/html");
+            }
+        
+        return false;
+            LOG_INFO(COLOR_PINK + std::string("lastSlash: ") + lastSlash + COLOR_RESET);
+
+            if (newSlash.compare(lastSlashroot) == 0)
+            {
+                std::cout << "C EST UN MATCH" << std::endl;
+                HTTPParser.getHttpRoot() = locs[i].getRoot();
+                break;
+            }
+        }
     }
 
+    
+    LOG_INFO(COLOR_PINK + std::string("ROOT: ") + HTTPParser.getHttpRoot() + COLOR_RESET);
 
+    // MARQUE
+    if (root.empty())
+    {
+        // root = bestLen->getRoot();
+        LOG_INFO(COLOR_CYAN + std::string("ROOT (buildFullPath(1)): ") + root + COLOR_RESET);
+    }
+
+    
     bool rangeHandled = false;
 
     if (HTTPParser.getMethod() == "DELETE")
