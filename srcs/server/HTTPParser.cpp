@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HTTPParser.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: leazannis <leazannis@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/19 11:53:22 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/19 17:09:14 by leazannis        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -1088,10 +1088,7 @@ bool HTTPParser::resolveRoot()
             if (!lastSlashRoot){
             LOG_INFO(COLOR_RED + std::string("NO lastSlashRoot: ") + COLOR_RESET);
                 
-                _errors = true;
-                _code = HTTP_400;
-                _type = "text/html";
-                return false;
+                 continue ;
             }
         
             LOG_INFO(COLOR_PINK + std::string("lastSlashRoot: ") + lastSlashRoot + COLOR_RESET);

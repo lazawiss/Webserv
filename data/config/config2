@@ -42,20 +42,19 @@ server {
         autoindex   off;
     }
 
-    # location /image.html {
-    #     return      301 redirection/index.html; # redirection permanente
-
-    # }
+    location /html/image.html {
+        return      301 /redirection/index.html; # redirection permanent        
+    }
 
     location /google {
         return      302 https://www.google.com; # redirection externe
     }
 
-    # location /redirection {
-    #     root        data/www;
-    #     index       index.html;
-    #     methods     GET;
-    # }
+    location /redirection {
+        root        data/www/redirection;
+        index       index.html;
+        methods     GET;
+    }
 
   
 }
