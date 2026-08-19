@@ -1,0 +1,20 @@
+server {
+    listen       127.0.0.1:8080;     # même port, mais interface différente
+    server_name  internal.localhost;
+
+    error_page 400 /errors/404.html;
+
+    location / {
+        root        data/www/vespera;
+        index       index2.html index.html;
+        methods     GET;
+        autoindex   on;
+    }
+
+    location /vespera {
+        root        data/www;
+        index       index2.html index.html;
+        methods     GET;
+        autoindex   on;
+    }
+}

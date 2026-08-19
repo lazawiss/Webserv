@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   EpollLoop.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
+/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/18 16:14:43 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/19 14:03:34 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -398,9 +398,17 @@ bool EpollLoop::do_read_fd(
     {
         LOG_ERROR("handleRequest failed, sending 500");
         _clientResponseBuffer[fd] =
-            "HTTP/1.1 500 Internal Server Error\r\n"
-            "Content-Type: text/html\r\n"
-            "Content-Length: 0\r\n\r\n";
+        "HTTP/1.1 500 Internal Server Error\r\n"
+        "Content-Type: text/html\r\n"
+        "Content-Length: 237\r\n\r\n"
+        "<html>\r\n"
+        "<head><title>500 Internal Server Error</title></head>\r\n"
+        "<body>\r\n"
+        "<h1>Internal Server Error</h1>\r\n"
+        "<p>-___-The server failed -___-</p>\r\n"
+        "</body>\r\n"
+        "</html>\r\n\r\n";
+        
         ev.events = EPOLLOUT;
         ev.data.fd = fd;
         epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &ev);
@@ -414,9 +422,17 @@ bool EpollLoop::do_read_fd(
         {
             delete cgi;
             _clientResponseBuffer[fd] =
-              "HTTP/1.1 502 Bad Gateway\r\n"
+           "HTTP/1.1 502 Bad Gateway\r\n"
             "Content-Type: text/html\r\n"
-            "Content-Length: 0\r\n\r\n";
+            "Content-Length: 237\r\n\r\n"
+            "<html>\r\n"
+            "<head><title>502 Bad Gateway</title></head>\r\n"
+            "<body>\r\n"
+            "<h1>502 Bad Gateway</h1>\r\n"
+            "<p>-___- yOU TOOk thE wRoNg turN sOMEwherE -___-</p>\r\n"
+            "</body>\r\n"
+            "</html>\r\n\r\n";
+            
             ev.events = EPOLLOUT;
             ev.data.fd = fd;
             epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &ev);
@@ -427,6 +443,7 @@ bool EpollLoop::do_read_fd(
         // stdin pipe: WE write the body into it -> watch for EPOLLOUT
         ev.events = EPOLLOUT;
         ev.data.fd = cgi->getStdinFd();
+      
         epoll_ctl(epollfd, EPOLL_CTL_ADD, cgi->getStdinFd(), &ev);
         _fdToCGI[cgi->getStdinFd()] = cgi;
 
@@ -465,6 +482,8 @@ bool EpollLoop::do_write_fd( int fd, int epollfd, epoll_event &ev ) {
     std::string & response = _clientResponseBuffer[fd];
     if (response.empty())
         return false;
+    
+    // LOG_INFO(COLOR_GREEN + std::string("response : ") + response  + COLOR_RESET);
 
     ssize_t headerSent = send(fd, response.c_str(), response.size(), 0);
     if (headerSent == -1)

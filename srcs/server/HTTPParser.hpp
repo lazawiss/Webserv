@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/17 10:16:51 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/19 11:37:27 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,6 +93,7 @@ private:
 
     std::string                 _request;           // raw request received from the buffer
     const ServerConfig          &_serverConfig;     // server config matched to this request
+    std::string                 _httpRoot;             // get _root from RequestHandler
     HttpCode                    _code;              // HTTP response code to send
     std::string                 _type;              // MIME type for the response
     std::string                 _method;            // GET || POST || DELETE
@@ -104,6 +105,8 @@ private:
     std::string                 _fileBuf;           // binary content of the uploaded file
     bool                        _errors;            // true if a parsing error occurred
     bool                        _upload;            // true if this is a file upload request
+    bool                        _isIndex;           // true if this is file is an index
+
 
     size_t                      _content_length;    // validated Content-Length value
     ConnectionType              _connectionType;    // keep-alive || close
@@ -133,6 +136,7 @@ public:
     HTTPParser &                operator=( HTTPParser const & other );
             
     HttpCode                    getCode() const;
+    std::string                 getHttpRoot() const;
     std::string                 getType() const;
     std::string                 getMethod() const;
     std::string                 getBoundary() const;
@@ -140,6 +144,7 @@ public:
     std::string                 getFileBuf() const;
     bool                        getError() const;
     bool                        getUpload() const;
+    bool                        getIsIndex() const;
     std::string                 getPath() const;
     std::string                 getScriptFilename() const;
     std::string                 getQueryString() const;
@@ -149,12 +154,16 @@ public:
     std::string                 getRequestTarget() const;
     std::string                 getRange() const;
     HttpCode                    setCode( HttpCode code );
+    std::string                 setFileName(std::string filename);
+    std::string                 setHttpRoot( std::string httpRoot );
     std::string                 setType( std::string const & type );
     bool                        setError( bool error );    
 
     bool                        isCGI() const;
 
     void                        buildFullPath();
+    bool                        resolveRoot();
+
 
     void                        checkRange( std::string const & value );
 
@@ -177,10 +186,10 @@ public:
     bool                        gatherFile( size_t curPos );
     
     std::string                 addSuffix(std::string suffix);
-    bool                        compareMethodWithConfigFile();
+    bool                        compareMethodWithConfigFile(const std::vector<LocationConfig> &locs, int bestIdx);
     bool                        isRedir();
-    bool                        findMethods();
-    int                         findAutoIndex();
+    bool                        findMethods(const std::vector<LocationConfig> &locs, int bestIdx);
+    int                         findAutoIndex(const std::vector<LocationConfig> &locs, int bestIdx);
 
     static std::string          httpCodeToString( HttpCode code );
 
