@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/19 09:40:09 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/19 11:37:27 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -162,6 +162,8 @@ public:
     bool                        isCGI() const;
 
     void                        buildFullPath();
+    bool                        resolveRoot();
+
 
     void                        checkRange( std::string const & value );
 

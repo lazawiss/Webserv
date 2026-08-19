@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:00:06 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/19 10:36:06 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/19 11:41:28 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -82,7 +82,7 @@ public:
     std::string         getSize() const;
     ssize_t             getNReadIndex() const;
 
-    bool                resolveRoot(const ServerConfig &cfg, HTTPParser HTTPParser);
+    // bool                resolveRoot(const ServerConfig &cfg, HTTPParser HTTPParser);
     
     std::string         generateAutoindex(const std::string &fullPath, const std::string &requestTarget);
     std::string         buildAnswerHeader( std::string const & code, std::string const & type );

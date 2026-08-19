@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/19 10:43:22 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/19 11:53:22 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -1044,6 +1044,92 @@ void HTTPParser::buildFullPath() {
     LOG_DEBUG(std::string("[HTTPParser] _fileName: '") + _fileName);
 }
 
+bool HTTPParser::resolveRoot()
+{
+    const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
+    std::string root;
+    std::string uri = _requesttarget;
+
+    LOG_INFO(COLOR_PINK + std::string("URI: ") + uri + COLOR_RESET);
+
+    char const *lastSlash = strrchr(uri.c_str(), '/');
+    if (!lastSlash){
+        
+        _errors = true;
+        _code = HTTP_400;
+        _type = "text/html";
+        
+        return false;
+    }
+    LOG_INFO(COLOR_PINK + std::string("lasttSlash: ") + lastSlash + COLOR_RESET);
+    
+    int len = strlen(lastSlash);
+    std::cout << "len: " << len << std::endl;
+   
+    int urilen = uri.size(); 
+    std::cout << "urilen: " << urilen << std::endl;
+    
+    std::string newSlash = uri.substr(0, urilen - len);
+    LOG_INFO(COLOR_PINK + std::string("newSlash : ") + newSlash  + COLOR_RESET);
+
+    
+    for (size_t i = 0; i < locs.size(); ++i)
+    {
+        const std::string &path = locs[i].getPath();
+        LOG_INFO(COLOR_CYAN + std::string("path: ") + path + COLOR_RESET);
+      
+        // if (uri.find(path) == 0 )
+        {
+            // pathLen = path.size();
+            root = locs[i].getRoot();
+            LOG_INFO(COLOR_CYAN + std::string("root: ") + root + COLOR_RESET);
+
+            char const *lastSlashRoot = strrchr(root.c_str(), '/');
+            if (!lastSlashRoot){
+            LOG_INFO(COLOR_RED + std::string("NO lastSlashRoot: ") + COLOR_RESET);
+                
+                _errors = true;
+                _code = HTTP_400;
+                _type = "text/html";
+                return false;
+            }
+        
+            LOG_INFO(COLOR_PINK + std::string("lastSlashRoot: ") + lastSlashRoot + COLOR_RESET);
+
+            if (newSlash.compare(lastSlashRoot) == 0)
+            {
+                std::cout << "C EST UN MATCH" << std::endl;
+                _httpRoot = locs[i].getRoot();
+                break;
+            }
+        }
+    }
+
+    
+    LOG_INFO(COLOR_PINK + std::string("ROOT: ") + _httpRoot + COLOR_RESET);
+
+    // MARQUE
+    if (_httpRoot.empty())
+    {
+        // root = bestLen->getRoot();
+        _httpRoot = _fullPath;
+        LOG_INFO(COLOR_CYAN + std::string("ROOT (buildFullPath(1)): ") + _httpRoot + COLOR_RESET);
+    }
+
+    std::string filename = std::string(lastSlash,len);
+    if (filename[0] == '/'){
+        filename.erase(filename.begin());
+        LOG_INFO(COLOR_PINK + std::string("filename after match: ") + filename + COLOR_RESET);
+        
+        _fileName = filename;
+        
+        LOG_INFO(COLOR_CYAN + std::string("_filename after match: ") +  _fileName  + COLOR_RESET);
+    }
+
+    return true;
+
+}
+
 std::string HTTPParser::addSuffix(std::string suffix) {
     
     if (suffix  == ".jpg")
@@ -1318,8 +1404,14 @@ bool HTTPParser::findMethods(const std::vector<LocationConfig> &locs, int bestId
 
             LOG_INFO(COLOR_GREEN + std::string("   LAST    ") + COLOR_RESET);
                 
-                if (!_fileName.empty() && _fileName[0] == '/')
-                    _fileName.erase(_fileName.begin());
+                // if (!_fileName.empty() && _fileName[0] == '/')
+                //     _fileName.erase(_fileName.begin());
+                if (resolveRoot() == false){
+                    LOG_INFO(COLOR_RED + std::string("ERROR") + COLOR_RESET);
+                    
+                    LOG_ERROR("resolveRoot() failed");
+                    return false;
+                  }
                 char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
                 if (lastPoint)
                     _type = addSuffix(std::string(lastPoint, strlen(lastPoint)));
