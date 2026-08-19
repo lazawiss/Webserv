@@ -56,28 +56,30 @@ La configuration suit une syntaxe inspirée de NGINX, avec trois niveaux : `glob
 
 ```nginx
 server {
-    listen       0.0.0.0:8080;
-    server_name  localhost;
+    listen       127.0.0.1:8080;
+    server_name  tsuki;
 
     client_max_body_size 10M;
 
     location / {
-        root        data/www/;
-        methods     GET POST DELETE;
+        root        data/www/tsuki;
         index       index.html;
-        autoindex   on;
+        methods     GET;
+        autoindex   off;
     }
 
     location /upload {
-        root        data/upload/;
-        methods     POST DELETE;
+        root        data/upload;
+        index       index.html;
+        methods     GET POST DELETE;
+        autoindex   off;
     }
 
-    location /cgi-bin {
+    llocation /cgi-bin/python {
         root            data/cgi-bin;
-        methods         GET POST;
+        methods         POST;
         cgi_extension   .py  /usr/bin/python3;
-        cgi_extension   .php /usr/bin/php-cgi;
+        index           index.py;
     }
 }
 ```
