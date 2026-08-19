@@ -4,14 +4,14 @@
 
 ## Description
 
-**Webserv** est un serveur HTTP écrit en **C++98**. L'objectif de ce projet est de créer un serveur web à l'image de **NGINX**, serveur web très répandu, dont le rôle principal est de recevoir des requêtes HTTP de clients et d'y répondre. Nginx sert ainsi de modèle de référence pour le comportement général de ce projet.
+**Webserv** est un serveur HTTP écrit en **C++98**. L'objectif de ce projet est de créer un serveur web à l'image de **NGINX**, serveur web très répandu, dont le rôle principal est de recevoir des requêtes HTTP de clients et d'y répondre. NGINX sert ainsi de modèle de référence pour le comportement général de ce projet.
 
 Webserv repose notamment sur les fonctionnalités suivantes :
 
 - lire un **fichier de configuration** inspiré de la syntaxe NGINX ;
 - créer un ou plusieurs **sockets d'écoute** (une paire adresse:port par server) ;
 - gèrer **plusieurs clients simultanément**, de manière **non bloquante**,
-grâce à une boucle événementielle basée sur `epoll()` ;
+grâce à une boucle événementielle basée sur epoll() ;
 - **parser** les requêtes HTTP reçues et répondre avec les méthodes **GET**, **POST** et **DELETE** ;
 - servir des **fichiers statiques**, gèrer l'**upload** de fichiers,
 le **listing de répertoire** (autoindex), les **redirections**
