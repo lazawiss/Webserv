@@ -18,40 +18,6 @@ le **listing de répertoire** (autoindex), les **redirections**
 et les **pages d'erreur** personnalisées ;
 - exécuter des scripts **CGI** (Python et PHP) en fonction de l'extension du fichier demandé ;
 
-## Architecture
-
-Le projet s'organise comme suit :
-
-```
-webserv/
-├── data/
-│   ├── config/         # Fichiers de configuration
-│   ├── www/            # Fichiers servis statiquement
-│   ├── cgi-bin/        # Scripts CGI (Python, PHP)
-│   ├── errors/         # Pages d'erreur personnalisées (400, 403, 404...)
-│   └── upload/         # Dépôt des fichiers uploadés
-├── srcs/
-│   ├── main.cpp
-│   ├── lexer/          # Liste de tokens
-│   ├── parser/         # AST (descente récursive)
-│   └── server/         # Cœur du serveur (epoll, HTTP, CGI...)
-├── tests/              # Scripts de test
-└── Makefile
-```
-
-Chaque composant de `srcs/` a un rôle précis dans le traitement d'une requête :
-
-| Composant | Fichiers | Rôle |
-|---|---|---|
-| **Lexer** | `srcs/lexer/` | Tokenisation du fichier de configuration |
-| **Parser** | `srcs/parser/` | Analyse syntaxique des tokens (descente récursive) |
-| **Server** | `srcs/server/Server.cpp` | Point d'entrée du serveur, initialisation |
-| **ListenerManager** | `srcs/server/ListenerManager.cpp` | Création et gestion des sockets d'écoute |
-| **EpollLoop** | `srcs/server/EpollLoop.cpp` | Boucle événementielle non bloquante (`epoll`) |
-| **HTTPParser** | `srcs/server/HTTPParser.cpp` | Parsing des requêtes HTTP entrantes |
-| **RequestHandler** | `srcs/server/RequestHandler.cpp` | Traitement des requêtes (GET, POST, DELETE) |
-| **CGIHandler** | `srcs/server/CGIHandler.cpp` | Exécution des scripts CGI (Python, PHP) |
-
 ## Instructions
 
 ### Prérequis
@@ -86,7 +52,7 @@ Un fichier de configuration doit être passé en argument. Des exemples sont dis
 
 ### Syntaxe de configuration
 
-La configuration suit une syntaxe inspirée de NGINX, avec trois niveaux : global, `server` et `location`.
+La configuration suit une syntaxe inspirée de NGINX, avec trois niveaux : `global`, `server` et `location`.
 
 ```nginx
 server {
