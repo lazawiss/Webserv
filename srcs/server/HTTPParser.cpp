@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/17 10:36:05 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/19 11:53:22 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,11 +25,11 @@
 
 HTTPParser::HTTPParser( std::string const & request,
     const ServerConfig & serverConfig) :
-    _request(request), _serverConfig(serverConfig),
+    _request(request), _serverConfig(serverConfig), _httpRoot(_serverConfig.getRoot()),
     _code(HTTP_INDEX), _type(), _method(),
     _requesttarget(), _httpversion(), _boundary(),
     _fileLength(), _fileName(), _fileBuf(),
-    _errors(false), _upload(false), _content_length(0), 
+    _errors(false), _upload(false), _isIndex(false), _content_length(0), 
     _connectionType(CONN_KEEP_ALIVE), _host("8080"),
     _isCGI(false), _fullPath(), _query_string(), _scriptFilename(),
     _body(), _content_type(), _content_int(0), _autoindexOn(false),
@@ -38,12 +38,12 @@ HTTPParser::HTTPParser( std::string const & request,
 
 HTTPParser::HTTPParser( HTTPParser const & src ) :
     _request(src._request), _serverConfig(src._serverConfig),
-    _code(src._code), _type(src._type),
+    _httpRoot(src._httpRoot), _code(src._code), _type(src._type),
     _method(src._method), _requesttarget(src._requesttarget),
     _httpversion(src._httpversion), _boundary(src._boundary),
     _fileLength(src._fileLength), _fileName(src._fileName),
     _fileBuf(src._fileBuf), _errors(src._errors),
-    _upload(src._upload), _content_length(src._content_length), 
+    _upload(src._upload), _isIndex(src._isIndex), _content_length(src._content_length), 
     _connectionType(src._connectionType),
     _host(src._host), _isCGI(src._isCGI),
     _fullPath(src._fullPath), _query_string(src._query_string),
@@ -62,34 +62,36 @@ HTTPParser &    HTTPParser::operator=( HTTPParser const & other )
 {
     if (this != &other )
     {
-        _request            = other._request;
-        _code               = other._code;
-        _type               = other._type;
-        _method             = other._method;
-        _requesttarget      = other._requesttarget;
-        _httpversion        = other._httpversion;
-        _boundary           = other._boundary;
-        _fileLength         = other._fileLength;
-        _fileName           = other._fileName;
-        _fileBuf            = other._fileBuf;
-        _errors             = other._errors;
-        _upload             = other._upload;
-        _connectionType     = other._connectionType;
-        _content_length     = other._content_length;
-        _host               = other._host;
-        _isCGI              = other._isCGI;
-        _fullPath           = other._fullPath;
-        _query_string       = other._query_string;
-        _scriptFilename     = other._scriptFilename;
-        _body               = other._body;
-        _content_type       = other._content_type;
-        _content_int        = other._content_int;
-        _autoindexOn        = other._autoindexOn;
-        _rangeHeader        = other._rangeHeader;
-        _isContentLengthFound = other._isContentLengthFound;
-        _isHostFound        = other._isHostFound;
-        _isContentTypeFound = other._isContentTypeFound;
-        _fileContentType    = other._fileContentType;
+        _request                = other._request;
+        _code                   = other._code;
+        _httpRoot               = other._httpRoot;
+        _type                   = other._type;
+        _method                 = other._method;
+        _requesttarget          = other._requesttarget;
+        _httpversion            = other._httpversion;
+        _boundary               = other._boundary;
+        _fileLength             = other._fileLength;
+        _fileName               = other._fileName;
+        _fileBuf                = other._fileBuf;
+        _errors                 = other._errors;
+        _upload                 = other._upload;
+        _isIndex                = other._isIndex;
+        _connectionType         = other._connectionType;
+        _content_length         = other._content_length;
+        _host                   = other._host;
+        _isCGI                  = other._isCGI;
+        _fullPath               = other._fullPath;
+        _query_string           = other._query_string;
+        _scriptFilename         = other._scriptFilename;
+        _body                   = other._body;
+        _content_type           = other._content_type;
+        _content_int            = other._content_int;
+        _autoindexOn            = other._autoindexOn;
+        _rangeHeader            = other._rangeHeader;
+        _isContentLengthFound   = other._isContentLengthFound;
+        _isHostFound            = other._isHostFound;
+        _isContentTypeFound     = other._isContentTypeFound;
+        _fileContentType        = other._fileContentType;
     }
 
     return *this;
@@ -113,6 +115,16 @@ HttpCode HTTPParser::setCode( HttpCode code )
     return _code;
 }
 
+std::string HTTPParser::getHttpRoot() const
+{
+    return _httpRoot;
+}
+
+std::string HTTPParser::setHttpRoot( std::string httpRoot )
+{
+    _httpRoot = httpRoot;
+    return _httpRoot;
+}
 // ── type ────────────────────────────────────────────────────────────────────
 std::string HTTPParser::getType() const
 {        
@@ -143,6 +155,12 @@ std::string HTTPParser::getFileName() const
     return _fileName;
 }
 
+std::string HTTPParser::setFileName(std::string filename)
+{        
+    _fileName = filename;
+
+    return _fileName;
+}
 // ── file buff ───────────────────────────────────────────────────────────────
 std::string HTTPParser::getFileBuf() const
 {        
@@ -165,6 +183,12 @@ bool HTTPParser::setError(bool error)
 bool     HTTPParser::getUpload() const
 { 
     return _upload;
+}
+
+// ── isIndex ──────────────────────────────────────────────────────────────────
+bool     HTTPParser::getIsIndex() const
+{ 
+    return _isIndex;
 }
 
 // ── script filename ─────────────────────────────────────────────────────────
@@ -899,15 +923,15 @@ void HTTPParser::buildFullPath() {
 
     const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
     const LocationConfig *bestLoc = NULL;
-    // size_t bestLen = 0;
+    size_t bestLen = 0;
 
     for (size_t i = 0; i < locs.size(); ++i)
     {
         const std::string &locPath = locs[i].getPath();
-        if (_requesttarget.compare(0, locPath.size(), locPath) == 0)
-        // && locPath.size() >= bestLen
+        if (_requesttarget.compare(0, locPath.size(), locPath) == 0
+        && locPath.size() >= bestLen)
         {
-            // bestLen  = locPath.size();
+            bestLen  = locPath.size();
             bestLoc  = &locs[i];
         }
     }
@@ -915,18 +939,26 @@ void HTTPParser::buildFullPath() {
     // MARQUE
     std::string root;
     if (bestLoc && !bestLoc->getRoot().empty())
+    {
         root = bestLoc->getRoot();
+        LOG_INFO(COLOR_CYAN + std::string("ROOT (buildFullPath(1)): ") + root + COLOR_RESET);
+    }
     else
+    {
         root = _serverConfig.getRoot();
+        LOG_INFO(COLOR_CYAN + std::string("ROOT (buildFullPath(2)): ") + root + COLOR_RESET);
+    }
 
     _autoindexOn = (bestLoc && bestLoc->getAutoindex() == "on");
 
     std::string suffix = _requesttarget;
-    if (bestLoc)
-        suffix = _requesttarget.substr(bestLoc->getPath().size());
+    _fileName = _requesttarget;
+    LOG_INFO(COLOR_PINK + std::string("_fileName =) ") + _fileName + COLOR_RESET);
 
     _fullPath = root;
-
+    if (bestLoc)
+        suffix = _requesttarget.substr(bestLoc->getPath().size());
+    
     if (suffix.empty()) {
     } else if (suffix[0] == '/') {
         _fullPath += suffix;
@@ -935,8 +967,167 @@ void HTTPParser::buildFullPath() {
         _fullPath += suffix;
     }
     _fileName = suffix;
+
+
+    // const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
+    // // std::cout << locs;
+    // size_t bestLen = 0;
+
+    // std::string root;
+    // std::string uri = _requesttarget;
+
+    // LOG_INFO(COLOR_PINK + std::string("URI: ") + uri + COLOR_RESET);
+
+    // char const *lastSlash = strrchr(uri.c_str(), '/');
+    //         if (doesCharCExist400(lastSlash) == false)
+    //                         return;
+    // LOG_INFO(COLOR_PINK + std::string("lasttSlash: ") + lastSlash + COLOR_RESET);
+    
+    // int len = strlen(lastSlash);
+    // std::cout << "len: " << len << std::endl;
+   
+    // int urilen = uri.size(); 
+    // std::cout << "urilen: " << urilen << std::endl;
+    
+    // std::string newSlash = uri.substr(0, urilen - len);
+    // LOG_INFO(COLOR_PINK + std::string("newSlash : ") + newSlash  + COLOR_RESET);
+
+    
+    // for (size_t i = 0; i < locs.size(); ++i)
+    // {
+    //     const std::string &path = locs[i].getPath();
+    //     if (uri.find(path) == 0 && path.size() > bestLen && (path == "/" || uri.size() == path.size() || uri[path.size()] == '/' || uri[path.size()] == '?'))
+    //     {
+    //         bestLen = path.size();
+    //         root = locs[i].getRoot();
+
+    //         char const *lastSlash = strrchr(root.c_str(), '/');
+    //         if (doesCharCExist400(lastSlash) == false)
+    //                         return;
+
+    //         LOG_INFO(COLOR_PINK + std::string("lastSlash: ") + lastSlash + COLOR_RESET);
+
+    //         if (newSlash.compare(lastSlash) == 0)
+    //         {
+    //             std::cout << "C EST UN MATCH" << std::endl;
+    //             _httpRoot = locs[i].getRoot();
+    //             break;
+    //         }
+    //     }
+    // }
+
+    
+    // LOG_INFO(COLOR_PINK + std::string("ROOT: ") + _httpRoot + COLOR_RESET);
+
+    // // MARQUE
+    // if (root.empty())
+    // {
+    //     // root = bestLen->getRoot();
+    //     LOG_INFO(COLOR_CYAN + std::string("ROOT (buildFullPath(1)): ") + root + COLOR_RESET);
+    // }
+    // else
+    // {
+    //     root = _root();vespera
+    //     LOG_INFO(COLOR_CYAN + std::string("ROOT (buildFullPath(2)): ") + root + COLOR_RESET);
+    // }
+
+    // _autoindexOn = (bestLoc && bestLoc->getAutoindex() == "on");
+
+    
+    // _fileName = std::string(lastSlash,len);
+    // LOG_INFO(COLOR_PINK + std::string("_fileName :slight_smile: ") + _fileName + COLOR_RESET);
+
+
+    // _fullPath = root;
+
     LOG_DEBUG(std::string("[HTTPParser] _fullPath: '") + _fullPath + "' autoindex=" + (_autoindexOn ? "on" : "off"));
     LOG_DEBUG(std::string("[HTTPParser] _fileName: '") + _fileName);
+}
+
+bool HTTPParser::resolveRoot()
+{
+    const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
+    std::string root;
+    std::string uri = _requesttarget;
+
+    LOG_INFO(COLOR_PINK + std::string("URI: ") + uri + COLOR_RESET);
+
+    char const *lastSlash = strrchr(uri.c_str(), '/');
+    if (!lastSlash){
+        
+        _errors = true;
+        _code = HTTP_400;
+        _type = "text/html";
+        
+        return false;
+    }
+    LOG_INFO(COLOR_PINK + std::string("lasttSlash: ") + lastSlash + COLOR_RESET);
+    
+    int len = strlen(lastSlash);
+    std::cout << "len: " << len << std::endl;
+   
+    int urilen = uri.size(); 
+    std::cout << "urilen: " << urilen << std::endl;
+    
+    std::string newSlash = uri.substr(0, urilen - len);
+    LOG_INFO(COLOR_PINK + std::string("newSlash : ") + newSlash  + COLOR_RESET);
+
+    
+    for (size_t i = 0; i < locs.size(); ++i)
+    {
+        const std::string &path = locs[i].getPath();
+        LOG_INFO(COLOR_CYAN + std::string("path: ") + path + COLOR_RESET);
+      
+        // if (uri.find(path) == 0 )
+        {
+            // pathLen = path.size();
+            root = locs[i].getRoot();
+            LOG_INFO(COLOR_CYAN + std::string("root: ") + root + COLOR_RESET);
+
+            char const *lastSlashRoot = strrchr(root.c_str(), '/');
+            if (!lastSlashRoot){
+            LOG_INFO(COLOR_RED + std::string("NO lastSlashRoot: ") + COLOR_RESET);
+                
+                _errors = true;
+                _code = HTTP_400;
+                _type = "text/html";
+                return false;
+            }
+        
+            LOG_INFO(COLOR_PINK + std::string("lastSlashRoot: ") + lastSlashRoot + COLOR_RESET);
+
+            if (newSlash.compare(lastSlashRoot) == 0)
+            {
+                std::cout << "C EST UN MATCH" << std::endl;
+                _httpRoot = locs[i].getRoot();
+                break;
+            }
+        }
+    }
+
+    
+    LOG_INFO(COLOR_PINK + std::string("ROOT: ") + _httpRoot + COLOR_RESET);
+
+    // MARQUE
+    if (_httpRoot.empty())
+    {
+        // root = bestLen->getRoot();
+        _httpRoot = _fullPath;
+        LOG_INFO(COLOR_CYAN + std::string("ROOT (buildFullPath(1)): ") + _httpRoot + COLOR_RESET);
+    }
+
+    std::string filename = std::string(lastSlash,len);
+    if (filename[0] == '/'){
+        filename.erase(filename.begin());
+        LOG_INFO(COLOR_PINK + std::string("filename after match: ") + filename + COLOR_RESET);
+        
+        _fileName = filename;
+        
+        LOG_INFO(COLOR_CYAN + std::string("_filename after match: ") +  _fileName  + COLOR_RESET);
+    }
+
+    return true;
+
 }
 
 std::string HTTPParser::addSuffix(std::string suffix) {
@@ -993,37 +1184,7 @@ std::string HTTPParser::httpCodeToString( HttpCode code )
 ** ============================================================================
 */
 
-bool HTTPParser::compareMethodWithConfigFile() {
-
-    const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
-    if (locs.size() == 0) {
-        _code = HTTP_INDEX;
-        _type = "text/html";
-
-        return true;
-    }
-
-    // Find the best matching location for the current URI (longest prefix match)
-    int bestIdx = -1;
-    size_t bestLen = 0;
-    for (size_t i = 0; i < locs.size(); i++)
-    {
-        const std::string &path = locs[i].getPath();
-        if (_requesttarget.find(path) == 0 && path.size() > bestLen
-            && (path == "/" || _requesttarget.size() == path.size()
-                || _requesttarget[path.size()] == '/' || _requesttarget[path.size()] == '?'))
-        {
-            bestLen = path.size();
-            bestIdx = (int)i;
-        }
-    }
-
-    if (bestIdx == -1) {
-        _errors = true;
-        _code = HTTP_405;
-        _type = "text/html";
-        return false;
-    }
+bool HTTPParser::compareMethodWithConfigFile(const std::vector<LocationConfig> &locs, int bestIdx) {
 
     const std::vector<std::string> &methodVector = locs[bestIdx].getMethods();
     for (size_t j = 0; j < methodVector.size(); j++)
@@ -1090,32 +1251,8 @@ bool HTTPParser::isRedir(){
 }
 
 
-int HTTPParser::findAutoIndex()
+int HTTPParser::findAutoIndex(const std::vector<LocationConfig> &locs, int bestIdx)
 {
-    const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
-
-    int bestIdx = -1;
-    size_t bestLen = 0;
-    for (size_t i = 0; i < locs.size(); i++)
-    {
-        const std::string &path = locs[i].getPath();
-        if (_requesttarget.find(path) == 0 && path.size() > bestLen
-            && (path == "/" || _requesttarget.size() == path.size()
-                || _requesttarget[path.size()] == '/' || _requesttarget[path.size()] == '?'))
-        {
-            bestLen = path.size();
-            bestIdx = (int)i;
-        }
-    }
-
-    if (bestIdx == -1) 
-    {
-        _errors = true;
-        _code = HTTP_405;
-        _type = "text/html";
-        return -1;
-    }
-
 
     const std::vector<std::string> &indexVector = locs[bestIdx].getIndex();
     if (indexVector.size() == 0){
@@ -1141,57 +1278,69 @@ int HTTPParser::findAutoIndex()
 }
 
 
-bool HTTPParser::findMethods() {
+bool HTTPParser::findMethods(const std::vector<LocationConfig> &locs, int bestIdx) {
 
-    if (compareMethodWithConfigFile() == true )
+    if (compareMethodWithConfigFile(locs, bestIdx) == true )
     {
         if (_method == "GET")
         {
-            const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
-            int bestIdx = -1;
-            size_t bestLen = 0;
-            for (size_t i = 0; i < locs.size(); i++)
-            {
-                const std::string &path = locs[i].getPath();
-                if (_requesttarget.find(path) == 0 && path.size() > bestLen
-                    && (path == "/" || _requesttarget.size() == path.size()
-                        || _requesttarget[path.size()] == '/' || _requesttarget[path.size()] == '?'))
-                {
-                    bestLen = path.size();
-                    bestIdx = (int)i;
-                }
-            }
-        
-            if (bestIdx == -1) {
-                _errors = true;
-                _code = HTTP_405;
-                _type = "text/html";
-                return false;
-            }
+     
+             struct stat path_stat_check;
+             std::cout << "_fullPath entree GET:" << _fullPath << std::endl;
+            //  std::string test = _httpRoot + _fileName;
+            //  LOG_INFO(COLOR_CYAN + std::string("test: ") + test + COLOR_RESET);
+             bool isDirRequest = (stat(_fullPath.c_str(), &path_stat_check) != -1
+             && S_ISDIR(path_stat_check.st_mode));
+             
+             std::cout << " isDirRequest bool:" << std::boolalpha << isDirRequest << std::endl;
 
-            const std::vector<std::string> &indexVector = locs[bestIdx].getIndex();
-            if (indexVector.size() > 0)
-            {
-                for (size_t j = 0; j < indexVector.size(); j++)
-                {
-                    struct stat sb;
-                    std::string locRoot = locs[bestIdx].getRoot().empty() ? _serverConfig.getRoot() : locs[bestIdx].getRoot();
-                    std::string index = locRoot + "/" + indexVector[j];
-                    if (stat(index.c_str(), &sb) == 0) {
-                        _fileName = indexVector[j];
-                        _code = HTTP_FILE;
-                        _type = "text/html";
-                        break ;
+             if (isDirRequest) {
+                 const std::vector<std::string> &indexVector = locs[bestIdx].getIndex();
+                 if (indexVector.size() > 0){
+                     for (size_t j = 0; j < indexVector.size(); j++)
+                     {
+                         struct stat sb;
+                         
+                        //  std::string index = _httpRoot + "/" + indexVector[j];
+                         std::string index = _fullPath + "/" + indexVector[j];
+                         
+                         if (stat(index.c_str(), &sb) == 0) {
+                             _fileName = indexVector[j];
+                              LOG_INFO(COLOR_PINK + std::string("_fileName dans stats: ") + _fileName + COLOR_RESET);
+                             _code = HTTP_FILE;
+                             break ;
+                            }
+                        }
                     }
                 }
-            }
+                else {
+                    _code = HTTP_INDEX;
+                }
+                {
+                    struct stat path_stat;
+                    std::cout << "FILENAME: "<< _fileName<< std::endl;
+                    if (stat(_fullPath.c_str(), &path_stat) != -1 && S_ISDIR(path_stat.st_mode))
+                    {
+                        std::string indexPath = _fullPath;
+                        if (indexPath[indexPath.size() - 1] != '/')
+                        indexPath += "/";
+                        indexPath += _fileName;
+                        
+                        struct stat index_stat;
+                        if (stat(indexPath.c_str(), &index_stat) == 0
+                        && S_ISREG(index_stat.st_mode))
+                        {
+                            _code = HTTP_INDEX;
+                            _type = "text/html";
+                            std::cout << "HERE "<< std::endl;
+                            _isIndex = true;
+                            return true;
+                        }
+                    }
 
-            if (_requesttarget == "/")
-            {
-                std::cout << "Index filename: " << _fileName << " _code: " << _code << " type: " << _type << std::endl;
-
-                return true;
+        
             }
+            
             if (_requesttarget.find("/images") != std::string::npos)
             {
                 
@@ -1210,8 +1359,7 @@ bool HTTPParser::findMethods() {
 
                 return true;
             }
-
-            if (_requesttarget.find("/upload/") != std::string::npos)
+            else if (_requesttarget.find("/upload/") != std::string::npos)
             {
                 char const *lastSlash = strrchr(_requesttarget.c_str(), '/');
                 if (doesCharCExist400(lastSlash) == false)
@@ -1244,8 +1392,7 @@ bool HTTPParser::findMethods() {
 
                 return true;
             }
-           
-            if (_requesttarget == "/favicon.ico"){
+            else if (_requesttarget == "/favicon.ico"){
 
                 _code = HTTP_FAVICON;
                 _type = "image/x-icon";
@@ -1253,10 +1400,18 @@ bool HTTPParser::findMethods() {
                 return true;
 
             }
-            
             else {
-                _fileName = _requesttarget;
-                _fileName.erase(_fileName.begin());
+
+            LOG_INFO(COLOR_GREEN + std::string("   LAST    ") + COLOR_RESET);
+                
+                // if (!_fileName.empty() && _fileName[0] == '/')
+                //     _fileName.erase(_fileName.begin());
+                if (resolveRoot() == false){
+                    LOG_INFO(COLOR_RED + std::string("ERROR") + COLOR_RESET);
+                    
+                    LOG_ERROR("resolveRoot() failed");
+                    return false;
+                  }
                 char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
                 if (lastPoint)
                     _type = addSuffix(std::string(lastPoint, strlen(lastPoint)));
@@ -1371,5 +1526,6 @@ bool HTTPParser::findMethods() {
 
         return false;
     }
+    
     return false;
 }
