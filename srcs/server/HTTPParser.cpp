@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/19 09:39:44 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/19 10:43:22 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -1315,6 +1315,9 @@ bool HTTPParser::findMethods(const std::vector<LocationConfig> &locs, int bestId
 
             }
             else {
+
+            LOG_INFO(COLOR_GREEN + std::string("   LAST    ") + COLOR_RESET);
+                
                 if (!_fileName.empty() && _fileName[0] == '/')
                     _fileName.erase(_fileName.begin());
                 char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
