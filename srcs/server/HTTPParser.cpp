@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/18 20:43:04 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/19 09:39:44 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,7 @@ HTTPParser::HTTPParser( std::string const & request,
     _code(HTTP_INDEX), _type(), _method(),
     _requesttarget(), _httpversion(), _boundary(),
     _fileLength(), _fileName(), _fileBuf(),
-    _errors(false), _upload(false), _content_length(0), 
+    _errors(false), _upload(false), _isIndex(false), _content_length(0), 
     _connectionType(CONN_KEEP_ALIVE), _host("8080"),
     _isCGI(false), _fullPath(), _query_string(), _scriptFilename(),
     _body(), _content_type(), _content_int(0), _autoindexOn(false),
@@ -43,7 +43,7 @@ HTTPParser::HTTPParser( HTTPParser const & src ) :
     _httpversion(src._httpversion), _boundary(src._boundary),
     _fileLength(src._fileLength), _fileName(src._fileName),
     _fileBuf(src._fileBuf), _errors(src._errors),
-    _upload(src._upload), _content_length(src._content_length), 
+    _upload(src._upload), _isIndex(src._isIndex), _content_length(src._content_length), 
     _connectionType(src._connectionType),
     _host(src._host), _isCGI(src._isCGI),
     _fullPath(src._fullPath), _query_string(src._query_string),
@@ -75,6 +75,7 @@ HTTPParser &    HTTPParser::operator=( HTTPParser const & other )
         _fileBuf                = other._fileBuf;
         _errors                 = other._errors;
         _upload                 = other._upload;
+        _isIndex                = other._isIndex;
         _connectionType         = other._connectionType;
         _content_length         = other._content_length;
         _host                   = other._host;
@@ -182,6 +183,12 @@ bool HTTPParser::setError(bool error)
 bool     HTTPParser::getUpload() const
 { 
     return _upload;
+}
+
+// ── isIndex ──────────────────────────────────────────────────────────────────
+bool     HTTPParser::getIsIndex() const
+{ 
+    return _isIndex;
 }
 
 // ── script filename ─────────────────────────────────────────────────────────
@@ -1240,13 +1247,14 @@ bool HTTPParser::findMethods(const std::vector<LocationConfig> &locs, int bestId
                             _code = HTTP_INDEX;
                             _type = "text/html";
                             std::cout << "HERE "<< std::endl;
-                            
+                            _isIndex = true;
                             return true;
                         }
                     }
 
         
             }
+            
             if (_requesttarget.find("/images") != std::string::npos)
             {
                 
@@ -1265,8 +1273,7 @@ bool HTTPParser::findMethods(const std::vector<LocationConfig> &locs, int bestId
 
                 return true;
             }
-
-            if (_requesttarget.find("/upload/") != std::string::npos)
+            else if (_requesttarget.find("/upload/") != std::string::npos)
             {
                 char const *lastSlash = strrchr(_requesttarget.c_str(), '/');
                 if (doesCharCExist400(lastSlash) == false)
@@ -1299,8 +1306,7 @@ bool HTTPParser::findMethods(const std::vector<LocationConfig> &locs, int bestId
 
                 return true;
             }
-           
-            if (_requesttarget == "/favicon.ico"){
+            else if (_requesttarget == "/favicon.ico"){
 
                 _code = HTTP_FAVICON;
                 _type = "image/x-icon";
@@ -1308,7 +1314,6 @@ bool HTTPParser::findMethods(const std::vector<LocationConfig> &locs, int bestId
                 return true;
 
             }
-            
             else {
                 if (!_fileName.empty() && _fileName[0] == '/')
                     _fileName.erase(_fileName.begin());

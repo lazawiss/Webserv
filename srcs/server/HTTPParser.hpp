@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/18 20:42:22 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/19 09:40:09 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -105,6 +105,8 @@ private:
     std::string                 _fileBuf;           // binary content of the uploaded file
     bool                        _errors;            // true if a parsing error occurred
     bool                        _upload;            // true if this is a file upload request
+    bool                        _isIndex;           // true if this is file is an index
+
 
     size_t                      _content_length;    // validated Content-Length value
     ConnectionType              _connectionType;    // keep-alive || close
@@ -142,6 +144,7 @@ public:
     std::string                 getFileBuf() const;
     bool                        getError() const;
     bool                        getUpload() const;
+    bool                        getIsIndex() const;
     std::string                 getPath() const;
     std::string                 getScriptFilename() const;
     std::string                 getQueryString() const;

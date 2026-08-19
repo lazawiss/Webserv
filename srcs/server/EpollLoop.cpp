@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/17 20:28:21 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/19 09:58:41 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -475,6 +475,8 @@ bool EpollLoop::do_write_fd( int fd, int epollfd, epoll_event &ev ) {
     std::string & response = _clientResponseBuffer[fd];
     if (response.empty())
         return false;
+    
+    // LOG_INFO(COLOR_GREEN + std::string("response : ") + response  + COLOR_RESET);
 
     ssize_t headerSent = send(fd, response.c_str(), response.size(), 0);
     if (headerSent == -1)

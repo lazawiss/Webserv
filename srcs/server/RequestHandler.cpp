@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/18 20:46:46 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/19 09:45:32 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -813,13 +813,13 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     }
 
     std::string filename = std::string(lastSlash,len);
-    if (filename[0] == '/'){
+    if (HTTPParser.getIsIndex() == false && filename[0] == '/'){
         filename.erase(filename.begin());
         LOG_INFO(COLOR_PINK + std::string("filename after match: ") + filename + COLOR_RESET);
         
-        // HTTPParser.setFileName(filename);
+        HTTPParser.setFileName(filename);
         
-        // LOG_INFO(COLOR_CYAN + std::string("_filename after match: ") +  HTTPParser.getFileName() + COLOR_RESET);
+        LOG_INFO(COLOR_CYAN + std::string("_filename after match: ") +  HTTPParser.getFileName() + COLOR_RESET);
     }
 
     
