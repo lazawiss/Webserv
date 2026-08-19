@@ -136,3 +136,15 @@ curl -v http://127.0.0.1:8080/
 L'IA (Claude, Anthropic) a été utilisée ponctuellement comme outil d'accompagnement, notamment pour :
 
 - reformuler et structurer les notes de travail prises pendant la phase de recherche en une documentation claire.
+
+<br>
+
+---
+
+<div align="center">
+
+![alt text](image.png)
+
+*You made it to the end!*
+
+</div>
