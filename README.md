@@ -4,19 +4,19 @@
 
 ## Description
 
-**Webserv** est un serveur HTTP écrit en **C++98**. L'objectif de ce projet est de créer un serveur web à l'image de **NGINX**, serveur web très répandu, dont le rôle principal est de recevoir des requêtes HTTP de clients et d'y répondre. 
+**Webserv** est un serveur HTTP écrit en **C++98**. L'objectif de ce projet est de créer un serveur web à l'image de **NGINX**, serveur web très répandu, dont le rôle principal est de recevoir des requêtes HTTP de clients et d'y répondre. Nginx sert ainsi de modèle de référence pour le comportement général de ce projet.
 
-Nginx sert donc de modèle de référence pour le comportement général de ce projet, webserv :
+Webserv repose notamment sur les fonctionnalités suivantes :
 
-- lit un **fichier de configuration** inspiré de la syntaxe NGINX ;
-- crée un ou plusieurs **sockets d'écoute** (une paire adresse:port par server) ;
-- gère **plusieurs clients simultanément**, de manière **non bloquante**,
+- lire un **fichier de configuration** inspiré de la syntaxe NGINX ;
+- créer un ou plusieurs **sockets d'écoute** (une paire adresse:port par server) ;
+- gèrer **plusieurs clients simultanément**, de manière **non bloquante**,
 grâce à une boucle événementielle basée sur `epoll()` ;
-- **parse** les requêtes HTTP reçues et répond avec les méthodes **GET**, **POST** et **DELETE** ;
-- sert des **fichiers statiques**, gère l'**upload** de fichiers,
+- **parser** les requêtes HTTP reçues et répondre avec les méthodes **GET**, **POST** et **DELETE** ;
+- servir des **fichiers statiques**, gèrer l'**upload** de fichiers,
 le **listing de répertoire** (autoindex), les **redirections**
 et les **pages d'erreur** personnalisées ;
-- exécute des scripts **CGI** (Python et PHP) en fonction de l'extension du fichier demandé ;
+- exécuter des scripts **CGI** (Python et PHP) en fonction de l'extension du fichier demandé ;
 
 ## Architecture
 
@@ -24,19 +24,17 @@ Le projet s'organise comme suit :
 
 ```
 webserv/
-├── srcs/
-│   ├── main.cpp
-│   ├── lexer/          # Liste de tokens
-│   ├── parser/
-│   │   ├── config/
-│   │   └── Parser.cpp  # AST (descente récursive)
-│   └── server/         # Cœur du serveur (epoll, HTTP, CGI...)
 ├── data/
 │   ├── config/         # Fichiers de configuration
-│   ├── www/            # Dossiers et fichiers servis statiquement
+│   ├── www/            # Fichiers servis statiquement
 │   ├── cgi-bin/        # Scripts CGI (Python, PHP)
 │   ├── errors/         # Pages d'erreur personnalisées (400, 403, 404...)
 │   └── upload/         # Dépôt des fichiers uploadés
+├── srcs/
+│   ├── main.cpp
+│   ├── lexer/          # Liste de tokens
+│   ├── parser/         # AST (descente récursive)
+│   └── server/         # Cœur du serveur (epoll, HTTP, CGI...)
 ├── tests/              # Scripts de test
 └── Makefile
 ```
@@ -46,7 +44,7 @@ Chaque composant de `srcs/` a un rôle précis dans le traitement d'une requête
 | Composant | Fichiers | Rôle |
 |---|---|---|
 | **Lexer** | `srcs/lexer/` | Tokenisation du fichier de configuration |
-| **Parser** | `srcs/parser/` | Analyse syntaxique et AST (descente récursive) |
+| **Parser** | `srcs/parser/` | Analyse syntaxique des tokens (descente récursive) |
 | **Server** | `srcs/server/Server.cpp` | Point d'entrée du serveur, initialisation |
 | **ListenerManager** | `srcs/server/ListenerManager.cpp` | Création et gestion des sockets d'écoute |
 | **EpollLoop** | `srcs/server/EpollLoop.cpp` | Boucle événementielle non bloquante (`epoll`) |
@@ -124,13 +122,13 @@ server {
 |---|---|---|
 | `listen` | `server` | Adresse IP et port d'écoute |
 | `server_name` | `server` | Nom de domaine (virtual hosting) |
-| `client_max_body_size` | `server` / `location` | Taille maximale du corps de la requête |
-| `root` | `server` / `location` | Répertoire racine des fichiers servis |
-| `index` | `location` | Fichier servi par défaut |
+| `client_max_body_size` | `global` / `server` / `location` | Taille maximale du corps de la requête |
+| `root` | `global` / `server` / `location` | Répertoire racine des fichiers servis |
+| `index` | `global` / `server` / `location` | Fichier servi par défaut |
 | `methods` | `location` | Méthodes HTTP autorisées |
-| `autoindex` | `location` | Activation du listing de répertoire |
+| `autoindex` | `global` / `server` / `location` | Activation du listing de répertoire |
 | `return` | `location` | Redirection HTTP |
-| `error_page` | `server` / `location` | Page d'erreur personnalisée |
+| `error_page` | `global` / `server` / `location` | Page d'erreur personnalisée |
 | `cgi_extension` | `location` | Association extension → interpréteur CGI |
 
 ### Tester le serveur
