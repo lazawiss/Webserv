@@ -11,14 +11,14 @@ server {
         root        data/www/vespera;
         index       index.html;
         methods     GET;
-        autoindex   on;
+        autoindex   off;
     }
 
     location / {
         root        data/www/html;
         index       index2.html index.html;
         methods     GET;
-        autoindex   on;
+        autoindex   off;
     }
 
     location /cgi-bin/python {
@@ -32,31 +32,32 @@ server {
         root        data/www/html1;
         index       index2.html index.html;
         methods     GET;
-        autoindex   on;
+        autoindex   off;
     }
 
     location /upload {
         root        data/upload;
-        index       index.html;
+        # index       index.html;
         methods     GET POST DELETE;
         autoindex   off;
     }
 
-    # location /image.html {
-    #     return      301 redirection/index.html; # redirection permanente
+    
+    location /html/image.html {
+        return      301 /redirection/index.html; # redirection permanente
 
-    # }
+    }
 
     location /google {
         return      302 https://www.google.com; # redirection externe
     }
 
-    # location /redirection {
-    #     root        data/www;
-    #     index       index.html;
-    #     methods     GET;
-    # }
 
+    location /redirection {
+        root        data/www/redirection;
+        index       index.html;
+        methods     GET;
+    }
   
 }
 
