@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/19 14:03:11 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/19 14:09:37 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -1088,11 +1088,7 @@ bool HTTPParser::resolveRoot()
             char const *lastSlashRoot = strrchr(root.c_str(), '/');
             if (!lastSlashRoot){
             LOG_INFO(COLOR_RED + std::string("NO lastSlashRoot: ") + COLOR_RESET);
-                
-                _errors = true;
-                _code = HTTP_400;
-                _type = "text/html";
-                return false;
+                continue;
             }
         
             LOG_INFO(COLOR_PINK + std::string("lastSlashRoot: ") + lastSlashRoot + COLOR_RESET);
