@@ -6,7 +6,7 @@
 /*   By: leazannis <leazannis@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/20 18:00:29 by leazannis        ###   ########.fr       */
+/*   Updated: 2026/08/20 21:46:16 by leazannis        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -1070,10 +1070,8 @@ bool HTTPParser::resolveRoot()
     LOG_INFO(COLOR_PINK + std::string("lasttSlash: ") + lastSlash + COLOR_RESET);
     
     int len = strlen(lastSlash);
-    std::cout << "len: " << len << std::endl;
    
     int urilen = uri.size(); 
-    std::cout << "urilen: " << urilen << std::endl;
     
     std::string newSlash = uri.substr(0, urilen - len);
     LOG_INFO(COLOR_PINK + std::string("newSlash : ") + newSlash  + COLOR_RESET);
@@ -1114,7 +1112,6 @@ bool HTTPParser::resolveRoot()
     // MARQUE
     if (_httpRoot.empty())
     {
-        // root = bestLen->getRoot();
         _httpRoot = _fullPath;
         LOG_INFO(COLOR_CYAN + std::string("ROOT (buildFullPath(1)): ") + _httpRoot + COLOR_RESET);
     }

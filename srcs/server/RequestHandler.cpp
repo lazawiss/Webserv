@@ -6,7 +6,7 @@
 /*   By: leazannis <leazannis@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/20 17:56:41 by leazannis        ###   ########.fr       */
+/*   Updated: 2026/08/20 23:12:57 by leazannis        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -578,29 +578,50 @@ std::string RequestHandler::generateAutoindex(const std::string &fullPath, const
     while ((entry = readdir(dir)) != NULL)
     {
         std::string name = entry->d_name;
+        LOG_INFO(COLOR_PINK + std::string("name generateAutoindex: ") + name + COLOR_RESET);
+
         if (name == ".")
             continue;
         std::string entryPath = fullPath;  // check entry a dir
+        LOG_INFO(COLOR_CYAN + std::string("entryPath: ") + entryPath+ COLOR_RESET);
+        char const *lastSlash = strrchr(entryPath.c_str(), '/');
+        if (!lastSlash){
+        return "";
+        }
+        LOG_INFO(COLOR_PINK + std::string("lasttSlash: ") + lastSlash + COLOR_RESET);
+        
+        std::string dir = std::string(lastSlash, strlen(lastSlash));
+
         if (entryPath[entryPath.size() - 1] != '/')
             entryPath += "/";
         entryPath += name;
+
+        LOG_INFO(COLOR_CYAN + std::string("entryPath 2: ") + entryPath+ COLOR_RESET);
+
         
         struct stat entry_stat;
         bool isDir = (stat(entryPath.c_str(), &entry_stat) == 0 
             && S_ISDIR(entry_stat.st_mode));
+
+        std::cout << std::boolalpha << isDir << std::endl;
+
+        
         html = html + "<li><a href=\"";
+        html += dir;
+        html += "/"; // this = trailing slash on directory
         html += name;
-        if (isDir)
-            html += "/"; // this = trailing slash on directory
         html += "\">";
         html += name;
         if (isDir)
             html += "/";
         html += "</a></li>\n";
     }
+    
     closedir(dir);
 
     html += "</ul>\n<hr>\n</body>\n</html>\n";
+    LOG_INFO(COLOR_PINK + std::string("html generateAutoindex: ") + html + COLOR_RESET);
+    
     return html;
 }
 
