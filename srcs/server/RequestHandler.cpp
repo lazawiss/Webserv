@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestHandler.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: leazannis <leazannis@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/19 11:50:12 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/20 17:56:41 by leazannis        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -430,6 +430,7 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
 // content = text
 bool    RequestHandler::answerFile( std::string const & file ){
 
+     LOG_INFO(COLOR_PINK + std::string("file dans AnswerFile(): ") + file + COLOR_RESET);
     struct stat sb;
     
     if (stat(file.c_str(), &sb) == -1)
@@ -455,8 +456,12 @@ bool    RequestHandler::answerFile( std::string const & file ){
     }
     _n_read_index = read(indexfd, _buffer, BUF_SIZE);
     close(indexfd);
-    if (_n_read_index == -1 || _n_read_index > BUF_SIZE || _n_read_index == 0)
+    std::ostringstream oss; oss << _n_read_index;
+    if (_n_read_index == -1 || _n_read_index > BUF_SIZE || _n_read_index == 0){
+        
+        LOG_ERROR("Failed to read file: " + oss.str() + " - " + strerror(errno));
         return false;
+    }
 
     return true;
 
@@ -560,15 +565,15 @@ std::string RequestHandler::generateAutoindex(const std::string &fullPath, const
     DIR *dir = opendir(fullPath.c_str());
     if (dir == NULL)
         return ("");
-    // and then after should be 403? or 500, is it an error unexpected though?
+        
     std::string html;
     html += "<!DOCTYPE html>\n<html>\n<head><title>Index of ";
-    html+= requestTarget; // or requestTarget - is it same thing here?
+    html+= requestTarget;
     html += "</title></head>\n<body>\n<h1>Index of ";
     html += requestTarget;
     html += "</h1>\n<hr>\n<ul>\n";
 
-    // format of directory entries, useful to grab all the files that are existing, girl
+    // format of directory entries, useful to grab all the files that are existing
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL)
     {
@@ -658,6 +663,7 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     }
 
     _root = locs[bestIdx].getRoot();
+     LOG_INFO(COLOR_CYAN + std::string("_ROOT before Iscgi/findMethod(): ") + _root + COLOR_RESET);
     
     if (HTTPParser.isCGI()) 
     {
@@ -699,6 +705,7 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), HTTPParser.getType());
         return true;
     }
+    
     int status = HTTPParser.findAutoIndex(locs, bestIdx);
     if (status == 2)
     {
@@ -759,7 +766,7 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     if (HTTPParser.getIsIndex() == false)
         _root = HTTPParser.getHttpRoot();
 
-    LOG_INFO(COLOR_CYAN + std::string("filename after resolve(): ") + _root + COLOR_RESET);
+    LOG_INFO(COLOR_CYAN + std::string("_root after resolve(): ") + _root + COLOR_RESET);
     
     bool rangeHandled = false;
 
@@ -815,14 +822,19 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
             ? getFile(HTTPParser::httpCodeToString(HTTPParser.getCode()), true)
             : getFile(HTTPParser.getFileName(), false);
 
-            if (answerFile(file) == false){
-                if (errno == EACCES)
-                    sendError(HTTPParser, HTTPParser.setCode(HTTP_403));
-                else if (errno == ENOENT)
-                    sendError(HTTPParser, HTTPParser.setCode(HTTP_404));
-                else 
-                    sendError(HTTPParser, HTTPParser.setCode(HTTP_500));
-            }
+        //if (HTTPParser.getAutoindexOn() == true){
+        //
+        //    file = _root;
+        //}
+        
+        if (answerFile(file) == false){
+            if (errno == EACCES)
+                sendError(HTTPParser, HTTPParser.setCode(HTTP_403));
+            else if (errno == ENOENT)
+                sendError(HTTPParser, HTTPParser.setCode(HTTP_404));
+            else 
+                sendError(HTTPParser, HTTPParser.setCode(HTTP_500));
+        }
             
     } 
     else if (HTTPParser.getType() == "text/plain") 

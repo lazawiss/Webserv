@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HTTPParser.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: leazannis <leazannis@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/19 12:53:34 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/20 17:53:50 by leazannis        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -238,12 +238,18 @@ std::string     HTTPParser::getRange() const
     return _rangeHeader;
 }
 
-
 // ── cgi ─────────────────────────────────────────────────────────────────────
 bool HTTPParser::isCGI() const
 {
     return _isCGI;
 }
+
+// ── autoindexon ─────────────────────────────────────────────────────────────────────
+bool HTTPParser::getAutoindexOn() const
+{
+    return _autoindexOn;
+}
+
 
 /*
 ** ============================================================================
@@ -1335,6 +1341,7 @@ bool HTTPParser::findMethods(const std::vector<LocationConfig> &locs, int bestId
                             _type = "text/html";
                             std::cout << "HERE "<< std::endl;
                             _isIndex = true;
+                            _autoindexOn = false;
                             return true;
                         }
                     }

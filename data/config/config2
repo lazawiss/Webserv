@@ -11,14 +11,14 @@ server {
         root        data/www/vespera;
         index       index.html;
         methods     GET;
-        autoindex   off;
+        autoindex   on;
     }
 
     location / {
         root        data/www/html;
-        index       index2.html index.html;
+        //index       index2.html index.html;
         methods     GET;
-        autoindex   off;
+        autoindex   on;
     }
 
     location /cgi-bin/python {
@@ -30,14 +30,14 @@ server {
 
     location /api {
         root        data/www/html1;
-        index       index2.html index.html;
+        //index       index2.html index.html;
         methods     GET;
-        autoindex   off;
+        autoindex   on;
     }
 
     location /upload {
         root        data/upload;
-        # index       index.html;
+        index       index.html;
         methods     GET POST DELETE;
         autoindex   off;
     }
