@@ -1,12 +1,16 @@
 # ─────────────────────────────────────────
 #  SERVEUR 3 — Même port, autre interface
 # ─────────────────────────────────────────
+
+autoindex   on;
+
 server {
+
     listen       127.0.0.1:8080;     # même port, mais interface différente
     server_name  internal.localhost;
-    # root        data/www;
+    root        data/www;
     error_page 404 /errors/404.html;
-
+    
     location /vespera {
         root        data/www/vespera;
         //index       index.html;
