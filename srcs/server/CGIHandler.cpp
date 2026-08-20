@@ -34,6 +34,9 @@ CGI::CGI(RequestHandler const &req, ListenerManager const &listen, int client_fd
     _bytesWritten(0),
     _scriptFilename(req.getFilename()),
     _fullPath(req.getPath()),
+    _pathInfo(req.getPathInfo()),
+    _scriptName(req.getScriptName()),
+    _cgiInterpreter(req.getInterpreter()),
     _queryString(req.getQueryString()),
     _method(req.getMethod()),
     _body(req.getBody()),
@@ -77,19 +80,19 @@ int CGI::getStdoutFd() const { return _stdout_pipe[0]; }  // OUR end (read) from
 ** ============================================================================
 */
 
-std::string CGI::findInterpreter() const
-{
-    size_t dot = _scriptFilename.rfind('.');
-    if (dot == std::string::npos)
-        return "";
-    std::string ext = _scriptFilename.substr(dot);
+// std::string CGI::findInterpreter() const
+// {
+//     size_t dot = _scriptFilename.rfind('.');
+//     if (dot == std::string::npos)
+//         return "";
+//     std::string ext = _scriptFilename.substr(dot);
 
-    if (ext == ".py")
-        return "/usr/bin/python3";
-    if (ext == ".php")
-        return "/usr/bin/php-cgi";
-    return "";
-}
+//     if (ext == ".py")
+//         return "/usr/bin/python3";
+//     if (ext == ".php")
+//         return "/usr/bin/php-cgi";
+//     return "";
+// }
 
 void CGI::buildEnv()
 {
@@ -97,7 +100,10 @@ void CGI::buildEnv()
 
     _env.push_back("REQUEST_METHOD=" + _method);
     _env.push_back("SCRIPT_FILENAME=" + _fullPath);
-    _env.push_back("SCRIPT_NAME=" + _scriptFilename);
+    _env.push_back("SCRIPT_NAME="
+        + (_scriptName.empty() ? _scriptFilename : _scriptName));
+    if (_pathInfo.empty() == false)
+        _env.push_back("PATH_INFO=" + _pathInfo);
     _env.push_back("QUERY_STRING=" + _queryString);
     _env.push_back("GATEWAY_INTERFACE=CGI/1.1");
     _env.push_back("SERVER_PROTOCOL=HTTP/1.1");
@@ -126,10 +132,9 @@ void CGI::buildEnv()
 bool CGI::start()
 {
     signal(SIGPIPE, SIG_IGN);
-    std::string interpreter = findInterpreter();
 
-    if (interpreter.empty() || access(_fullPath.c_str(), R_OK) != 0
-        || access(interpreter.c_str(), X_OK) != 0)
+    if (_cgiInterpreter.empty() || access(_fullPath.c_str(), R_OK) != 0
+        || access(_cgiInterpreter.c_str(), X_OK) != 0)
     {
         LOG_ERROR("CGI: invalid script or interpreter: " + _fullPath);
         return false;
@@ -171,11 +176,11 @@ bool CGI::start()
         close(_stdout_pipe[1]);
 
         char *argv[] = {
-            const_cast<char*>(interpreter.c_str()),
+            const_cast<char*>(_cgiInterpreter.c_str()),
             const_cast<char*>(_fullPath.c_str()),
             NULL
         };
-        execve(interpreter.c_str(), argv, &_envp[0]);
+        execve(_cgiInterpreter.c_str(), argv, &_envp[0]);
 
         // only reached if execve failed
         LOG_ERROR("CGI: execve failed: " + std::string(strerror(errno)));

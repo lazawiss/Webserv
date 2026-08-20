@@ -65,7 +65,7 @@ private:
     CGI &operator=(CGI const &other);
 
     void        buildEnv();
-    std::string findInterpreter() const;
+    // std::string findInterpreter() const;
 
     pid_t                       _pid;
     int                         _client_fd;
@@ -78,6 +78,9 @@ private:
 
     std::string                 _scriptFilename;
     std::string                 _fullPath;
+    std::string                 _pathInfo;
+    std::string                 _scriptName;
+    std::string                 _cgiInterpreter;
     std::string                 _queryString;
     std::string                 _method;
     std::string                 _body;

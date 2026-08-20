@@ -35,7 +35,7 @@ RequestHandler::RequestHandler(
     _pathToFile(), _n_read_index(0), _isCGI(false),
     _fullPath(), _query_string(), _scriptFilename(),
     _body(), _content_type(), _content_length(),
-    _method()
+    _method(), _pathInfo(), _scriptName(), _interpreter()
 {
     memset(_buffer, 0, BUF_SIZE);
 }
@@ -49,7 +49,8 @@ RequestHandler::RequestHandler( RequestHandler const & src ) :
     _scriptFilename(src._scriptFilename),
     _body(src._body), _content_type(src._content_type),
     _content_length(src._content_length),
-    _method(src._method)
+    _method(src._method), _pathInfo(src._pathInfo),
+    _scriptName(src._scriptName), _interpreter(src._interpreter)
 {
     memcpy(_buffer, src._buffer, BUF_SIZE);
 }
@@ -77,6 +78,9 @@ RequestHandler & RequestHandler::operator=( RequestHandler const & other )
         _content_type   = other._content_type;
         _content_length = other._content_length;
         _method = other._method;
+        _pathInfo       = other._pathInfo;
+        _scriptName     = other._scriptName;
+        _interpreter    = other._interpreter;
     }
 
     return *this;
@@ -128,6 +132,22 @@ std::string RequestHandler::getPath() const
 std::string RequestHandler::getFilename() const
 {
     return _scriptFilename;
+}
+
+// ── cgi: PATH_INFO / SCRIPT_NAME / interpreter ──────────────────────────────
+std::string RequestHandler::getPathInfo() const
+{
+    return _pathInfo;
+}
+
+std::string RequestHandler::getScriptName() const
+{
+    return _scriptName;
+}
+
+std::string RequestHandler::getInterpreter() const
+{
+    return _interpreter;
 }
 
 // ── query string ────────────────────────────────────────────────────────────
@@ -628,8 +648,6 @@ void RequestHandler::sendError( HTTPParser & parser, HttpCode code ) {
 bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     
     HTTPParser HTTPParser(_request, _serverConfig);
-    
-    std::cout << "[LOG FROM PARTIAL REQUESTS:] BODY " << _request << std::endl;
 
     if (HTTPParser.isRequestValid(listen) == false)
     {
@@ -681,7 +699,10 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         }
 
         _scriptFilename = HTTPParser.getScriptFilename();
-        _fullPath = "data/" + _scriptFilename;
+        _fullPath = HTTPParser.getPath();
+        _pathInfo = HTTPParser.getPathInfo();
+        _scriptName = HTTPParser.getScriptName();
+        _interpreter = HTTPParser.getInterpreter();
         _query_string = HTTPParser.getQueryString();
         _body = HTTPParser.getBody();
         _content_type = HTTPParser.getContentType();
