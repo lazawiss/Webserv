@@ -74,7 +74,7 @@ private:
     int                         _stdout_pipe[2]; // child writes stdout ->[1]  [0]-> parent reads
 
     size_t                      _bytesWritten;   // how much of _body was sent so far
-    std::string                 _output;         // raw script output, accumulated
+    std::string                 _output;
 
     std::string                 _scriptFilename;
     std::string                 _fullPath;

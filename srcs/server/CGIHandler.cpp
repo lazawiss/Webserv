@@ -215,24 +215,18 @@ Result CGI::onWritable()
     ssize_t n = write(_stdin_pipe[1],
                       _body.c_str() + _bytesWritten,
                       _body.size() - _bytesWritten); // for remaining bytes
-    // if (n > 0)
-    //     _bytesWritten += static_cast<size_t>(n);
-    
+
+    if (n == -1)
+        return ERR;
+
     if (n > 0)
     {
         _bytesWritten += static_cast<size_t>(n);
         if (_bytesWritten >= _body.size())
             return SUCCESS;
     }
-    if (n == -1)
-    {
-        if (errno == EAGAIN || errno == EWOULDBLOCK)
-            return HOLD; 
-        else
-            return ERR;
-    }
+
     return HOLD;
-    // return _bytesWritten >= _body.size();
 }
 
 Result CGI::onReadable()
@@ -240,23 +234,14 @@ Result CGI::onReadable()
     char    buf[4096];
     ssize_t n = read(_stdout_pipe[0], buf, sizeof(buf));
 
-    if (n > 0)
-    {
-        _output.append(buf, static_cast<size_t>(n));
-        return HOLD;
-        // return false; // maybe more coming; epoll will tell us
-    }
-    else if (n == -1)
-    {
-        if (errno == EAGAIN || errno == EWOULDBLOCK)
-            return HOLD;
-        else
-            return ERR;
-    }
+    if (n == -1)
+        return ERR; 
+
     if (n == 0)
         return SUCCESS;
+
+    _output.append(buf, static_cast<size_t>(n));
     return HOLD;
-    // return (n == 0); // 0 = EOF ; -1 = epoll woke me up but nothing to read
 }
 
 void CGI::closeStdin()
