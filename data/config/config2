@@ -9,7 +9,7 @@ server {
 
     location /vespera {
         root        data/www/vespera;
-        index       index.html;
+        //index       index.html;
         methods     GET;
         autoindex   on;
     }
@@ -42,10 +42,8 @@ server {
         autoindex   off;
     }
 
-    
     location /html/image.html {
-        return      301 /redirection/index.html; # redirection permanente
-
+        return      301 /redirection/index.html; # redirection permanent        
     }
 
     location /google {
