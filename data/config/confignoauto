@@ -8,12 +8,12 @@ server {
     autoindex   on;
     
     location /vespera {
-        root        data/www/vespera;
+        //root        data/www/vespera;
         methods     GET;
     }
 
     location / {
-        root        data/www/html;
+        //root        data/www/html;
         methods     GET;
     }
 
@@ -25,12 +25,12 @@ server {
     }
 
     location /api {
-        root        data/www/html1;
+        //root        data/www/html1;
         methods     GET;
     }
 
     location /upload {
-        root        data/upload;
+        //root        data/upload;
         index       index.html;
         methods     GET POST DELETE;
     }
