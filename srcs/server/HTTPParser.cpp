@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/21 19:58:33 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/21 20:17:13 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -1175,14 +1175,21 @@ bool HTTPParser::resolveRoot()
 
     
     LOG_INFO(COLOR_PINK + std::string("ROOT: ") + _httpRoot + COLOR_RESET);
+    LOG_INFO(COLOR_PINK + std::string("ROOT fullPath: ") + _fullPath + COLOR_RESET);
+
 
     // MARQUE
+    if (_httpRoot.rfind(uri,uri.size()) == std::string::npos)
+    {
+        _httpRoot += newSlash;
+        LOG_INFO(COLOR_CYAN + std::string("ROOT (buildFullPath(1)): ") + _httpRoot + COLOR_RESET);
+    }
+
     if (_httpRoot.empty())
     {
         _httpRoot = _fullPath;
         LOG_INFO(COLOR_CYAN + std::string("ROOT (buildFullPath(1)): ") + _httpRoot + COLOR_RESET);
     }
-
     std::string filename = std::string(lastSlash,len);
     if (filename[0] == '/'){
         filename.erase(filename.begin());
