@@ -62,13 +62,16 @@ private:
     ssize_t             _n_read_index;
     /*CGI */
     bool                _isCGI;
-    std::string         _fullPath; // location.root + _scriptFilename
+    std::string         _fullPath;
     std::string         _query_string;
     std::string         _scriptFilename;
     std::string         _body;
     std::string         _content_type;
     std::string         _content_length;
     std::string         _method;
+    std::string         _pathInfo;
+    std::string         _scriptName; 
+    std::string         _interpreter; 
 
 public:
 
@@ -92,6 +95,9 @@ public:
     std::string         getFileUpload( std::string const & code);
     
     std::string         getPath() const;
+    std::string         getPathInfo() const;
+    std::string         getScriptName() const;
+    std::string         getInterpreter() const;
     std::string         getFilename() const;
     std::string         getQueryString() const;
     std::string         getBody() const;

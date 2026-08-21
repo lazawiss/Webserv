@@ -32,7 +32,8 @@ HTTPParser::HTTPParser( std::string const & request,
     _errors(false), _upload(false), _isIndex(false), _content_length(0), 
     _connectionType(CONN_KEEP_ALIVE), _host("8080"),
     _isCGI(false), _fullPath(), _query_string(), _scriptFilename(),
-    _body(), _content_type(), _content_int(0), _autoindexOn(false),
+    _body(), _content_type(), _content_int(0),
+    _pathInfo(), _scriptName(), _cgiInterpreter(), _autoindexOn(false),
     _rangeHeader(), _isContentLengthFound(false),
     _isHostFound(false), _isContentTypeFound(false), _fileContentType(){}
 
@@ -50,6 +51,8 @@ HTTPParser::HTTPParser( HTTPParser const & src ) :
     _scriptFilename(src._scriptFilename), _body(src._body),
     _content_type(src._content_type),
     _content_int(src._content_int),
+    _pathInfo(src._pathInfo), _scriptName(src._scriptName),
+    _cgiInterpreter(src._cgiInterpreter),
     _autoindexOn(src._autoindexOn), _rangeHeader(src._rangeHeader),
     _isContentLengthFound(src._isContentLengthFound),
     _isHostFound(src._isHostFound),
@@ -86,6 +89,9 @@ HTTPParser &    HTTPParser::operator=( HTTPParser const & other )
         _body                   = other._body;
         _content_type           = other._content_type;
         _content_int            = other._content_int;
+        _pathInfo               = other._pathInfo;
+        _scriptName             = other._scriptName;
+        _cgiInterpreter         = other._cgiInterpreter;
         _autoindexOn            = other._autoindexOn;
         _rangeHeader            = other._rangeHeader;
         _isContentLengthFound   = other._isContentLengthFound;
@@ -195,6 +201,21 @@ bool     HTTPParser::getIsIndex() const
 std::string     HTTPParser::getScriptFilename() const
 {
     return _scriptFilename;
+}
+
+std::string     HTTPParser::getPathInfo() const
+{
+    return _pathInfo;
+}
+
+std::string     HTTPParser::getScriptName() const
+{
+    return _scriptName;
+}
+
+std::string     HTTPParser::getInterpreter() const
+{
+    return _cgiInterpreter;
 }
 // ── query string ────────────────────────────────────────────────────────────
 std::string     HTTPParser::getQueryString() const
@@ -401,18 +422,121 @@ void HTTPParser::parseCGI()
     return ; 
 }
 
+int HTTPParser::matchLocation(const std::vector<LocationConfig> &locs, const std::string &uri )
+{
+    int    best    = -1;
+    size_t bestLen = 0;
 
+    for (size_t i = 0; i < locs.size(); ++i)
+    {
+        const std::string &locPath = locs[i].getPath();
+
+        if (locPath.size() > uri.size())
+            continue;
+        if (uri.compare(0, locPath.size(), locPath) != 0)
+            continue;
+        // /cgi-binlol.py
+        if (locPath != "/" && uri.size() > locPath.size() && uri[locPath.size()] != '/')
+            continue;
+
+        if (best == -1 || locPath.size() > bestLen)
+        {
+            bestLen = locPath.size();
+            best    = static_cast<int>(i);
+        }
+    }
+    std::cout << "HERE IS LOC PATH BLOCK: "<< (best == -1 ? std::string("NO INDEX MATCHES") : locs[best].getPath())<< std::endl;
+    std::cout << "WHAT IS BEST LEN OF LOC PATH BLOC: " << bestLen << std::endl;
+
+    return best;
+}
+
+bool HTTPParser::buildCGIPath()
+{
+    if (!_pathInfo.empty())
+        _pathInfo.clear();
+    if (!_scriptName.empty())
+        _scriptName.clear();
+    if (!_cgiInterpreter.empty())
+        _cgiInterpreter.clear();
+
+    // data/cgi-bin/database.py/42/lol?name=x
+
+    std::string uriPath = _requesttarget;
+    size_t q = uriPath.find('?');
+    if (q != std::string::npos)
+        uriPath = uriPath.substr(0, q);
+
+    std::cout << "HERE IS WHAT URI LOOKS LIKE : " << uriPath << std::endl;
+
+    const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
+    int bestIdx = matchLocation(locs, uriPath);
+    if (bestIdx < 0)
+        return false;
+
+    const LocationConfig &loc = locs[bestIdx];
+
+    //data/cgi-bin/database.py
+
+    const std::map<std::string, std::string> &allExtensions = loc.getMap();
+    std::string scriptPath = uriPath;
+
+    for (size_t i = 0; i <= uriPath.size(); ++i)
+    {
+        if (i != uriPath.size() && uriPath[i] != '/')
+            continue;
+
+        std::string piece = uriPath.substr(0, i);
+        size_t extDot = piece.rfind('.');
+        if (extDot == std::string::npos)
+            continue;
+        size_t slash = piece.rfind('/'); // last occ of / 
+        //  dot before / 
+        if (slash != std::string::npos && extDot < slash)
+            continue;
+
+        std::map<std::string, std::string>::const_iterator it = allExtensions.find(piece.substr(extDot));
+        if (it == allExtensions.end())
+            continue;
+
+        scriptPath      = piece;
+        _pathInfo       = uriPath.substr(i);
+        _cgiInterpreter = it->second;
+        break;
+    }
+    std::cout << "Si je suis sortie, je suis un .py or .php " << std::endl;
+    
+    std::string root = loc.getRoot();
+    if (root.empty())
+        root = _serverConfig.getRoot();
+    std::string suffix = scriptPath.substr(loc.getPath().size());
+    _fullPath = root;
+    if (suffix.empty() == false)
+    {
+        if (suffix[0] != '/')
+            _fullPath += '/';
+        _fullPath += suffix;
+    }
+    _scriptName = scriptPath;
+
+    LOG_DEBUG("[CGI] script='" + _fullPath + "' SCRIPT_NAME='" + _scriptName + "' PATH_INFO='" + _pathInfo 
+        + "' QUERY='" + _query_string + "'");
+
+    return true;
+}
 
 bool HTTPParser::validateCGIRequest() {
 
     if (_scriptFilename.empty())
         return false;
-    
-    std::string path = "data/" + _scriptFilename;
-    struct stat st;
-    if (stat(path.c_str(), &st) != 0 || !S_ISREG(st.st_mode))
+
+    if (buildCGIPath() == false)
         return false;
-    
+
+    struct stat st;
+    if (stat(_fullPath.c_str(), &st) != 0 || !S_ISREG(st.st_mode))
+        return false;
+
     return true;
 }
 
@@ -941,7 +1065,6 @@ void HTTPParser::buildFullPath() {
             bestLoc  = &locs[i];
         }
     }
-
     // MARQUE
     std::string root;
     if (bestLoc && !bestLoc->getRoot().empty())
@@ -1091,8 +1214,7 @@ bool HTTPParser::resolveRoot()
             char const *lastSlashRoot = strrchr(root.c_str(), '/');
             if (!lastSlashRoot){
             LOG_INFO(COLOR_RED + std::string("NO lastSlashRoot: ") + COLOR_RESET);
-                
-                 continue ;
+                continue;
             }
         
             LOG_INFO(COLOR_PINK + std::string("lastSlashRoot: ") + lastSlashRoot + COLOR_RESET);
@@ -1258,6 +1380,7 @@ int HTTPParser::findAutoIndex(const std::vector<LocationConfig> &locs, int bestI
     if (indexVector.size() == 0){
         _code = HTTP_FILE;
         struct stat path_stat;
+    
         if (stat(_fullPath.c_str(), &path_stat) != -1 && S_ISDIR(path_stat.st_mode))
         {
             if (_autoindexOn)

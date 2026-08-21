@@ -17,8 +17,3 @@ server {
     }
 }
 
-
-// segmentation fault ./webserv data/config/configauto - data/www/images
-// check for also clickables to see if we have to actually list all or if it is ok 
-// cgi - page principale stuff
-// buttons to come back to the page principal

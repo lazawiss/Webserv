@@ -40,7 +40,7 @@ public:
     void setPath(const std::string &path);
     void addMethod(const std::string &method);
     void setUpload(const std::string &upload);
-    void addReturn(int code, const std::string &uri);
+    void addReturn(int code, const std::string &);
     void addMap(const std::string &key, const std::string &value);
 };
 
