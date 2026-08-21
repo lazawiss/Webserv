@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HTTPParser.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: leazannis <leazannis@student.42.fr>        +#+  +:+       +#+        */
+/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/20 21:46:16 by leazannis        ###   ########.fr       */
+/*   Updated: 2026/08/21 14:17:05 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -1079,6 +1079,12 @@ void HTTPParser::buildFullPath() {
     }
 
     _autoindexOn = (bestLoc && bestLoc->getAutoindex() == "on");
+    if (bestLoc->getAutoindex().empty()){
+        const std::string autoserver = _serverConfig.getAutoindex();
+        LOG_INFO(COLOR_GREEN + std::string("autoserver: ") + autoserver + COLOR_RESET);
+        if (autoserver == "on")
+            _autoindexOn = true;
+    }
 
     std::string suffix = _requesttarget;
     _fileName = _requesttarget;

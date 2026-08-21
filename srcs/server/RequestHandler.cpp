@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/21 13:49:14 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/21 14:22:15 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -604,7 +604,9 @@ std::string RequestHandler::generateAutoindex(const std::string &fullPath, const
 
         if (name == ".")
             continue;
-        std::string entryPath = fullPath;  // check entry a dir
+        // std::string entryPath = fullPath;
+        std::string entryPath = _root;  // check entry a dir
+          // check entry a dir
         LOG_INFO(COLOR_CYAN + std::string("entryPath: ") + entryPath+ COLOR_RESET);
         char const *lastSlash = strrchr(entryPath.c_str(), '/');
         if (!lastSlash){
