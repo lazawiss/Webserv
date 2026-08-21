@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/21 17:07:45 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/21 17:44:51 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -1100,11 +1100,11 @@ void HTTPParser::buildFullPath() {
         
     }
     
-    if (suffix.empty()) {
+    if (suffix.empty() && _autoindexOn == true) {
         
         LOG_INFO(COLOR_RED + std::string("EMPTY") + COLOR_RESET);
-        suffix = _fileName;
-        _fullPath += suffix;
+        // suffix = _fileName;
+        // _fullPath += suffix;
 
     } else if (suffix[0] == '/') {
         _fullPath += suffix;
@@ -1332,6 +1332,12 @@ int HTTPParser::findAutoIndex(const std::vector<LocationConfig> &locs, int bestI
     
         std::cout << "ENTER" << std::endl;
         std::string root = locs[bestIdx].getRoot();
+        if (root.empty()){
+            
+            LOG_INFO(COLOR_RED + std::string("   EMPTY ")  + COLOR_RESET);
+            root = _fullPath;
+            
+        }
         struct stat path_stat;
     
         if (stat(root.c_str(), &path_stat) != -1 && S_ISDIR(path_stat.st_mode))

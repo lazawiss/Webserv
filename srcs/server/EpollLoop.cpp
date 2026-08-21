@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/19 14:03:34 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/21 17:38:25 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -227,7 +227,6 @@ static RequestState analyzeRequest( const std::string &acc, std::string &request
         return REQ_INCOMPLETE;
     size_t bodyStart = headerEnd + 4;
     const std::string headerBlock = acc.substr(0, headerEnd);
-    std::cout << "HEADER" << headerBlock << std::endl;
 
     //BODY PART:
     // chunking here

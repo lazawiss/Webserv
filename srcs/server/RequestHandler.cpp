@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/21 16:58:24 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/21 17:36:02 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -583,7 +583,7 @@ bool    RequestHandler::removeFile( std::string const & filename ){
 
 std::string RequestHandler::generateAutoindex(const std::string &fullPath, const std::string &requestTarget)
 {
-    
+    std:: cout << fullPath << std::endl;
     DIR *dir = opendir(fullPath.c_str());
     if (dir == NULL)
         return ("");
@@ -763,7 +763,6 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     }
     
     int status = HTTPParser.findAutoIndex(locs, bestIdx);
-    std::cout  << "status : " << status << std::endl;
     if (status == 2)
     {
         if (HTTPParser.getCode() == HTTP_AUTOINDEX)
