@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/21 14:37:03 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/21 16:33:50 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -1091,17 +1091,28 @@ void HTTPParser::buildFullPath() {
     LOG_INFO(COLOR_PINK + std::string("_fileName =) ") + _fileName + COLOR_RESET);
 
     _fullPath = root;
-    if (bestLoc)
+    if (bestLoc){
         suffix = _requesttarget.substr(bestLoc->getPath().size());
+        std::cout << "bestLoc->getPath():" << bestLoc->getPath() << std::endl;
+        std::cout << "bestLoc->getPath().size():"  << bestLoc->getPath().size() << std::endl;
+        
+        LOG_INFO(COLOR_PINK + std::string("suffix =) ") + suffix + COLOR_RESET);
+        
+    }
     
     if (suffix.empty()) {
+        
+        LOG_INFO(COLOR_RED + std::string("EMPTY") + COLOR_RESET);
+        suffix = _fileName;
+        _fullPath += suffix;
+
     } else if (suffix[0] == '/') {
         _fullPath += suffix;
     } else {
         _fullPath += '/';
         _fullPath += suffix;
     }
-    _fileName = suffix;
+    // _fileName = suffix;
 
     LOG_DEBUG(std::string("[HTTPParser] _fullPath: '") + _fullPath + "' autoindex=" + (_autoindexOn ? "on" : "off"));
     LOG_DEBUG(std::string("[HTTPParser] _fileName: '") + _fileName);
