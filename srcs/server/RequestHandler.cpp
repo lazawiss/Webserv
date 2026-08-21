@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/21 15:31:36 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/21 16:58:24 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -711,7 +711,8 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         HTTPParser.setType("text/html"); 
         return false;
     }
-
+    
+    std::cout << locs[bestIdx].getPath()<< std::endl;
     _root = locs[bestIdx].getRoot();
     if (_root.empty())
         _root = HTTPParser.getPath();
@@ -762,6 +763,7 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     }
     
     int status = HTTPParser.findAutoIndex(locs, bestIdx);
+    std::cout  << "status : " << status << std::endl;
     if (status == 2)
     {
         if (HTTPParser.getCode() == HTTP_AUTOINDEX)

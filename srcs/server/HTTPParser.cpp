@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/21 16:33:50 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/21 17:07:45 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -1320,13 +1320,21 @@ bool HTTPParser::isRedir(){
 
 int HTTPParser::findAutoIndex(const std::vector<LocationConfig> &locs, int bestIdx)
 {
+    LOG_INFO(COLOR_CYAN + std::string("_fullPath dans findAutoIndex: ") + _fullPath + COLOR_RESET);
+    LOG_INFO(COLOR_CYAN + std::string("_httpROOT dans findAutoIndex: ") + _httpRoot + COLOR_RESET);
+    LOG_INFO(COLOR_CYAN + std::string("locs[bestIdx].getPath() dans findAutoIndex: ") + locs[bestIdx].getPath() + COLOR_RESET);
+    LOG_INFO(COLOR_CYAN + std::string("locs[bestIdx].getRoot() dans findAutoIndex: ") + locs[bestIdx].getRoot() + COLOR_RESET);
 
+    
     const std::vector<std::string> &indexVector = locs[bestIdx].getIndex();
+    std::cout << indexVector.size() << std::endl;
     if (indexVector.size() == 0){
-        _code = HTTP_FILE;
+    
+        std::cout << "ENTER" << std::endl;
+        std::string root = locs[bestIdx].getRoot();
         struct stat path_stat;
     
-        if (stat(_fullPath.c_str(), &path_stat) != -1 && S_ISDIR(path_stat.st_mode))
+        if (stat(root.c_str(), &path_stat) != -1 && S_ISDIR(path_stat.st_mode))
         {
             if (_autoindexOn)
             {
