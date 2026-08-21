@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/21 19:31:08 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/21 19:58:33 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -1327,7 +1327,6 @@ int HTTPParser::findAutoIndex(const std::vector<LocationConfig> &locs, int bestI
 
     
     const std::vector<std::string> &indexVector = locs[bestIdx].getIndex();
-    std::cout << indexVector.size() << std::endl;
     if (indexVector.size() == 0){
         
         _code = HTTP_FILE;
@@ -1336,7 +1335,7 @@ int HTTPParser::findAutoIndex(const std::vector<LocationConfig> &locs, int bestI
         LOG_INFO(COLOR_CYAN + std::string("root dans findAutoIndex1: ") + root + COLOR_RESET);
         
         // std::string root = locs[bestIdx].getRoot();
-        // if (root.empty()){
+        if (root <= _httpRoot){
             
         if (_fullPath.rfind(locs[bestIdx].getPath(),locs[bestIdx].getPath().size()) != std::string::npos){
             
@@ -1350,7 +1349,7 @@ int HTTPParser::findAutoIndex(const std::vector<LocationConfig> &locs, int bestI
             
             _fullPath = root;
         }
-        // }
+        }
         struct stat path_stat;
     
         LOG_INFO(COLOR_CYAN + std::string("root dans findAutoIndex2: ") + root + COLOR_RESET);
