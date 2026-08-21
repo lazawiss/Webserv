@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/21 17:36:02 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/21 19:18:07 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -602,19 +602,23 @@ std::string RequestHandler::generateAutoindex(const std::string &fullPath, const
         std::string name = entry->d_name;
         LOG_INFO(COLOR_PINK + std::string("name generateAutoindex: ") + name + COLOR_RESET);
 
-        if (name == "." || name == "..")
+        if (name == ".")
             continue;
         
         std::string entryPath = fullPath;  // check entry a dir
       
         LOG_INFO(COLOR_CYAN + std::string("entryPath: ") + entryPath+ COLOR_RESET);
-        char const *lastSlash = strrchr(entryPath.c_str(), '/');
-        if (!lastSlash){
-        return "";
-        }
-        LOG_INFO(COLOR_PINK + std::string("lasttSlash: ") + lastSlash + COLOR_RESET);
+        // char const *lastSlash = strrchr(entryPath.c_str(), '/');
+        // if (!lastSlash){
+        // return "";
+        // }
+        // LOG_INFO(COLOR_PINK + std::string("lasttSlash: ") + lastSlash + COLOR_RESET);
         
-        std::string dir = std::string(lastSlash, strlen(lastSlash));
+        // std::string dir = std::string(lastSlash, strlen(lastSlash));
+        
+        std::string dir = requestTarget;
+        LOG_INFO(COLOR_PINK + std::string("dir: ") + dir + COLOR_RESET);
+
 
         if (entryPath[entryPath.size() - 1] != '/')
             entryPath += "/";
@@ -768,8 +772,12 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         if (HTTPParser.getCode() == HTTP_AUTOINDEX)
         {
             // HTTPParser.getPath() is the resolved on-disk directory (root + URI).
-            _body = generateAutoindex(HTTPParser.getPath(),
-            HTTPParser.getRequestTarget());
+            // std::string path = HTTPParser.getPath().size() < HTTPParser.getHttpRoot().size() ? 
+            // HTTPParser.getHttpRoot() : HTTPParser.getPath();
+            std::string path = HTTPParser.getPath();
+            LOG_INFO(COLOR_CYAN + std::string("path: ") + path + COLOR_RESET);
+            
+            _body = generateAutoindex(path, HTTPParser.getRequestTarget());
             if (_body.empty()) {
                 HTTPParser.setError(true);
                 HTTPParser.setCode(HTTP_403); // if real dir didn't open
@@ -883,11 +891,6 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
             ? getFile(HTTPParser::httpCodeToString(HTTPParser.getCode()), true)
             : getFile(HTTPParser.getFileName(), false);
 
-        //if (HTTPParser.getAutoindexOn() == true){
-        //
-        //    file = _root;
-        //}
-        
         if (answerFile(file) == false){
             if (errno == EACCES)
                 sendError(HTTPParser, HTTPParser.setCode(HTTP_403));

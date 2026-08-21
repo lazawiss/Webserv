@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/21 17:44:51 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/21 19:31:08 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -1329,17 +1329,32 @@ int HTTPParser::findAutoIndex(const std::vector<LocationConfig> &locs, int bestI
     const std::vector<std::string> &indexVector = locs[bestIdx].getIndex();
     std::cout << indexVector.size() << std::endl;
     if (indexVector.size() == 0){
-    
-        std::cout << "ENTER" << std::endl;
-        std::string root = locs[bestIdx].getRoot();
-        if (root.empty()){
+        
+        _code = HTTP_FILE;
+        std::string root = _fullPath.size() < locs[bestIdx].getRoot().size() ?  
+            locs[bestIdx].getRoot() : _fullPath;
+        LOG_INFO(COLOR_CYAN + std::string("root dans findAutoIndex1: ") + root + COLOR_RESET);
+        
+        // std::string root = locs[bestIdx].getRoot();
+        // if (root.empty()){
             
-            LOG_INFO(COLOR_RED + std::string("   EMPTY ")  + COLOR_RESET);
+        if (_fullPath.rfind(locs[bestIdx].getPath(),locs[bestIdx].getPath().size()) != std::string::npos){
+            
             root = _fullPath;
-            
+            LOG_INFO(COLOR_RED + std::string(" root1") + root  + COLOR_RESET);
         }
+        else{
+            
+            root = _fullPath + locs[bestIdx].getPath();
+            LOG_INFO(COLOR_RED + std::string(" root2 " ) + root + COLOR_RESET);
+            
+            _fullPath = root;
+        }
+        // }
         struct stat path_stat;
     
+        LOG_INFO(COLOR_CYAN + std::string("root dans findAutoIndex2: ") + root + COLOR_RESET);
+
         if (stat(root.c_str(), &path_stat) != -1 && S_ISDIR(path_stat.st_mode))
         {
             if (_autoindexOn)
@@ -1487,8 +1502,6 @@ bool HTTPParser::findMethods(const std::vector<LocationConfig> &locs, int bestId
 
             LOG_INFO(COLOR_GREEN + std::string("   LAST    ") + COLOR_RESET);
                 
-                // if (!_fileName.empty() && _fileName[0] == '/')
-                //     _fileName.erase(_fileName.begin());
                 if (resolveRoot() == false){
                     LOG_INFO(COLOR_RED + std::string("ERROR") + COLOR_RESET);
                     
