@@ -21,7 +21,7 @@ server {
         autoindex   on;
     }
 
-    location /cgi-bin/python {
+    location /cgi-bin {
         root            data/cgi-bin;
         methods         POST;
         cgi_extension   .py  /usr/bin/python3;
@@ -32,7 +32,7 @@ server {
         root        data/www/html1;
         index       index2.html index.html;
         methods     GET;
-        autoindex   on;
+        autoindex   off;
     }
 
     location /upload {
