@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/21 14:47:18 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/21 15:31:36 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -602,16 +602,11 @@ std::string RequestHandler::generateAutoindex(const std::string &fullPath, const
         std::string name = entry->d_name;
         LOG_INFO(COLOR_PINK + std::string("name generateAutoindex: ") + name + COLOR_RESET);
 
-        if (name == ".")
+        if (name == "." || name == "..")
             continue;
         
-        std::string entryPath = _root;  // check entry a dir
-        if (entryPath.empty()){
-            LOG_INFO(COLOR_RED + std::string("EMPTY") + COLOR_RESET);
-            
-            std::string entryPath = fullPath;
-        }
-            
+        std::string entryPath = fullPath;  // check entry a dir
+      
         LOG_INFO(COLOR_CYAN + std::string("entryPath: ") + entryPath+ COLOR_RESET);
         char const *lastSlash = strrchr(entryPath.c_str(), '/');
         if (!lastSlash){
@@ -634,11 +629,16 @@ std::string RequestHandler::generateAutoindex(const std::string &fullPath, const
 
         std::cout << std::boolalpha << isDir << std::endl;
 
-        
         html = html + "<li><a href=\"";
-        html += dir;
-        html += "/"; // this = trailing slash on directory
-        html += name;
+        if (isDir){
+            html += name;
+        }
+        else{
+            
+            html += dir;
+            html += "/"; // this = trailing slash on directory
+            html += name;
+        }
         html += "\">";
         html += name;
         if (isDir)
