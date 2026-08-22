@@ -183,8 +183,6 @@ h1 {
 .preview-image {
   width: 100%;
   border-radius: 12px;
-  border: 1px solid var(--blue);
-  object-fit: contain;
   margin-top: 0.5rem;
 }
 

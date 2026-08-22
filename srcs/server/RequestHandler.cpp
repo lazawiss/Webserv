@@ -841,6 +841,7 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
 
     } 
     else if (HTTPParser.getType() == "image/jpeg"
+        || HTTPParser.getType() == "image/jpg"
         || HTTPParser.getType() == "image/png"
         || HTTPParser.getType() == "image/gif"
         || HTTPParser.getType() == "image/webp") {
