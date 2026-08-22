@@ -54,6 +54,11 @@ server {
         return      302 https://www.google.com; # redirection externe
     }
 
+    location /images {
+        root        data/www/images;
+        methods     GET;
+
+    }
 
     location /redirection {
         root        data/www/redirection;

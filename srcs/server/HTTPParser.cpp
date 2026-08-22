@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/21 20:17:13 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/22 17:05:15 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -1177,24 +1177,32 @@ bool HTTPParser::resolveRoot()
     LOG_INFO(COLOR_PINK + std::string("ROOT: ") + _httpRoot + COLOR_RESET);
     LOG_INFO(COLOR_PINK + std::string("ROOT fullPath: ") + _fullPath + COLOR_RESET);
 
+    // _httpRoot = _fullPath.size() > _httpRoot.size() ? _fullPath : _httpRoot;
+    // LOG_INFO(COLOR_PINK + std::string("ROOT after ternaire: ") + _httpRoot + COLOR_RESET);
 
     // MARQUE
-    if (_httpRoot.rfind(uri,uri.size()) == std::string::npos)
+    // if (_httpRoot.rfind(uri,uri.size()) == std::string::npos)
+    if (newSlash.size() >= _httpRoot.size()&& _httpRoot.find(newSlash) == std::string::npos)
     {
         _httpRoot += newSlash;
         LOG_INFO(COLOR_CYAN + std::string("ROOT (buildFullPath(1)): ") + _httpRoot + COLOR_RESET);
+    }
+    
+    else if (_httpRoot.size() >= newSlash.size()&& _httpRoot.find(newSlash) == std::string::npos &&
+    _httpRoot.compare(_httpRoot.size() - newSlash.size(), newSlash.size(), newSlash) != 0 )
+    {
+        _httpRoot += newSlash;
+        LOG_INFO(COLOR_CYAN + std::string("ROOT (buildFullPath(2)): ") + _httpRoot + COLOR_RESET);
     }
 
     if (_httpRoot.empty())
     {
         _httpRoot = _fullPath;
-        LOG_INFO(COLOR_CYAN + std::string("ROOT (buildFullPath(1)): ") + _httpRoot + COLOR_RESET);
+        LOG_INFO(COLOR_CYAN + std::string("ROOT (buildFullPath(3)): ") + _httpRoot + COLOR_RESET);
     }
     std::string filename = std::string(lastSlash,len);
     if (filename[0] == '/'){
         filename.erase(filename.begin());
-        LOG_INFO(COLOR_PINK + std::string("filename after match: ") + filename + COLOR_RESET);
-        
         _fileName = filename;
         
         LOG_INFO(COLOR_CYAN + std::string("_filename after match: ") +  _fileName  + COLOR_RESET);
@@ -1460,6 +1468,7 @@ bool HTTPParser::findMethods(const std::vector<LocationConfig> &locs, int bestId
                 _code = HTTP_FILE;
                 std::string suffix = std::string(lastPoint, strlen(lastPoint));
                 _type = addSuffix(suffix);
+                _httpRoot = "data/www/images";
 
                 return true;
             }
