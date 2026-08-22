@@ -1,0 +1,61 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;1,400&family=Space+Mono&display=swap');
+
+:root {
+    --main-color: #a2d594;
+    --black-color: #262626;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: var(--main-color);
+    font-family: "Space Mono", monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+h1 {
+    font-family: "Fraunces", Georgia, serif;
+    font-weight: 600;
+    font-size: clamp(2rem, 6vw, 3.2rem);
+    color: var(--black-color);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin: 0 0 1rem;
+}
+
+p {
+    font-family: "Space Mono", monospace;
+    font-size: 0.88rem;
+    color: var(--black-color);
+    opacity: 0.75;
+    letter-spacing: 0.04em;
+    line-height: 1.7;
+    margin: 0.3rem 0;
+}
+
+a {
+    text-decoration: none;
+    color: var(--black-color);
+    border-bottom: 1px solid rgba(38, 38, 38, 0.4);
+}
+
+a:hover { color: var(--black-color); }
+
+.secret {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    text-align: center;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    opacity: 0.45;
+    margin: 0;
+}

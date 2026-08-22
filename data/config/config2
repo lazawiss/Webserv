@@ -29,7 +29,7 @@ server {
     }
 
     location /api {
-        root        data/www/html1;
+        root        data/www/diary;
         index       index2.html index.html;
         methods     GET;
         autoindex   on;

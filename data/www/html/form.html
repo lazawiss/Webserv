@@ -1,17 +1,26 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
-    <title>Login Form</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulaire</title>
+    <link rel="stylesheet" href="/html/style.css">
 </head>
-<body>
-    <form action="/cgi-bin/database.php" method="post">
-        <label for="username">Username:</label>
-        <input type="text" id="username" name="username">
-        <br>
-        <label for="emailaddress">Email:</label>
-        <input type="email" id="emailaddress" name="emailaddress">
-        <br>
-        <button type="submit">Submit</button>
-    </form>
+<body class="upload-page">
+    <div class="upload-container">
+        <a href="/html/index.html" class="back-link">← retour</a>
+
+        <h1>Formulaire CGI.</h1>
+
+        <form action="/cgi-bin/database.php" method="post" class="upload-section">
+            <label class="form-label" for="username">Nom d'utilisateur</label>
+            <input class="input" type="text" id="username" name="username">
+
+            <label class="form-label" for="emailaddress">Email</label>
+            <input class="input" type="email" id="emailaddress" name="emailaddress">
+
+            <button class="upload-button" type="submit">Envoyer</button>
+        </form>
+    </div>
 </body>
 </html>

@@ -1,30 +1,30 @@
-*This project has been created as part of the 42 curriculum by ankim, dpaiva, lzannis*
+*This project has been created as part of the 42 curriculum by ankim, dpaiva, lzannis.*
 
 # Webserv
 
 ## Description
 
-**Webserv** est un serveur HTTP écrit en **C++98**. L'objectif de ce projet est de créer un serveur web à l'image de **NGINX**, serveur web très répandu, dont le rôle principal est de recevoir des requêtes HTTP de clients et d'y répondre. NGINX sert ainsi de modèle de référence pour le comportement général de ce projet.
+**Webserv** is an HTTP server written in **C++98**. The goal of this project is to build a web server modeled after **NGINX**, a widely used web server whose primary role is to receive HTTP requests from clients and respond to them. NGINX serves as the reference implementation for the general behavior of this project.
 
-Webserv repose notamment sur les fonctionnalités suivantes :
+Webserv is built around the following features:
 
-- lire un **fichier de configuration** inspiré de la syntaxe NGINX ;
-- créer un ou plusieurs **sockets d'écoute** (une paire adresse:port par server) ;
-- gèrer **plusieurs clients simultanément**, de manière **non bloquante**,
-grâce à une boucle événementielle basée sur epoll() ;
-- **parser** les requêtes HTTP reçues et répondre avec les méthodes **GET**, **POST** et **DELETE** ;
-- servir des **fichiers statiques**, gèrer l'**upload** de fichiers,
-le **listing de répertoire** (autoindex), les **redirections**
-et les **pages d'erreur** personnalisées ;
-- exécuter des scripts **CGI** (Python et PHP) en fonction de l'extension du fichier demandé ;
+- reading a **configuration file** inspired by NGINX syntax;
+- creating one or more **listening sockets** (one address:port pair per server);
+- handling **multiple simultaneous clients** in a **non-blocking** manner,
+using an event loop based on epoll();
+- **parsing** incoming HTTP requests and responding with the **GET**, **POST**, and **DELETE** methods;
+- serving **static files**, handling file **uploads**,
+**directory listing** (autoindex), **redirects**,
+and custom **error pages**;
+- executing **CGI** scripts (Python and PHP) based on the requested file's extension;
 
 ## Instructions
 
-### Prérequis
+### Prerequisites
 
-- Compilateur C++ compatible **C++98** (`g++` ou `clang++`)
-- Système **Linux** (la boucle événementielle repose sur `epoll`, spécifique à Linux)
-- **Python 3** et/ou **PHP-CGI** si l'on souhaite utiliser les fonctionnalités CGI
+- A **C++98**-compatible C++ compiler (`g++` or `clang++`)
+- A **Linux** system (the event loop relies on `epoll`, which is Linux-specific)
+- **Python 3** and/or **PHP-CGI** if you want to use the CGI features
 
 ### Compilation
 
@@ -34,25 +34,25 @@ cd webserv
 make
 ```
 
-La compilation génère un exécutable `webserv` à la racine du projet. Le `Makefile` fournit également les règles classiques :
+Compilation produces a `webserv` executable at the root of the project. The `Makefile` also provides the standard rules:
 
 ```bash
-make clean   # supprime les fichiers objets
-make fclean  # supprime les fichiers objets et l'exécutable
-make re      # recompile entièrement le projet
+make clean   # removes object files
+make fclean  # removes object files and the executable
+make re      # fully recompiles the project
 ```
 
-### Exécution
+### Running
 
 ```bash
-./webserv [fichier de configuration]
+./webserv [configuration file]
 ```
 
-Un fichier de configuration doit être passé en argument. Des exemples sont disponibles dans `data/config/`.
+A configuration file must be passed as an argument. Examples are available in `data/config/`.
 
-### Syntaxe de configuration
+### Configuration syntax
 
-La configuration suit une syntaxe inspirée de NGINX, avec trois niveaux : `global`, `server` et `location`.
+The configuration follows a syntax inspired by NGINX, with three levels: `global`, `server`, and `location`.
 
 ```nginx
 server {
@@ -75,7 +75,7 @@ server {
         autoindex   off;
     }
 
-    llocation /cgi-bin/python {
+    location /cgi-bin/python {
         root            data/cgi-bin;
         methods         POST;
         cgi_extension   .py  /usr/bin/python3;
@@ -84,58 +84,58 @@ server {
 }
 ```
 
-**Directives disponibles :**
+**Available directives:**
 
-| Directive | Contexte | Description |
+| Directive | Context | Description |
 |---|---|---|
-| `listen` | `server` | Adresse IP et port d'écoute |
-| `server_name` | `server` | Nom de domaine (virtual hosting) |
-| `client_max_body_size` | `global` / `server` / `location` | Taille maximale du corps de la requête |
-| `root` | `global` / `server` / `location` | Répertoire racine des fichiers servis |
-| `index` | `global` / `server` / `location` | Fichier servi par défaut |
-| `methods` | `location` | Méthodes HTTP autorisées |
-| `autoindex` | `global` / `server` / `location` | Activation du listing de répertoire |
-| `return` | `location` | Redirection HTTP |
-| `error_page` | `global` / `server` / `location` | Page d'erreur personnalisée |
-| `cgi_extension` | `location` | Association extension → interpréteur CGI |
+| `listen` | `server` | IP address and listening port |
+| `server_name` | `server` | Domain name (virtual hosting) |
+| `client_max_body_size` | `global` / `server` / `location` | Maximum request body size |
+| `root` | `global` / `server` / `location` | Root directory for served files |
+| `index` | `global` / `server` / `location` | Default file to serve |
+| `methods` | `location` | Allowed HTTP methods |
+| `autoindex` | `global` / `server` / `location` | Enable directory listing |
+| `return` | `location` | HTTP redirect |
+| `error_page` | `global` / `server` / `location` | Custom error page |
+| `cgi_extension` | `location` | Map file extension to CGI interpreter |
 
-### Tester le serveur
+### Testing the server
 
-Une fois lancé, le serveur écoute sur les adresses/ports définis dans la configuration. Il peut être testé :
+Once running, the server listens on the addresses and ports defined in the configuration. It can be tested:
 
-- avec un navigateur web :
+- with a web browser:
 
 ```bash
 http://localhost:8080
 ````
 
 
-- avec `curl` :
+- with `curl`:
 
 ```bash
 curl -v http://127.0.0.1:8080/
 ```
 
-- avec un outil de stress test (ex : `siege`) pour vérifier la stabilité du serveur sous charge.
+- with a stress-testing tool (e.g. `siege`) to verify server stability under load.
 
-## Ressources
+## Resources
 
-### Documentation et articles
+### Documentation and articles
 
-- [Documentation officielle NGINX](https://nginx.org/en/docs/) — modèle de référence pour la syntaxe de configuration et le comportement général du serveur
+- [Official NGINX documentation](https://nginx.org/en/docs/) — reference model for configuration syntax and general server behavior
 - [RFC 9110 – HTTP Semantics](https://www.rfc-editor.org/rfc/rfc9110.html)
 - [RFC 9112 – HTTP/1.1](https://www.rfc-editor.org/rfc/rfc9112.html)
-- [Beej's Guide to Network Programming](https://beej.us/guide/bgnet/) — référence classique pour la programmation socket en C/C++
+- [Beej's Guide to Network Programming](https://beej.us/guide/bgnet/) — classic reference for socket programming in C/C++
 - [man epoll(7)](https://man7.org/linux/man-pages/man7/epoll.7.html)
 - [The Common Gateway Interface (CGI) — RFC 3875](https://www.rfc-editor.org/rfc/rfc3875)
-- [Simple HTTP webserver in C – bruinsslot.jp](https://bruinsslot.jp/post/simple-http-webserver-in-c/) — tutoriel utilisé pour comprendre la structure générale d'un serveur HTTP en C
-- [Codes de statut HTTP – MDN](https://developer.mozilla.org/fr/docs/Web/HTTP/Status)
+- [Simple HTTP webserver in C – bruinsslot.jp](https://bruinsslot.jp/post/simple-http-webserver-in-c/) — tutorial used to understand the general structure of an HTTP server in C
+- [HTTP status codes – MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status)
 
-### Utilisation de l'IA
+### Use of AI
 
-L'IA (Claude, Anthropic) a été utilisée ponctuellement comme outil d'accompagnement, notamment pour :
+AI (Claude, Anthropic) was used occasionally as a supporting tool, in particular to:
 
-- reformuler et structurer les notes de travail prises pendant la phase de recherche en une documentation claire.
+- rephrase and structure working notes taken during the research phase into clear documentation.
 
 <br>
 

@@ -1,31 +1,35 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload</title>
-    <link rel="stylesheet" href="/html/styles.css">
+    <title>WebServ</title>
+    <link rel="stylesheet" href="/html/style.css">
 </head>
-<body>
-    <div class="upload-container">
-        <nav class="navigation">
-            <a href="/html/gallery.html" class="nav-button">🖼️ Gallery</a>
-        </nav>
+<body class="upload-page">
 
-        <h1 class="upload-title">Upload Photo</h1>
+    <div class="upload-content">
+        <a href="/html/index.html" class="back-link">← retour</a>
+
+        <h1>Envoie une photo.</h1>
+        <p class="subtitle">Plus on en a, mieux c'est.</p>
 
         <div class="upload-section">
-            <input type="file" id="photo-input" accept="image/*" class="file-input">
+            <input type="file" id="photo-input" accept="image/*" class="input">
             <button onclick="uploadPhoto()" class="upload-button" id="upload-btn">
-                📷 Upload Photo
+                Envoyer la photo
             </button>
 
             <div id="upload-status" class="upload-status"></div>
 
-            <div id="preview-container" class="preview-container" style="display: none;">
+            <div id="preview-container" style="display: none;">
                 <img id="preview-image" class="preview-image" alt="Preview">
             </div>
         </div>
+
+        <nav class="nav-links" style="margin-top: 2rem;">
+            <a href="/html/gallery.html">Voir la galerie →</a>
+        </nav>
     </div>
 
     <script>
