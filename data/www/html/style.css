@@ -130,7 +130,7 @@ h1 {
 
 .nav-links a:hover {
   border-color: var(--blue);
-  background: var(--btn-hover);
+  background: var(--btn);
 }
 
 /* -------------------------------------------- */
@@ -186,10 +186,29 @@ h1 {
 /* -------------------------------------------- */
 /* ------------------- Image ------------------ */
 
+.img-wrapper {
+  position: relative;
+  margin-top: 0.5rem;
+}
+
 .preview-image {
   width: 100%;
   border-radius: 12px;
-  margin-top: 0.5rem;
+  display: block;
+}
+
+.img-format {
+  position: absolute;
+  bottom: 0.6rem;
+  right: 0.6rem;
+  background: rgba(0, 0, 0, 0.55);
+  color: var(--white);
+  font-family: 'Space Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  backdrop-filter: blur(4px);
 }
 
 body.upload-page {
