@@ -7,7 +7,7 @@
   --blue-dark: #4a9ed6;
   --blue-bg: #eef6fd;
   --black: #262626;
-  --ink-dim: #888;
+  --grey: #888;
   --red: #b94040;
   --white: #fff;
   
@@ -99,7 +99,9 @@ h1 {
 }
 
 .home-content .subtitle {
-  margin-bottom: 6rem;
+  margin-bottom: 3rem;
+  padding-bottom: 3rem;
+  border-bottom: 1px solid var(--blue-bg);
 }
 
 .nav-links {
@@ -261,4 +263,14 @@ body.upload-page {
 
 .photo-container:hover .delete-icon {
   opacity: 1;
+}
+
+.footer {
+  position: fixed;
+  bottom: 1.2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.72rem;
+  color: var(--blue-dark);
+  letter-spacing: 0.04em;
 }
