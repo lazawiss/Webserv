@@ -13,7 +13,7 @@ server {
     
     location /vespera {
         root        data/www/vespera;
-        //index       index.html;
+        index       index.html;
         methods     GET;
         autoindex   off;
     }
