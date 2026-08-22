@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/22 17:00:46 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/22 18:10:00 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -527,16 +527,25 @@ std::string RequestHandler::generateAutoindex(const std::string &fullPath, const
         std::string entryPath = fullPath;  // check entry a dir
       
         LOG_INFO(COLOR_CYAN + std::string("entryPath: ") + entryPath+ COLOR_RESET);
-        // char const *lastSlash = strrchr(entryPath.c_str(), '/');
-        // if (!lastSlash){
-        // return "";
+        
+        // std::string dir = requestTarget;
+        // LOG_INFO(COLOR_PINK + std::string("dir 1 : ") + dir + COLOR_RESET);
+        
+        if (entryPath.rfind("/")){
+        
+            LOG_INFO(COLOR_RED + std::string("FOUND / in LAST") + COLOR_RESET);
+            
+        }
+            
+        char const *lastSlash = strrchr(entryPath.c_str(), '/');
+        if (!lastSlash){
+            return "";
+        }
+        LOG_INFO(COLOR_PINK + std::string("lasttSlash: ") + lastSlash + COLOR_RESET);
+        
+        std::string dir = std::string(lastSlash, strlen(lastSlash));
         // }
-        // LOG_INFO(COLOR_PINK + std::string("lasttSlash: ") + lastSlash + COLOR_RESET);
-        
-        // std::string dir = std::string(lastSlash, strlen(lastSlash));
-        
-        std::string dir = requestTarget;
-        LOG_INFO(COLOR_PINK + std::string("dir: ") + dir + COLOR_RESET);
+        LOG_INFO(COLOR_PINK + std::string("dir 2 : ") + dir + COLOR_RESET);
 
 
         if (entryPath[entryPath.size() - 1] != '/')

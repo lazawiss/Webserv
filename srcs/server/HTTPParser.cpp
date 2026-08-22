@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/22 17:05:15 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/22 17:44:00 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -1398,8 +1398,6 @@ bool HTTPParser::findMethods(const std::vector<LocationConfig> &locs, int bestId
      
              struct stat path_stat_check;
              std::cout << "_fullPath entree GET:" << _fullPath << std::endl;
-            //  std::string test = _httpRoot + _fileName;
-            //  LOG_INFO(COLOR_CYAN + std::string("test: ") + test + COLOR_RESET);
              bool isDirRequest = (stat(_fullPath.c_str(), &path_stat_check) != -1
              && S_ISDIR(path_stat_check.st_mode));
              
@@ -1412,7 +1410,6 @@ bool HTTPParser::findMethods(const std::vector<LocationConfig> &locs, int bestId
                      {
                          struct stat sb;
                          
-                        //  std::string index = _httpRoot + "/" + indexVector[j];
                          std::string index = _fullPath + "/" + indexVector[j];
                          
                          if (stat(index.c_str(), &sb) == 0) {

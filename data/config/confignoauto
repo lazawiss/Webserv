@@ -1,11 +1,11 @@
 root            data/www;
-autoindex       on;
+autoindex       off;
 server {
 
     listen       127.0.0.1:8080;     # même port, mais interface différente
     server_name  internal.localhost;
     //root        data/www;
-    //autoindex   on;
+    //autoindex   off;
     error_page 404 /errors/404.html;
     
     location /vespera {

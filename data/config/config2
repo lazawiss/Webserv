@@ -20,7 +20,7 @@ server {
 
     location / {
         root        data/www/html;
-        index       index2.html index.html;
+        //index       index2.html index.html;
         methods     GET;
         autoindex   on;
     }
@@ -36,7 +36,7 @@ server {
         root        data/www/html1;
         //index       index2.html index.html;
         methods     GET;
-        autoindex   off;
+        autoindex   on;
     }
 
     location /upload {
@@ -54,11 +54,6 @@ server {
         return      302 https://www.google.com; # redirection externe
     }
 
-    location /images {
-        root        data/www/images;
-        methods     GET;
-
-    }
 
     location /redirection {
         root        data/www/redirection;
