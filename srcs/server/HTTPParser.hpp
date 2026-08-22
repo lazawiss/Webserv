@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HTTPParser.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: leazannis <leazannis@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/19 11:37:27 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/20 16:20:25 by leazannis        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -159,6 +159,8 @@ public:
     size_t                      getContentLength() const;
     std::string                 getRequestTarget() const;
     std::string                 getRange() const;
+    bool                        getAutoindexOn() const;
+
     HttpCode                    setCode( HttpCode code );
     std::string                 setFileName(std::string filename);
     std::string                 setHttpRoot( std::string httpRoot );

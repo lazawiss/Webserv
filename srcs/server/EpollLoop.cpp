@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/19 14:03:34 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/22 18:23:09 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -227,7 +227,6 @@ static RequestState analyzeRequest( const std::string &acc, std::string &request
         return REQ_INCOMPLETE;
     size_t bodyStart = headerEnd + 4;
     const std::string headerBlock = acc.substr(0, headerEnd);
-    std::cout << "HEADER" << headerBlock << std::endl;
 
     //BODY PART:
     // chunking here
@@ -263,15 +262,6 @@ static RequestState analyzeRequest( const std::string &acc, std::string &request
     return REQ_READY;
 }
 
-
-// void    EpollLoop::cleanupClient(int fd, int epollfd)
-// {
-//     epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, NULL);
-//     close(fd);
-//     _clientRequestBuffer.erase(fd);
-//     _clientResponseBuffer.erase(fd);
-//     _clientToListener.erase(fd);
-// }
 
 /**
 ** @brief Reads a request from a client fd and builds the response.

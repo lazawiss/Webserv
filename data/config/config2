@@ -1,22 +1,26 @@
 # ─────────────────────────────────────────
 #  SERVEUR 3 — Même port, autre interface
 # ─────────────────────────────────────────
+
+autoindex   on;
+
 server {
+
     listen       127.0.0.1:8080;     # même port, mais interface différente
     server_name  internal.localhost;
-    # root        data/www;
+    root        data/www;
     error_page 404 /errors/404.html;
-
+    
     location /vespera {
         root        data/www/vespera;
         index       index.html;
         methods     GET;
-        autoindex   on;
+        autoindex   off;
     }
 
     location / {
         root        data/www/html;
-        index       index2.html index.html;
+        //index       index2.html index.html;
         methods     GET;
         autoindex   on;
     }
@@ -30,9 +34,9 @@ server {
 
     location /api {
         root        data/www/html1;
-        index       index2.html index.html;
+        //index       index2.html index.html;
         methods     GET;
-        autoindex   off;
+        autoindex   on;
     }
 
     location /upload {
@@ -50,12 +54,12 @@ server {
         return      302 https://www.google.com; # redirection externe
     }
 
+
     location /redirection {
         root        data/www/redirection;
         index       index.html;
         methods     GET;
     }
-
   
 }
 
