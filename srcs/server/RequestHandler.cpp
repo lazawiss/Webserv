@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/22 18:10:00 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/22 18:43:56 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -196,13 +196,10 @@ std::string RequestHandler::getFile( std::string const & code, bool const & erro
     }
     else {
         
-        LOG_INFO(COLOR_PINK + std::string("filename getFile: ") + code + COLOR_RESET);
-        
         file = _root;
         file += "/";
         file += code;
 
-        std::cout << "FULL PATH FROM get FILE " << file << std::endl;
     }
 
     // ------------ Debug ------------
@@ -213,12 +210,6 @@ std::string RequestHandler::getFile( std::string const & code, bool const & erro
 
 std::string RequestHandler::getFileImage( std::string const & code){
     
-    LOG_INFO(COLOR_CYAN + std::string("_root getFileIMAGE: ") + _root + COLOR_RESET);
-    LOG_INFO(COLOR_CYAN + std::string("_fullPath getFileIMAGE: ") + _fullPath + COLOR_RESET);
-    
-
-    
-    // std::string file = "data/www/images";
     std::string file = _root;
     file += "/";
     file += code;
@@ -371,7 +362,6 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
 // content = text
 bool    RequestHandler::answerFile( std::string const & file ){
 
-     LOG_INFO(COLOR_PINK + std::string("file dans AnswerFile(): ") + file + COLOR_RESET);
     struct stat sb;
     
     if (stat(file.c_str(), &sb) == -1)
@@ -502,7 +492,6 @@ bool    RequestHandler::removeFile( std::string const & filename ){
 
 std::string RequestHandler::generateAutoindex(const std::string &fullPath, const std::string &requestTarget)
 {
-    std:: cout << fullPath << std::endl;
     DIR *dir = opendir(fullPath.c_str());
     if (dir == NULL)
         return ("");
@@ -519,47 +508,25 @@ std::string RequestHandler::generateAutoindex(const std::string &fullPath, const
     while ((entry = readdir(dir)) != NULL)
     {
         std::string name = entry->d_name;
-        LOG_INFO(COLOR_PINK + std::string("name generateAutoindex: ") + name + COLOR_RESET);
 
         if (name == ".")
             continue;
         
         std::string entryPath = fullPath;  // check entry a dir
-      
-        LOG_INFO(COLOR_CYAN + std::string("entryPath: ") + entryPath+ COLOR_RESET);
-        
-        // std::string dir = requestTarget;
-        // LOG_INFO(COLOR_PINK + std::string("dir 1 : ") + dir + COLOR_RESET);
-        
-        if (entryPath.rfind("/")){
-        
-            LOG_INFO(COLOR_RED + std::string("FOUND / in LAST") + COLOR_RESET);
-            
-        }
-            
+ 
         char const *lastSlash = strrchr(entryPath.c_str(), '/');
         if (!lastSlash){
             return "";
         }
-        LOG_INFO(COLOR_PINK + std::string("lasttSlash: ") + lastSlash + COLOR_RESET);
-        
         std::string dir = std::string(lastSlash, strlen(lastSlash));
-        // }
-        LOG_INFO(COLOR_PINK + std::string("dir 2 : ") + dir + COLOR_RESET);
-
 
         if (entryPath[entryPath.size() - 1] != '/')
             entryPath += "/";
         entryPath += name;
 
-        LOG_INFO(COLOR_CYAN + std::string("entryPath 2: ") + entryPath+ COLOR_RESET);
-
-        
         struct stat entry_stat;
         bool isDir = (stat(entryPath.c_str(), &entry_stat) == 0 
             && S_ISDIR(entry_stat.st_mode));
-
-        std::cout << std::boolalpha << isDir << std::endl;
 
         html = html + "<li><a href=\"";
         if (isDir){
@@ -581,7 +548,6 @@ std::string RequestHandler::generateAutoindex(const std::string &fullPath, const
     closedir(dir);
 
     html += "</ul>\n<hr>\n</body>\n</html>\n";
-    LOG_INFO(COLOR_PINK + std::string("html generateAutoindex: ") + html + COLOR_RESET);
     
     return html;
 }
@@ -644,12 +610,10 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         return false;
     }
     
-    std::cout << locs[bestIdx].getPath()<< std::endl;
     _root = locs[bestIdx].getRoot();
     if (_root.empty())
         _root = HTTPParser.getPath();
-     LOG_INFO(COLOR_CYAN + std::string("_ROOT before Iscgi/findMethod(): ") + _root + COLOR_RESET);
-    
+        
     if (HTTPParser.isCGI()) 
     {
         if (HTTPParser.validateCGIRequest() == false)
@@ -699,11 +663,7 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     {
         if (HTTPParser.getCode() == HTTP_AUTOINDEX)
         {
-            // HTTPParser.getPath() is the resolved on-disk directory (root + URI).
-            // std::string path = HTTPParser.getPath().size() < HTTPParser.getHttpRoot().size() ? 
-            // HTTPParser.getHttpRoot() : HTTPParser.getPath();
             std::string path = HTTPParser.getPath();
-            LOG_INFO(COLOR_CYAN + std::string("path: ") + path + COLOR_RESET);
             
             _body = generateAutoindex(path, HTTPParser.getRequestTarget());
             if (_body.empty()) {
@@ -743,23 +703,9 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         }
     }
     
-    // if (_root.empty()){
-        
-    //     std::cout << "ROOT EMPTY" << std::endl;
-    // if (HTTPParser.getIsIndex() == false &&  resolveRoot(_serverConfig, HTTPParser) == false){
-    //     LOG_INFO(COLOR_RED + std::string("ERROR") + COLOR_RESET);
-                
-    //     LOG_ERROR("resolveRoot() failed");
-    //     return false;
-    // }
-    
-    LOG_INFO(COLOR_PINK + std::string("filename after resolve(): ") + HTTPParser.getFileName() + COLOR_RESET);
-
     if (HTTPParser.getIsIndex() == false)
         _root = HTTPParser.getHttpRoot();
 
-    LOG_INFO(COLOR_CYAN + std::string("_root after resolve(): ") + _root + COLOR_RESET);
-    
     bool rangeHandled = false;
 
     if (HTTPParser.getMethod() == "DELETE")
@@ -804,7 +750,6 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         else {
 
             HTTPParser.setCode(HTTP_201);
-            // TODO: set _content_type from HTTPParser.getType() if needed
         }
     } 
 
@@ -813,10 +758,6 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         || HTTPParser.getType() == "text/javascript"
         || HTTPParser.getType() == "application/javascript") 
     {
-        LOG_INFO(COLOR_CYAN + std::string("_fullPath from HTTP before getFile: ") + HTTPParser.getPath() + COLOR_RESET);
-        LOG_INFO(COLOR_CYAN + std::string("_httpRoot before getFile: ") + HTTPParser.getHttpRoot() + COLOR_RESET);
-        
-      
         std::string file = HTTPParser.getError()
             ? getFile(HTTPParser::httpCodeToString(HTTPParser.getCode()), true)
             : getFile(HTTPParser.getFileName(), false);
@@ -851,20 +792,10 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         || HTTPParser.getType() == "image/gif"
         || HTTPParser.getType() == "image/webp") {
 
-        LOG_INFO(COLOR_CYAN + std::string("_fullPath from HTTP before getFileIMAGE: ") + HTTPParser.getPath() + COLOR_RESET);
-        LOG_INFO(COLOR_CYAN + std::string("_httpRoot before getFileIMAGE: ") + HTTPParser.getHttpRoot() + COLOR_RESET);
-        
         std::string file = getFileImage(HTTPParser.getFileName());
-        // std::string file = HTTPParser.getPath();
-
-        LOG_INFO(COLOR_CYAN + std::string("file: ") + file + COLOR_RESET);
-
-        // file = HTTPParser.getPath().size() > file.size() ?  HTTPParser.getPath() : file;
-        // LOG_INFO(COLOR_CYAN + std::string("file after ternaire: ") + file + COLOR_RESET);
         
         if (file.find("favicon.ico") != std::string::npos)
             file = HTTPParser.getPath();
-        LOG_INFO(COLOR_CYAN + std::string("file after check favico: ") + file + COLOR_RESET);
         
         //  206 Partial Content path (only range set)
         struct stat sb;
@@ -886,7 +817,6 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         if (HTTPParser.getUpload() == true) {
 
             std::string uploadFile = getFileUpload(HTTPParser.getFileName());
-            std::cout << "uploadFile: "<< uploadFile << std::endl;
             
             if (answerFile(uploadFile) == false){
                 
@@ -900,13 +830,6 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
 
         }
         else {
-
-        //     std::string imgFile = getFileImage(HTTPParser.getFileName());
-        //    imgFile = HTTPParser.getPath().size() > file.size() ?  HTTPParser.getPath() : imgFile;
-
-        //     // std::string imgFile = HTTPParser.getRange();
-
-        //     std::cout << "imgFile: "<< imgFile<< std::endl;
 
             if (answerFile(file) == false){
                 
@@ -954,7 +877,6 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     return true;
 }
 
-// SO GIRLS: flow is set at the top of handleRequest()'s file branches:
 //  HTTPParser.getRange() gives the raw "Range:" value ("", if none)
 //  parseRangeHeader(value, fileSize) -> ByteRange
 //  r.unsatisfiable -> send build416Header(); r.valid -> answerFilePartial 
