@@ -2,10 +2,16 @@
 
 :root {
   --blue: #a8d4f5;
+  --light-blue: #8ec8f0;
+  --btn-hover: #daeef9;
   --blue-dark: #4a9ed6;
   --blue-bg: #eef6fd;
   --black: #262626;
   --ink-dim: #888;
+  --red: #b94040;
+  --white: #fff;
+  
+  --upload-succes: #3a8a3a;
 }
 
 *, *::before, *::after {
@@ -17,7 +23,7 @@
 html { scroll-behavior: smooth; }
 
 body {
-  background: #fff;
+  background: var(--white);
   color: var(--black);
   font-family: 'Space Mono', monospace;
   min-height: 100vh;
@@ -124,7 +130,7 @@ h1 {
 
 .nav-links a:hover {
   border-color: var(--blue);
-  background: #daeef9;
+  background: var(--btn-hover);
 }
 
 /* -------------------------------------------- */
@@ -169,12 +175,12 @@ h1 {
   text-align: left;
 }
 
-.upload-button:hover { background: #8ec8f0; }
+.upload-button:hover { background: var(--light-blue); }
 .upload-button:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .upload-status { font-size: 0.82rem; }
-.upload-status .success { color: #3a8a3a; }
-.upload-status .error   { color: #b94040; }
+.upload-status .success { color: var(--upload-succes); }
+.upload-status .error   { color: var(--red); }
 .upload-status .loading { color: var(--ink-dim); }
 
 /* -------------------------------------------- */
@@ -206,12 +212,6 @@ body.upload-page {
   position: relative;
   border-radius: 12px;
   overflow: hidden;
-  border: 2px solid transparent;
-  transition: border-color 0.15s;
-}
-
-.photo-container:hover {
-  border-color: var(--blue);
 }
 
 .photo-container .photo {
@@ -232,7 +232,7 @@ body.upload-page {
   border: none;
   cursor: pointer;
   font-size: 0.7rem;
-  color: #b94040;
+  color: var(--red);
   display: flex;
   align-items: center;
   justify-content: center;
