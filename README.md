@@ -4,27 +4,27 @@
 
 ## Description
 
-**Webserv** is an HTTP server written in **C++98**. The goal of this project is to build a web server modeled after **NGINX**, a widely used web server whose primary role is to receive HTTP requests from clients and respond to them. NGINX serves as the reference implementation for the general behavior of this project.
+**Webserv** est un serveur HTTP écrit en **C++98**. L'objectif de ce projet est de créer un serveur web à l'image d'**NGINX**, serveur web très répandu, dont le rôle principal est de recevoir des requêtes HTTP de clients et d'y répondre. NGINX sert, ainsi, de modèle de référence pour le comportement général de ce projet.
 
-Webserv is built around the following features:
+Webserv repose notamment sur les fonctionnalités suivantes :
 
-- reading a **configuration file** inspired by NGINX syntax;
-- creating one or more **listening sockets** (one address:port pair per server);
-- handling **multiple simultaneous clients** in a **non-blocking** manner,
-using an event loop based on epoll();
-- **parsing** incoming HTTP requests and responding with the **GET**, **POST**, and **DELETE** methods;
-- serving **static files**, handling file **uploads**,
-**directory listing** (autoindex), **redirects**,
-and custom **error pages**;
-- executing **CGI** scripts (Python and PHP) based on the requested file's extension;
+- lire un **fichier de configuration** inspiré de la syntaxe NGINX ;
+- créer un ou plusieurs **sockets d'écoute** (une paire adresse:port par server) ;
+- gèrer **plusieurs clients simultanément**, de manière **non bloquante**,
+grâce à une boucle événementielle basée sur epoll() ;
+- **parser** les requêtes HTTP reçues et répondre avec les méthodes **GET**, **POST** et **DELETE** ;
+- servir des **fichiers statiques**, gèrer l'**upload** de fichiers,
+le **listing de répertoire** (autoindex), les **redirections**
+et les **pages d'erreur** personnalisées ;
+- exécuter des scripts **CGI** (Python et PHP) en fonction de l'extension du fichier demandé ;
 
 ## Instructions
 
-### Prerequisites
+### Prérequis
 
-- A **C++98**-compatible C++ compiler (`g++` or `clang++`)
-- A **Linux** system (the event loop relies on `epoll`, which is Linux-specific)
-- **Python 3** and/or **PHP-CGI** if you want to use the CGI features
+- Compilateur C++ compatible **C++98** (`g++` ou `clang++`)
+- Système **Linux** (la boucle événementielle repose sur `epoll`, spécifique à Linux)
+- **Python 3** et/ou **PHP-CGI** si l'on souhaite utiliser les fonctionnalités CGI
 
 ### Compilation
 
@@ -34,32 +34,32 @@ cd webserv
 make
 ```
 
-Compilation produces a `webserv` executable at the root of the project. The `Makefile` also provides the standard rules:
+La compilation génère un exécutable `webserv` à la racine du projet. Le `Makefile` fournit également les règles classiques :
 
 ```bash
-make clean   # removes object files
-make fclean  # removes object files and the executable
-make re      # fully recompiles the project
+make clean          # supprime les fichiers objets
+make fclean         # supprime les fichiers objets et l'exécutable
+make re             # recompile entièrement le projet
 ```
 
-### Running
+### Exécution
 
 ```bash
-./webserv [configuration file]
+./webserv [fichier de configuration]
 ```
 
-A configuration file must be passed as an argument. Examples are available in `data/config/`.
+Un fichier de configuration doit être passé en argument. Des exemples sont disponibles dans `data/config/`.
 
-### Configuration syntax
+### Syntaxe de configuration
 
-The configuration follows a syntax inspired by NGINX, with three levels: `global`, `server`, and `location`.
+La configuration suit une syntaxe inspirée de NGINX, avec trois niveaux : `global`, `server` et `location`.
 
 ```nginx
+client_max_body_size 10M;
+
 server {
     listen       127.0.0.1:8080;
     server_name  tsuki;
-
-    client_max_body_size 10M;
 
     location / {
         root        data/www/tsuki;
@@ -75,7 +75,7 @@ server {
         autoindex   off;
     }
 
-    location /cgi-bin/python {
+    llocation /cgi-bin/python {
         root            data/cgi-bin;
         methods         POST;
         cgi_extension   .py  /usr/bin/python3;
@@ -84,67 +84,130 @@ server {
 }
 ```
 
-**Available directives:**
+**Directives disponibles :**
 
-| Directive | Context | Description |
+| Directive | Contexte | Description |
 |---|---|---|
-| `listen` | `server` | IP address and listening port |
-| `server_name` | `server` | Domain name (virtual hosting) |
-| `client_max_body_size` | `global` / `server` / `location` | Maximum request body size |
-| `root` | `global` / `server` / `location` | Root directory for served files |
-| `index` | `global` / `server` / `location` | Default file to serve |
-| `methods` | `location` | Allowed HTTP methods |
-| `autoindex` | `global` / `server` / `location` | Enable directory listing |
-| `return` | `location` | HTTP redirect |
-| `error_page` | `global` / `server` / `location` | Custom error page |
-| `cgi_extension` | `location` | Map file extension to CGI interpreter |
+| `client_max_body_size` | `global` / `server` / `location` | Taille maximale du corps de la requête |
+| `root` | `global` / `server` / `location` | Répertoire racine des fichiers servis |
+| `index` | `global` / `server` / `location` | Fichier servi par défaut |
+| `error_page` | `global` / `server` / `location` | Page d'erreur personnalisée |
+| `autoindex` | `global` / `server` / `location` | Activation du listing de répertoire |
+| `listen` | `server` | Adresse IP et port d'écoute |
+| `server_name` | `server` | Nom de domaine (virtual hosting) |
+| `methods` | `location` | Méthodes HTTP autorisées |
+| `return` | `location` | Redirection HTTP |
+| `cgi_extension` | `location` | Association extension → interpréteur CGI |
 
-### Testing the server
+### Tester le serveur
 
-Once running, the server listens on the addresses and ports defined in the configuration. It can be tested:
+Une fois lancé, le serveur écoute sur les adresses/ports définis dans la configuration. Il peut être testé :
 
-- with a web browser:
+- avec un navigateur web :
 
 ```bash
 http://localhost:8080
 ````
 
 
-- with `curl`:
+- avec `curl` :
 
 ```bash
 curl -v http://127.0.0.1:8080/
 ```
 
-- with a stress-testing tool (e.g. `siege`) to verify server stability under load.
+- avec un outil de stress test (ex : `siege`) pour vérifier la stabilité du serveur sous charge.
 
-## Resources
+## Architecture
 
-### Documentation and articles
+**Architecture du projet :**
 
-- [Official NGINX documentation](https://nginx.org/en/docs/) — reference model for configuration syntax and general server behavior
+```
+Lexer / Parser      →  lit le fichier de config  →  GlobalConfig / ServerConfig / LocationConfig
+
+Server
+├── SignalManager       gère SIGINT / SIGQUIT
+├── ListenerManager     sockets d'écoute (un par `listen`)
+├── EpollLoop           boucle principale (epoll)
+│   ├── HTTPParser      parse la requête brute
+│   ├── RequestHandler  construit la réponse
+│   └── CGIHandler      exécute les scripts Python / PHP
+```
+
+**Flux d'une requête :**
+
+```
+Client
+  │  TCP connect
+  ▼
+ListenerManager  ──accept()──►  nouveau fd client
+  │
+  ▼
+EpollLoop  (epoll_wait)
+  │
+  ├─ EPOLLIN  ──►  HTTPParser       parse méthode / headers / body
+  │                    │
+  │                    ▼
+  │               RequestHandler    décide de la réponse
+  │                    ├── fichier statique  →  lecture disque
+  │                    ├── upload            →  écriture disque
+  │                    └── CGI (.py/.php)    →  CGIHandler (fork + pipe)
+  │
+  └─ EPOLLOUT ──►  envoie la réponse  ──►  Client
+```
+
+## Lexique
+
+### Client / Serveur
+Un **serveur** est un programme qui attend des connexions (requête HTTP) et répond aux demandes. Un **client** (navigateur, `curl`, etc.) est celui qui initie la connexion et envoie une requête HTTP. La communication passe par un réseau TCP/IP : le client ouvre une connexion vers l'adresse IP et le port du serveur.
+
+### HTTP (HyperText Transfer Protocol)
+Protocole texte au-dessus de TCP qui définit le format des échanges entre client et serveur. Une **requête** HTTP contient :
+- une **ligne de requête** (request-line) : méthode + chemin + version (`GET /index.html HTTP/1.1`)
+- des **headers** : métadonnées (`Host:`, `Content-Type:`, `Content-Length:`…)
+- un **body** (optionnel) : données envoyées (formulaire, fichier uploadé…)
+
+Une **réponse** contient un code de statut (`200 OK`, `404 Not Found`…), des headers, et le contenu.
+
+### Socket
+Point d'entrée réseau représenté par un descripteur de fichier (fd). Le serveur crée un socket d'écoute par directive `listen`, accepte les connexions entrantes (`accept()`), puis chaque client obtient son propre fd pour lire/écrire.
+
+### Méthodes HTTP
+- **GET** : demander une ressource (page, image…)
+- **POST** : envoyer des données au serveur (formulaire, upload)
+- **DELETE** : supprimer une ressource
+
+### epoll()
+Table Linux pour surveiller de nombreux fds simultanément **sans bloquer**. Au lieu d'attendre sur un seul fd, `epoll_wait()` retourne la liste des fds prêts à lire ou à écrire. C'est ce qui permet de gérer des dizaines de clients en parallèle dans **un seul thread**, sans créer un thread par connexion.
+
+### Non-bloquant (I/O non-bloquante)
+Par défaut un appel `read()` ou `write()` attend que des données soient disponibles. En mode non-bloquant, il retourne immédiatement si rien n'est prêt. Couplé à epoll, cela évite qu'un client lent bloque tous les autres.
+
+### CGI (Common Gateway Interface)
+Interface standard pour qu'un serveur web exécute un script externe (Python, PHP…). Le serveur crée un processus fils via `fork()` + `execve()`, lui passe la requête via des variables d'environnement et un pipe, et lit la réponse générée sur stdout. Ici, c'est `CGIHandler` qui orchestre ça.
+
+### Parsing / Lexer / Parser
+Transformer du texte brut en données structurées. Le **Lexer** découpe le fichier de config en tokens. Le **Parser** lit ces tokens et construit les objets `GlobalConfig` / `ServerConfig` / `LocationConfig`. Même principe pour `HTTPParser` sur les requêtes HTTP brutes.
+
+### Virtual hosting
+Faire tourner plusieurs sites sur le même serveur (même IP/port) en différenciant par le header `Host:`. Chaque bloc `server` avec un `server_name` différent correspond à un site distinct.
+
+## Ressources
+
+### Documentation et articles
+
+- [Documentation officielle NGINX](https://nginx.org/en/docs/) — modèle de référence pour la syntaxe de configuration et le comportement général du serveur
 - [RFC 9110 – HTTP Semantics](https://www.rfc-editor.org/rfc/rfc9110.html)
 - [RFC 9112 – HTTP/1.1](https://www.rfc-editor.org/rfc/rfc9112.html)
-- [Beej's Guide to Network Programming](https://beej.us/guide/bgnet/) — classic reference for socket programming in C/C++
+- [Beej's Guide to Network Programming](https://beej.us/guide/bgnet/) — référence classique pour la programmation socket en C/C++
 - [man epoll(7)](https://man7.org/linux/man-pages/man7/epoll.7.html)
 - [The Common Gateway Interface (CGI) — RFC 3875](https://www.rfc-editor.org/rfc/rfc3875)
-- [Simple HTTP webserver in C – bruinsslot.jp](https://bruinsslot.jp/post/simple-http-webserver-in-c/) — tutorial used to understand the general structure of an HTTP server in C
-- [HTTP status codes – MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status)
+- [Simple HTTP webserver in C – bruinsslot.jp](https://bruinsslot.jp/post/simple-http-webserver-in-c/) — tutoriel utilisé pour comprendre la structure générale d'un serveur HTTP en C
+- [Codes de statut HTTP – MDN](https://developer.mozilla.org/fr/docs/Web/HTTP/Status)
 
-### Use of AI
+### Utilisation de l'IA
 
-AI (Claude, Anthropic) was used occasionally as a supporting tool, in particular to:
+L'IA (Claude, Anthropic) a été utilisée ponctuellement comme outil d'accompagnement, notamment pour :
 
-- rephrase and structure working notes taken during the research phase into clear documentation.
+- reformuler et structurer les notes de travail prises pendant la phase de recherche en une documentation claire.
 
-<br>
-
----
-
-<div align="center">
-
-![alt text](image.png)
-
-*You made it to the end!*
-
-</div>
