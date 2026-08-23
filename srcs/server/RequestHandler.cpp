@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestHandler.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: leazannis <leazannis@student.42.fr>        +#+  +:+       +#+        */
+/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/22 21:30:15 by leazannis        ###   ########.fr       */
+/*   Updated: 2026/08/23 18:24:26 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -364,7 +364,8 @@ bool    RequestHandler::answerFile( std::string const & file ){
 
     struct stat sb;
     
-    if (stat(file.c_str(), &sb) == -1 && S_ISREG(sb.st_mode))
+    // if (stat(file.c_str(), &sb) == -1)
+    if (stat(file.c_str(), &sb) == -1 || !S_ISREG(sb.st_mode))
     {
         LOG_ERROR("stat failed: " + file + " - " + strerror(errno));
         return false;
@@ -406,7 +407,7 @@ bool    RequestHandler::answerFileIcon(){
     struct stat sb;
     
     std::string faviconPath = "data/www/favicon.ico/favicon-16x16.png";
-    if (stat(faviconPath.c_str(), &sb) == -1 && S_ISREG(sb.st_mode)){
+    if (stat(faviconPath.c_str(), &sb) == -1 || !S_ISREG(sb.st_mode)){
         LOG_ERROR("Stat failed for favicon: " + std::string(strerror(errno)));
         return false;
     }
