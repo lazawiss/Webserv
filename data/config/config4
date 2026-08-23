@@ -24,14 +24,14 @@ server {
     }
 
 
-    location /cgi-bin/python {
+    location /cgi-bin {
         root            /var/www/cgi-bin;
         methods         GET POST;
         cgi_extension   .py  /usr/bin/python3;
         index           File.py;
     }
 
-    location /cgi-bin/php {
+    location /cgi-bin {
         root            /var/www/cgi-bin;
         methods         GET POST;
         cgi_extension   .php /usr/bin/php-cgi;

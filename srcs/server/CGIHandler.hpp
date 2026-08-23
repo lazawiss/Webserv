@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 18:29:28 by andikim           #+#    #+#             */
-/*   Updated: 2026/07/12 18:05:48 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/18 16:20:05 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,15 @@ class ListenerManager;
 // onReadable()  : collect script output from child's stdout (EPOLLIN on stdout pipe)
 // buildResponse(): CGI output -> full HTTP response, sent to _client_fd
 // EpollLoop owns the object and is the only one who closes fds / deletes it.
+
+enum Result
+{
+    HOLD,
+    ERR,
+    SUCCESS,
+};
+
+
 class CGI
 {
 public:
@@ -37,8 +46,9 @@ public:
     bool        start();
     // both return true when their side is finished:
     // onWritable -> whole body written / onReadable -> EOF (script done)
-    bool        onWritable();
-    bool        onReadable();
+    // bool        onWritable();
+    Result      onWritable();
+    Result      onReadable();
 
     void        closeStdin();   // sends EOF to the script
     void        closeStdout();  // called after EOF; also reaps the child
@@ -55,7 +65,7 @@ private:
     CGI &operator=(CGI const &other);
 
     void        buildEnv();
-    std::string findInterpreter() const;
+    // std::string findInterpreter() const;
 
     pid_t                       _pid;
     int                         _client_fd;
@@ -64,10 +74,13 @@ private:
     int                         _stdout_pipe[2]; // child writes stdout ->[1]  [0]-> parent reads
 
     size_t                      _bytesWritten;   // how much of _body was sent so far
-    std::string                 _output;         // raw script output, accumulated
+    std::string                 _output;
 
     std::string                 _scriptFilename;
     std::string                 _fullPath;
+    std::string                 _pathInfo;
+    std::string                 _scriptName;
+    std::string                 _cgiInterpreter;
     std::string                 _queryString;
     std::string                 _method;
     std::string                 _body;

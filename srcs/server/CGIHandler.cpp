@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 18:29:42 by andikim           #+#    #+#             */
-/*   Updated: 2026/08/09 16:46:51 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/18 16:19:12 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,6 +34,9 @@ CGI::CGI(RequestHandler const &req, ListenerManager const &listen, int client_fd
     _bytesWritten(0),
     _scriptFilename(req.getFilename()),
     _fullPath(req.getPath()),
+    _pathInfo(req.getPathInfo()),
+    _scriptName(req.getScriptName()),
+    _cgiInterpreter(req.getInterpreter()),
     _queryString(req.getQueryString()),
     _method(req.getMethod()),
     _body(req.getBody()),
@@ -77,19 +80,19 @@ int CGI::getStdoutFd() const { return _stdout_pipe[0]; }  // OUR end (read) from
 ** ============================================================================
 */
 
-std::string CGI::findInterpreter() const
-{
-    size_t dot = _scriptFilename.rfind('.');
-    if (dot == std::string::npos)
-        return "";
-    std::string ext = _scriptFilename.substr(dot);
+// std::string CGI::findInterpreter() const
+// {
+//     size_t dot = _scriptFilename.rfind('.');
+//     if (dot == std::string::npos)
+//         return "";
+//     std::string ext = _scriptFilename.substr(dot);
 
-    if (ext == ".py")
-        return "/usr/bin/python3";
-    if (ext == ".php")
-        return "/usr/bin/php-cgi";
-    return "";
-}
+//     if (ext == ".py")
+//         return "/usr/bin/python3";
+//     if (ext == ".php")
+//         return "/usr/bin/php-cgi";
+//     return "";
+// }
 
 void CGI::buildEnv()
 {
@@ -97,7 +100,10 @@ void CGI::buildEnv()
 
     _env.push_back("REQUEST_METHOD=" + _method);
     _env.push_back("SCRIPT_FILENAME=" + _fullPath);
-    _env.push_back("SCRIPT_NAME=" + _scriptFilename);
+    _env.push_back("SCRIPT_NAME="
+        + (_scriptName.empty() ? _scriptFilename : _scriptName));
+    if (_pathInfo.empty() == false)
+        _env.push_back("PATH_INFO=" + _pathInfo);
     _env.push_back("QUERY_STRING=" + _queryString);
     _env.push_back("GATEWAY_INTERFACE=CGI/1.1");
     _env.push_back("SERVER_PROTOCOL=HTTP/1.1");
@@ -126,10 +132,9 @@ void CGI::buildEnv()
 bool CGI::start()
 {
     signal(SIGPIPE, SIG_IGN);
-    std::string interpreter = findInterpreter();
 
-    if (interpreter.empty() || access(_fullPath.c_str(), R_OK) != 0
-        || access(interpreter.c_str(), X_OK) != 0)
+    if (_cgiInterpreter.empty() || access(_fullPath.c_str(), R_OK) != 0
+        || access(_cgiInterpreter.c_str(), X_OK) != 0)
     {
         LOG_ERROR("CGI: invalid script or interpreter: " + _fullPath);
         return false;
@@ -171,11 +176,11 @@ bool CGI::start()
         close(_stdout_pipe[1]);
 
         char *argv[] = {
-            const_cast<char*>(interpreter.c_str()),
+            const_cast<char*>(_cgiInterpreter.c_str()),
             const_cast<char*>(_fullPath.c_str()),
             NULL
         };
-        execve(interpreter.c_str(), argv, &_envp[0]);
+        execve(_cgiInterpreter.c_str(), argv, &_envp[0]);
 
         // only reached if execve failed
         LOG_ERROR("CGI: execve failed: " + std::string(strerror(errno)));
@@ -202,33 +207,41 @@ bool CGI::start()
 // EPOLLOUT on _stdin_pipe[1]: the pipe has room, write more of the body.
 // Returns true when the whole body has been handed to the script —
 // EpollLoop then deregisters the fd and calls closeStdin() (= EOF).
-bool CGI::onWritable()
+Result CGI::onWritable()
 {
     if (_bytesWritten >= _body.size())
-        return true; // nothing left to send because all body complete
+        return SUCCESS; // nothing left to send because all body complete
 
     ssize_t n = write(_stdin_pipe[1],
                       _body.c_str() + _bytesWritten,
                       _body.size() - _bytesWritten); // for remaining bytes
-    if (n > 0)
-        _bytesWritten += static_cast<size_t>(n);
-    // n == -1 means the pipe is full for the moment; epoll will fire again.
 
-    return _bytesWritten >= _body.size();
+    if (n == -1)
+        return ERR;
+
+    if (n > 0)
+    {
+        _bytesWritten += static_cast<size_t>(n);
+        if (_bytesWritten >= _body.size())
+            return SUCCESS;
+    }
+
+    return HOLD;
 }
 
-
-bool CGI::onReadable()
+Result CGI::onReadable()
 {
     char    buf[4096];
     ssize_t n = read(_stdout_pipe[0], buf, sizeof(buf));
 
-    if (n > 0)
-    {
-        _output.append(buf, static_cast<size_t>(n));
-        return false; // maybe more coming; epoll will tell us
-    }
-    return (n == 0); // 0 = EOF ; -1 = epoll woke me up but nothing to read
+    if (n == -1)
+        return ERR; 
+
+    if (n == 0)
+        return SUCCESS;
+
+    _output.append(buf, static_cast<size_t>(n));
+    return HOLD;
 }
 
 void CGI::closeStdin()

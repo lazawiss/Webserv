@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HTTPParser.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: leazannis <leazannis@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/19 11:37:27 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/20 16:20:25 by leazannis        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -119,6 +119,9 @@ private:
     std::string                 _body;              // everything after the first \r\n\r\n
     std::string                 _content_type;      // Content-Type header value
     int                         _content_int;       // Content-Length as integer (CGI)
+    std::string                 _pathInfo;          // CGI PATH_INFO: URI left over after the script
+    std::string                 _scriptName;        // CGI SCRIPT_NAME: URL path of the script itself
+    std::string                 _cgiInterpreter;    // interpreter taken from the location's cgi_extension
 
     bool                        _autoindexOn;       // true if autoindex is enabled for the matched location
     std::string                 _rangeHeader;       // Range header value (bytes=X-Y)
@@ -146,6 +149,9 @@ public:
     bool                        getUpload() const;
     bool                        getIsIndex() const;
     std::string                 getPath() const;
+    std::string                 getPathInfo() const;
+    std::string                 getScriptName() const;
+    std::string                 getInterpreter() const;
     std::string                 getScriptFilename() const;
     std::string                 getQueryString() const;
     std::string                 getBody() const;
@@ -153,6 +159,8 @@ public:
     size_t                      getContentLength() const;
     std::string                 getRequestTarget() const;
     std::string                 getRange() const;
+    bool                        getAutoindexOn() const;
+
     HttpCode                    setCode( HttpCode code );
     std::string                 setFileName(std::string filename);
     std::string                 setHttpRoot( std::string httpRoot );
@@ -164,11 +172,12 @@ public:
     void                        buildFullPath();
     bool                        resolveRoot();
 
-
     void                        checkRange( std::string const & value );
 
     void                        parseCGI();
     bool                        validateCGIRequest();
+    bool                        buildCGIPath();
+    static int                  matchLocation(const std::vector<LocationConfig> &locs, const std::string &uri);
 
     bool                        varNotFound400 ( size_t var );
     bool                        doesCharCExist400 ( char const *str );
