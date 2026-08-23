@@ -27,7 +27,7 @@ server {
     error_page 400 /errors/404.html;
 
     location / {
-        root        data/www/diary;
+        root        data/www/html1;
         index       index.html;
         methods     GET;
         autoindex   off;

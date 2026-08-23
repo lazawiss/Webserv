@@ -1,28 +1,26 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Galerie</title>
-    <link rel="stylesheet" href="/html/style.css">
+    <title>Gallery</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
-<body class="upload-page">
+<body>
+    <div class="gallery-container">
+        <nav class="navigation">
+            <a href="/html/upload.html" class="nav-button">📷 Upload</a>
+        </nav>
 
-    <div class="upload-container">
-        <a href="/html/index.html" class="back-link">← retour</a>
+        <h1 class="gallery-title">Gallery</h1>
 
-        <h1>La galerie.</h1>
-        <p class="subtitle">Toutes les photos envoyées par le serveur.</p>
-
-        <div id="photos-container" class="photos-grid"></div>
-
-        <div id="no-photos" style="display: none;">
-            <p class="subtitle">Aucune photo pour l'instant. <a href="/html/upload.html">Envoie la première !</a></p>
+        <div id="photos-container" class="photos-grid">
+            <!-- Photos will be loaded here -->
         </div>
 
-        <nav class="nav-links" style="margin-top: 2rem;">
-            <a href="/html/upload.html">Envoyer une photo →</a>
-        </nav>
+        <div id="no-photos" class="no-photos" style="display: none;">
+            <p>No photos yet. <a href="/html/upload.html">Upload your first photo!</a></p>
+        </div>
     </div>
 
     <script>

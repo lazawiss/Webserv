@@ -1,34 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Image of the Day — NASA</title>
-  <link href="https://fonts.googleapis.com">
-  <link href="https://fonts.gstatic.com">
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Space+Mono:wght@400;700&display=swap">
-  <link rel="stylesheet" href="/nasa/style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Image of the Day — NASA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/nasa/styles.css">
 </head>
 <body>
 
   <canvas id="stars"></canvas>
 
-  <header class="header">
-    <p class="subtitle">DAILY TRANSMISSION — NASA</p>
-    <h1 class="title">Welcome to your webserver</h1>
-    <p class="description">Every day, NASA captures an image of the universe. Here it is.</p>
+  <header class="site-header">
+    <p class="eyebrow">DAILY TRANSMISSION — NASA</p>
+    <h1 class="wordmark">Welcome to your webserver</h1>
+    <p class="subtitle">Every day, NASA captures an image of the universe. Here it is.</p>
   </header>
 
   <main>
-    <section id="card" class="card" aria-live="polite">
+    <section id="apod-card" class="apod-card" aria-live="polite">
 
       <div id="state-loading" class="state">
-        <p class="state-detail">Receiving signal…</p>
+        <div class="pulse-dot"></div>
+        <p>Receiving signal…</p>
       </div>
 
       <div id="state-error" class="state hidden">
-        <p class="state-detail">Signal lost.</p>
-        <p id="error-detail" class="state-detail">Could not retrieve today's image.</p>
+        <p class="error-title">Signal lost.</p>
+        <p id="error-detail" class="error-detail">Could not retrieve today's image.</p>
       </div>
 
       <article id="state-content" class="content hidden">
@@ -37,19 +38,19 @@
           <iframe id="apod-video" class="hidden" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
         </div>
 
-        <div class="information">
-          <p class="information-line"><span class="apod-label">Date</span><span id="apod-date"></span></p>
+        <div class="log">
+          <p class="log-line"><span class="log-label">Date</span><span id="apod-date"></span></p>
           <h2 id="apod-title" class="apod-title"></h2>
           <p id="apod-explanation" class="apod-explanation"></p>
-          <p class="information-line credit"><span class="apod-label">Credit</span><span id="apod-copyright">NASA</span></p>
+          <p class="log-line credit"><span class="log-label">Credit</span><span id="apod-copyright">NASA</span></p>
         </div>
       </article>
 
     </section>
   </main>
 
-  <footer class="footer">
-    <p>Powered by NASA's <a href="https://api.nasa.gov/">Astronomy Picture of the Day API</a>.</p>
+  <footer class="site-footer">
+    <p>Powered by NASA's <a href="https://api.nasa.gov/" target="_blank" rel="noopener">Astronomy Picture of the Day API</a>.</p>
   </footer>
 
   <script src="/nasa/config.js"></script>

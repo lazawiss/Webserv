@@ -4,38 +4,32 @@
 const NASA_API_URL = "https://api.nasa.gov/planetary/apod";
 /* ============================================================ */
 
-async function loadApod()
-{
+async function loadApod() {
   const loading = document.getElementById("state-loading");
   const errorState = document.getElementById("state-error");
   const errorDetail = document.getElementById("error-detail");
   const content = document.getElementById("state-content");
 
-  try
-  {
+  try {
     const url = `${NASA_API_URL}?api_key=${encodeURIComponent(NASA_API_KEY)}`;
     const response = await fetch(url);
 
-    if (!response.ok)
-    {
-      if (response.status === 403)
+    if (!response.ok) {
+      if (response.status === 403) {
         throw new Error("Invalid or missing API key.");
-      if (response.status === 429)
+      }
+      if (response.status === 429) {
         throw new Error("Too many requests — NASA's hourly quota was reached.");
-
+      }
       throw new Error(`NASA's server responded with status ${response.status}.`);
     }
 
     const data = await response.json();
-    console.log("data: ", data);
     renderApod(data);
 
     loading.classList.add("hidden");
     content.classList.remove("hidden");
-
-  } 
-  catch (err)
-  {
+  } catch (err) {
     console.error(err);
     errorDetail.textContent = err.message || "An unknown error occurred.";
     loading.classList.add("hidden");
@@ -54,16 +48,13 @@ function renderApod(data) {
   dateEl.textContent = data.date || "";
   titleEl.textContent = data.title || "Untitled";
   explanationEl.textContent = data.explanation || "";
-  copyrightEl.textContent = data.copyright ? data.copyright : "NASA (public domain)";
+  copyrightEl.textContent = data.copyright ? data.copyright.trim() : "NASA (public domain)";
 
-  if (data.media_type === "video")
-  {
+  if (data.media_type === "video") {
     imageEl.classList.add("hidden");
     videoEl.classList.remove("hidden");
     videoEl.src = data.url;
-  }
-  else
-  {
+  } else {
     videoEl.classList.add("hidden");
     imageEl.classList.remove("hidden");
     imageEl.src = data.hdurl || data.url;
@@ -71,53 +62,41 @@ function renderApod(data) {
   }
 }
 
-function initStarfield()
-{
+function initStarfield() {
   const canvas = document.getElementById("stars");
+  if (!canvas) return;
 
-  // 2D drawing context for the canvas
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const ctx = canvas.getContext("2d");
   let stars = [];
 
-  function resize()
-  {
-    // Match canvas size to the viewport
+  function resize() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-
-    // Number of stars scales with screen area (higher divisor = fewer stars)
-    const count = Math.floor((canvas.width * canvas.height) / 18000);
-
-    // Generate each star with a random position, radius, and twinkle rhythm
+    const count = Math.floor((canvas.width * canvas.height) / 9000);
     stars = Array.from({ length: count }, () => ({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
-      r: Math.random() * 1.2 + 0.2,         // radius between 0.2 and 1.4 px
-      phase: Math.random() * Math.PI * 2,   // random starting point in the twinkle cycle
-      speed: Math.random() * 0.015 + 0.005, // twinkle speed (radians per ms)
+      r: Math.random() * 1.2 + 0.2,
+      phase: Math.random() * Math.PI * 2,
+      speed: Math.random() * 0.015 + 0.005,
     }));
   }
 
-  function draw(time)
-  {
-    // Clear the previous frame
+  function draw(time) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    stars.forEach(star => {
-      // Oscillate opacity between 0.4 and 0.8 to create a twinkling effect
-      const opacity = 0.4 + 0.4 * Math.sin(time * star.speed + star.phase);
+    for (const star of stars) {
+      const twinkle = prefersReducedMotion ? 0.6 : 0.5 + 0.5 * Math.sin(time * star.speed + star.phase);
       ctx.beginPath();
       ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(237, 238, 245, ${opacity})`;
+      ctx.fillStyle = `rgba(237, 238, 245, ${0.15 + twinkle * 0.55})`;
       ctx.fill();
-    });
-
-    // Schedule the next frame
-    requestAnimationFrame(draw);
+    }
+    if (!prefersReducedMotion) requestAnimationFrame(draw);
   }
 
   resize();
-  window.addEventListener("resize", resize); // Regenerate stars on window resize
+  window.addEventListener("resize", resize);
   requestAnimationFrame(draw);
 }
 
