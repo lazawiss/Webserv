@@ -45,9 +45,6 @@
 
 
 
-#define BUF_SIZE 800000
-
-
 class RequestHandler {
   
 private:

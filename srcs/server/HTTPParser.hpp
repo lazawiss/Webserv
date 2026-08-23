@@ -72,8 +72,6 @@ enum HttpCode
 #include <limits>
 
 
-#define BUF_SIZE 800000
-
 typedef enum RequestParser
 {
     CONTENT_TYPE,
@@ -208,4 +206,5 @@ public:
     static bool                 containsCaseInsensitive( std::string const & haystack, std::string const & needle );
     void                        resolveConnectionType();
     static size_t               parseBodySize( std::string const & s );
+    size_t                      getEffectiveBodyLimit() const;
 };

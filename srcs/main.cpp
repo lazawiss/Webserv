@@ -28,8 +28,6 @@
 #include <ctime>
 #include <cstdio>
 
-#define BUF_SIZE 800000
-
 int parse_arguments(int argc);
 
 int parse_arguments(int argc)
