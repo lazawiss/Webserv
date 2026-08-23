@@ -9,13 +9,7 @@
 <body>
 
   <div class="hud" aria-hidden="true">
-    <div class="hud__track">
-      <span>SECTEUR : <b>NEXUS-7</b></span>
-      <span>POPULATION : <b>14,2M</b></span>
-      <span>MÉTÉO : <b>PLUIE ACIDE — 68%</b></span>
-      <span>HEURE LOCALE : <b data-hud-clock>--:--</b></span>
-      <span>NIVEAU DE SÉCURITÉ : <b>ORANGE</b></span>
-      <span>RÉSEAU NÉON : <b>STABLE</b></span>
+    <div class="hud_track">
       <span>SECTEUR : <b>NEXUS-7</b></span>
       <span>POPULATION : <b>14,2M</b></span>
       <span>MÉTÉO : <b>PLUIE ACIDE — 68%</b></span>
@@ -26,9 +20,8 @@
   </div>
 
   <nav class="nav">
-    <div class="nav__logo">VESPERA<span>.</span></div>
-    <button class="nav__toggle" aria-label="Ouvrir le menu" aria-expanded="false">MENU</button>
-    <ul class="nav__links">
+    <div class="nav_logo">VESPERA<span>.</span></div>
+    <ul class="nav_links">
       <li><a href="/vespera/index.html">Accueil</a></li>
       <li><a href="/vespera/ville.html" aria-current="page">La Ville</a></li>
       <li><a href="/vespera/brochure.html">Brochure</a></li>
@@ -37,7 +30,7 @@
   </nav>
 
   <header class="section section--tight">
-    <span class="eyebrow">// Dossier municipal</span>
+    <span class="slash">// Dossier municipal</span>
     <h1 style="font-size:clamp(2.2rem,6vw,3.6rem)">Bienvenue à Vespera</h1>
     <p style="max-width:42em">Construite il y a 47 ans sur des plateformes marines reconstruites, Vespera s'est développée à la verticale plutôt qu'à l'horizontale. On n'y demande pas où tu vis, mais à quel niveau.</p>
   </header>
@@ -47,34 +40,34 @@
       <div class="stat"><b>14,2M</b><span>Habitants</span></div>
       <div class="stat"><b>47 ans</b><span>Depuis la fondation</span></div>
       <div class="stat"><b>4</b><span>Secteurs verticaux</span></div>
-      <div class="stat"><b>11</b><span>Langues officielles</span></div>
+      <div class="stat"><b>8</b><span>Langues officielles</span></div>
     </div>
   </section>
 
   <section class="section">
-    <div class="section__head">
-      <span class="eyebrow">// Cartographie</span>
+    <div class="section--head">
+      <span class="slash">// Cartographie</span>
       <h2>Les quatre secteurs</h2>
       <p>Chaque secteur a son économie, son éclairage et ses propres règles non écrites.</p>
     </div>
     <div class="grid">
       <div class="district">
-        <span class="eyebrow">Secteur 01</span>
+        <span class="slash">Secteur 01</span>
         <h3>Nexus Corp</h3>
         <p>Le sommet financier de Vespera. Tours de verre, sièges sociaux et transactions qui ne dorment jamais. L'entrée y est filtrée par badge corporatif.</p>
       </div>
       <div class="district district--magenta">
-        <span class="eyebrow">Secteur 02</span>
+        <span class="slash">Secteur 02</span>
         <h3>Le Marché Bas</h3>
         <p>Niveau marchand à ciel fermé. Nourriture de rue, pièces détachées, informations en tout genre — tout se négocie, rien n'est étiqueté.</p>
       </div>
       <div class="district district--yellow">
-        <span class="eyebrow">Secteur 03</span>
+        <span class="slash">Secteur 03</span>
         <h3>Aurore Heights</h3>
         <p>Quartier résidentiel suspendu, dômes végétalisés et lumière filtrée en journée. Le secteur le plus calme, réservé aux longs séjours.</p>
       </div>
       <div class="district district--purple">
-        <span class="eyebrow">Secteur 04</span>
+        <span class="slash">Secteur 04</span>
         <h3>Zone Franche</h3>
         <p>Ancien port industriel reconverti. Ateliers, entrepôts et une réglementation volontairement floue. Beaucoup d'histoires y commencent.</p>
       </div>
@@ -82,8 +75,8 @@
   </section>
 
   <section class="section section--tight">
-    <div class="section__head">
-      <span class="eyebrow">// Se déplacer</span>
+    <div class="section--head">
+      <span class="slash">// Se déplacer</span>
       <h2>Transports</h2>
       <p>Trois réseaux se superposent pour couvrir les quatre secteurs sans jamais toucher le niveau marin.</p>
     </div>
@@ -102,11 +95,6 @@
       </div>
     </div>
   </section>
-
-  <footer class="footer">
-    <span>Autorité Métropolitaine de Vespera — Terminal d'accès civil v7.3</span>
-    <span>Ceci est une ville fictive, projet à but pédagogique.</span>
-  </footer>
 
   <script src="/vespera/script.js"></script>
 </body>
