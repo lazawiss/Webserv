@@ -143,10 +143,6 @@ p { color: var(--text-dim); }
   to { transform: translateX(-100%); }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .hud_track { animation: none; padding-left: 1em; }
-}
-
 /* ============================================
   Nagivation
   ============================================ */
