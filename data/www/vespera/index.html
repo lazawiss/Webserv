@@ -9,13 +9,7 @@
 <body>
 
   <div class="hud" aria-hidden="true">
-    <div class="hud__track">
-      <span>SECTEUR : <b>NEXUS-7</b></span>
-      <span>POPULATION : <b>14,2M</b></span>
-      <span>MÉTÉO : <b>PLUIE ACIDE — 68%</b></span>
-      <span>HEURE LOCALE : <b data-hud-clock>--:--</b></span>
-      <span>NIVEAU DE SÉCURITÉ : <b>ORANGE</b></span>
-      <span>RÉSEAU NÉON : <b>STABLE</b></span>
+    <div class="hud_track">
       <span>SECTEUR : <b>NEXUS-7</b></span>
       <span>POPULATION : <b>14,2M</b></span>
       <span>MÉTÉO : <b>PLUIE ACIDE — 68%</b></span>
@@ -26,9 +20,8 @@
   </div>
 
   <nav class="nav">
-    <div class="nav__logo">VESPERA<span>.</span></div>
-    <button class="nav__toggle" aria-label="Ouvrir le menu" aria-expanded="false">MENU</button>
-    <ul class="nav__links">
+    <div class="nav_logo">VESPERA<span>.</span></div>
+    <ul class="nav_links">
       <li><a href="/vespera/index.html" aria-current="page">Accueil</a></li>
       <li><a href="/vespera/ville.html">La Ville</a></li>
       <li><a href="/vespera/brochure.html">Brochure</a></li>
@@ -36,45 +29,15 @@
     </ul>
   </nav>
 
-  <header class="hero">
-    <span class="eyebrow">// Autorité Métropolitaine de Vespera</span>
-    <h1 class="glitch" data-text="VESPERA">VESPERA</h1>
-    <p class="hero__tagline">Une mégapole bâtie sur l'océan, éclairée par ses propres enseignes. Ici, la nuit ne tombe jamais — elle change juste de couleur.</p>
-    <div class="hero__actions">
+  <header class="header">
+    <span class="slash">// Autorité Métropolitaine de Vespera</span>
+    <h1 class="title" data-text="VESPERA">VESPERA</h1>
+    <p class="header_subtitle">Une mégapole bâtie sur l'océan, éclairée par ses propres enseignes. Ici, la nuit ne tombe jamais — elle change juste de couleur.</p>
+    <div class="header_buttons">
       <a class="btn btn--fill" href="/vespera/brochure.html">Demander la brochure</a>
       <a class="btn" href="/vespera/ville.html">Découvrir la ville</a>
     </div>
   </header>
-
-  <section class="section">
-    <div class="section__head">
-      <span class="eyebrow">// Aperçu du secteur</span>
-      <h2>Trois choses à savoir avant d'arriver</h2>
-      <p>Vespera ne se visite pas comme les autres villes. Voici ce qui change la donne.</p>
-    </div>
-    <div class="grid">
-      <div class="card">
-        <svg class="card__icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 21h18M5 21V9l7-5 7 5v12M9 21v-6h6v6"/></svg>
-        <h3>Quartiers verticaux</h3>
-        <p>Quatre secteurs empilés du fond marin jusqu'aux tours-nuages, chacun avec ses propres lois tacites.</p>
-      </div>
-      <div class="card">
-        <svg class="card__icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12h18M3 6h18M3 18h18"/><circle cx="18" cy="6" r="1.4" fill="currentColor" stroke="none"/><circle cx="6" cy="18" r="1.4" fill="currentColor" stroke="none"/></svg>
-        <h3>Transports suspendus</h3>
-        <p>Monorail Nexus, drones-taxis et ascenseurs urbains relient les niveaux 24 heures sur 24.</p>
-      </div>
-      <div class="card">
-        <svg class="card__icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2v6M12 16v6M2 12h6M16 12h6"/><circle cx="12" cy="12" r="3.4"/></svg>
-        <h3>Vie nocturne dense</h3>
-        <p>Marchés, concerts holographiques et courses clandestines rythment chaque secteur après 22h.</p>
-      </div>
-    </div>
-  </section>
-
-  <footer class="footer">
-    <span>Autorité Métropolitaine de Vespera — Terminal d'accès civil v7.3</span>
-    <span>Ceci est une ville fictive, projet à but pédagogique.</span>
-  </footer>
 
   <script src="/vespera/script.js"></script>
 </body>

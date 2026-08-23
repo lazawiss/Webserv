@@ -1163,6 +1163,8 @@ std::string HTTPParser::addSuffix(std::string suffix) {
     
     if (suffix  == ".jpg")
         _type = "image/jpeg";
+    if (suffix  == ".jpeg")
+        _type = "image/jpeg";
     if (suffix  == ".png")
         _type = "image/png";
     if (suffix  == ".gif")

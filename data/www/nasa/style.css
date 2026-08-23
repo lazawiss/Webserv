@@ -1,8 +1,11 @@
+/* ============================================================ */
+/* ============================================================ */
+
 :root {
-  --bg: #0a0e27;
-  --bg-deep: #060815;
-  --ink: #edeef5;
-  --ink-dim: #9aa0c3;
+  --background: #0a0e27;
+  --background-deep: #060815;
+  --white: #edeef5;
+  --light-blue: #9aa0c3;
   --gold: #f4c95d;
   --violet: #8b7fd1;
   --line: rgba(237, 238, 245, 0.12);
@@ -18,12 +21,10 @@ html { scroll-behavior: smooth; }
 
 body {
   margin: 0;
-  background: radial-gradient(ellipse at top, var(--bg) 0%, var(--bg-deep) 70%);
-  color: var(--ink);
+  background: radial-gradient(ellipse at top, var(--background) 0%, var(--background-deep) 70%);
+  color: var(--white);
   font-family: var(--font-mono);
   min-height: 100vh;
-  position: relative;
-  overflow-x: hidden;
 }
 
 #stars {
@@ -37,21 +38,22 @@ body {
   #stars { display: none; }
 }
 
-.site-header,
-main,
+/* ============================================================ */
+/* ========================== Header ========================== */
+
+.header, main,
 .site-footer {
   position: relative;
-  z-index: 1;
 }
 
-.site-header {
+.header {
   max-width: 780px;
   margin: 0 auto;
   padding: 5rem 1.5rem 2.5rem;
   text-align: left;
 }
 
-.eyebrow {
+.subtitle {
   font-family: var(--font-mono);
   font-size: 0.72rem;
   letter-spacing: 0.18em;
@@ -59,7 +61,7 @@ main,
   margin: 0 0 1.1rem;
 }
 
-.wordmark {
+.title {
   font-family: var(--font-display);
   font-weight: 600;
   font-size: clamp(2.2rem, 5vw, 3.4rem);
@@ -68,14 +70,17 @@ main,
   letter-spacing: -0.01em;
 }
 
-.subtitle {
+.description {
   font-family: var(--font-mono);
-  color: var(--ink-dim);
+  color: var(--light-blue);
   font-size: 0.95rem;
   max-width: 46ch;
   line-height: 1.6;
   margin: 0;
 }
+
+/* ============================================================ */
+/* ========================== Section ========================= */
 
 main {
   max-width: 780px;
@@ -83,60 +88,31 @@ main {
   padding: 0 1.5rem 4rem;
 }
 
-.apod-card {
+.card {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: rgba(255, 255, 255, 0.02);
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(10px);
   overflow: hidden;
 }
-
-/* ---- states ---- */
 
 .state {
   padding: 4rem 2rem;
   text-align: center;
-  color: var(--ink-dim);
+  color: var(--light-blue);
 }
 
 .hidden { display: none !important; }
 
-.pulse-dot {
-  width: 10px;
-  height: 10px;
-  margin: 0 auto 1.2rem;
-  border-radius: 50%;
-  background: var(--gold);
-  animation: pulse 1.4s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { transform: scale(0.8); opacity: 0.6; }
-  50% { transform: scale(1.15); opacity: 1; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .pulse-dot { animation: none; }
-}
-
-.error-title {
-  font-family: var(--font-display);
-  font-size: 1.4rem;
-  color: var(--ink);
-  margin: 0 0 0.5rem;
-}
-
-.error-detail {
+.state-detail {
   font-size: 0.85rem;
   margin: 0;
 }
 
-/* ---- content ---- */
-
 .media-frame {
   width: 100%;
   aspect-ratio: 16 / 10;
-  background: #000;
+  background: var(--background-deep);
   border-bottom: 1px solid var(--line);
 }
 
@@ -149,20 +125,20 @@ main {
   display: block;
 }
 
-.log {
+.information {
   padding: 1.8rem 2rem 2.4rem;
 }
 
-.log-line {
+.information-line {
   display: flex;
   gap: 0.7rem;
   align-items: baseline;
   font-size: 0.78rem;
-  color: var(--ink-dim);
+  color: var(--light-blue);
   margin: 0 0 0.4rem;
 }
 
-.log-label {
+.apod-label {
   color: var(--violet);
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -181,7 +157,7 @@ main {
   font-family: var(--font-mono);
   font-size: 0.88rem;
   line-height: 1.75;
-  color: var(--ink);
+  color: var(--white);
   opacity: 0.9;
   margin: 0 0 1.4rem;
 }
@@ -192,21 +168,24 @@ main {
   border-top: 1px solid var(--line);
 }
 
-.site-footer {
+/* ============================================================ */
+/* ========================== Footer ========================== */
+
+.footer {
   max-width: 780px;
   margin: 0 auto;
   padding: 0 1.5rem 3rem;
   font-size: 0.75rem;
-  color: var(--ink-dim);
+  color: var(--light-blue);
 }
 
-.site-footer a {
+.footer a {
   color: var(--gold);
   text-decoration: none;
   border-bottom: 1px solid rgba(244, 201, 93, 0.35);
 }
 
-.site-footer a:hover {
+.footer a:hover {
   border-bottom-color: var(--gold);
 }
 

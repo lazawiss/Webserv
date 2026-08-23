@@ -9,13 +9,7 @@
 <body>
 
   <div class="hud" aria-hidden="true">
-    <div class="hud__track">
-      <span>SECTEUR : <b>NEXUS-7</b></span>
-      <span>POPULATION : <b>14,2M</b></span>
-      <span>MÉTÉO : <b>PLUIE ACIDE — 68%</b></span>
-      <span>HEURE LOCALE : <b data-hud-clock>--:--</b></span>
-      <span>NIVEAU DE SÉCURITÉ : <b>ORANGE</b></span>
-      <span>RÉSEAU NÉON : <b>STABLE</b></span>
+    <div class="hud_track">
       <span>SECTEUR : <b>NEXUS-7</b></span>
       <span>POPULATION : <b>14,2M</b></span>
       <span>MÉTÉO : <b>PLUIE ACIDE — 68%</b></span>
@@ -26,9 +20,8 @@
   </div>
 
   <nav class="nav">
-    <div class="nav__logo">VESPERA<span>.</span></div>
-    <button class="nav__toggle" aria-label="Ouvrir le menu" aria-expanded="false">MENU</button>
-    <ul class="nav__links">
+    <div class="nav_logo">VESPERA<span>.</span></div>
+    <ul class="nav_links">
       <li><a href="/vespera/index.html">Accueil</a></li>
       <li><a href="/vespera/ville.html">La Ville</a></li>
       <li><a href="/vespera/brochure.html">Brochure</a></li>
@@ -37,19 +30,19 @@
   </nav>
 
   <header class="section section--tight">
-    <span class="eyebrow">// Agenda municipal</span>
+    <span class="slash">// Agenda municipal</span>
     <h1 style="font-size:clamp(2.2rem,6vw,3.6rem)">Ce qui s'anime à Vespera</h1>
     <p style="max-width:42em">Chaque secteur a son propre rythme après la tombée de la nuit. Voici ce qu'il ne faut pas manquer.</p>
   </header>
 
   <section class="section section--tight">
-    <div class="section__head">
-      <span class="eyebrow">// À venir</span>
+    <div class="section--head">
+      <span class="slash">// À venir</span>
       <h2>Prochains événements</h2>
     </div>
 
     <div class="event">
-      <div class="event__date"><b>14</b>NOV</div>
+      <div class="event_date"><b>14</b>NOV</div>
       <div>
         <h3>Festival des Lumières Froides</h3>
         <p>Trois nuits d'installations lumineuses sur les façades de Nexus Corp, orchestrées en direct par les artistes du secteur.</p>
@@ -58,7 +51,7 @@
     </div>
 
     <div class="event">
-      <div class="event__date"><b>Chaque</b>VENDREDI</div>
+      <div class="event_date"><b>Chaque</b>VENDREDI</div>
       <div>
         <h3>Marché Nocturne du Marché Bas</h3>
         <p>De 21h à l'aube : street food, pièces détachées et négociants itinérants envahissent les coursives basses.</p>
@@ -67,7 +60,7 @@
     </div>
 
     <div class="event">
-      <div class="event__date"><b>02</b>DÉC</div>
+      <div class="event_date"><b>02</b>DÉC</div>
       <div>
         <h3>Course de Drones Clandestine</h3>
         <p>Un tracé non officiel serpente entre les entrepôts de la Zone Franche. L'emplacement du départ ne circule que la veille.</p>
@@ -76,7 +69,7 @@
     </div>
 
     <div class="event">
-      <div class="event__date"><b>20</b>DÉC</div>
+      <div class="event_date"><b>20</b>DÉC</div>
       <div>
         <h3>Concert Holographique — Amphithéâtre Suspendu</h3>
         <p>Projection d'artistes en hologramme grandeur nature au-dessus des dômes végétalisés d'Aurore Heights.</p>
@@ -84,33 +77,6 @@
       </div>
     </div>
   </section>
-
-  <section class="section">
-    <div class="section__head">
-      <span class="eyebrow">// Sorties</span>
-      <h2>Vie nocturne recommandée</h2>
-      <p>Trois adresses tenues par des habitants de longue date, une par secteur.</p>
-    </div>
-    <div class="grid">
-      <div class="card">
-        <h3>Le Circuit</h3>
-        <p>Bar musical au sommet de Nexus Corp, vue sur les tours voisines et cocktails facturés à l'heure de marché.</p>
-      </div>
-      <div class="card">
-        <h3>Bain Statique</h3>
-        <p>Club installé dans un ancien entrepôt du Marché Bas, réputé pour ses nuits qui ne suivent aucun horaire annoncé.</p>
-      </div>
-      <div class="card">
-        <h3>Jardin Suspendu</h3>
-        <p>Lounge à ciel ouvert dans les dômes d'Aurore Heights, le seul endroit où l'on voit encore de vraies étoiles.</p>
-      </div>
-    </div>
-  </section>
-
-  <footer class="footer">
-    <span>Autorité Métropolitaine de Vespera — Terminal d'accès civil v7.3</span>
-    <span>Ceci est une ville fictive, projet à but pédagogique.</span>
-  </footer>
 
   <script src="/vespera/script.js"></script>
 </body>
