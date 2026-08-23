@@ -424,12 +424,12 @@ bool EpollLoop::do_read_fd(
             _clientResponseBuffer[fd] =
            "HTTP/1.1 502 Bad Gateway\r\n"
             "Content-Type: text/html\r\n"
-            "Content-Length: 237\r\n\r\n"
+            "Content-Length: 161\r\n\r\n"
             "<html>\r\n"
             "<head><title>502 Bad Gateway</title></head>\r\n"
             "<body>\r\n"
             "<h1>502 Bad Gateway</h1>\r\n"
-            "<p>-___- yOU TOOk thE wRoNg turN sOMEwherE -___-</p>\r\n"
+            "<p>-___-Took wrong turn somewhere -___-</p>\r\n"
             "</body>\r\n"
             "</html>\r\n\r\n";
             
@@ -439,22 +439,16 @@ bool EpollLoop::do_read_fd(
             
             return true;
         }
-
-        // stdin pipe: WE write the body into it -> watch for EPOLLOUT
         ev.events = EPOLLOUT;
         ev.data.fd = cgi->getStdinFd();
-      
         epoll_ctl(epollfd, EPOLL_CTL_ADD, cgi->getStdinFd(), &ev);
         _fdToCGI[cgi->getStdinFd()] = cgi;
 
-        // stdout pipe: WE read the script output -> watch for EPOLLIN
         ev.events = EPOLLIN;
         ev.data.fd = cgi->getStdoutFd();
         epoll_ctl(epollfd, EPOLL_CTL_ADD, cgi->getStdoutFd(), &ev);
         _fdToCGI[cgi->getStdoutFd()] = cgi;
-
-        // client fd stays OPEN and untouched: the response is sent later,
-        // when the stdout pipe hits EOF (see readingSocket)
+        
         return true;
     }
 
@@ -475,6 +469,66 @@ bool EpollLoop::do_read_fd(
     
     return true;
 
+}
+
+void EpollLoop::cleanupCGI(CGI *cgi, int epollfd, std::string const& response,
+    epoll_event &ev)
+{
+    int inFd  = cgi->getStdinFd();
+    int outFd = cgi->getStdoutFd();
+
+    if (inFd != -1)
+    {
+        epoll_ctl(epollfd, EPOLL_CTL_DEL, inFd, NULL);
+        _fdToCGI.erase(inFd);
+    }
+    if (outFd != -1)
+    {
+        epoll_ctl(epollfd, EPOLL_CTL_DEL, outFd, NULL);
+        _fdToCGI.erase(outFd);
+    }
+
+    int clientFd = cgi->getClientFd();
+    _clientResponseBuffer[clientFd] += response;
+
+    ev.events  = EPOLLOUT;
+    ev.data.fd = clientFd;
+    epoll_ctl(epollfd, EPOLL_CTL_MOD, clientFd, &ev);
+
+    delete cgi;
+}
+
+void EpollLoop::checkCGITimeout(int epollfd, epoll_event &ev)
+{
+    if (_fdToCGI.empty())
+        return;
+
+    time_t now = time(NULL);
+    std::vector<CGI*> expired;
+    for (std::map<int, CGI*>::iterator it = _fdToCGI.begin(); it != _fdToCGI.end(); ++it)
+    {
+        CGI *cgi = it->second;
+        if (cgi->hasTimedOut(now) == false)
+            continue;
+        if (std::find(expired.begin(), expired.end(), cgi) == expired.end())
+            expired.push_back(cgi);
+    }
+
+    for (size_t i = 0; i < expired.size(); ++i)
+    {
+        LOG_ERROR("CGI: script exceeded timeout, killing it");
+        cleanupCGI(expired[i], epollfd,
+            "HTTP/1.1 504 Gateway Timeout\r\n"
+            "Content-Type: text/html\r\n"
+            "Content-Length: 160\r\n\r\n"
+            "<html>\r\n"
+            "<head><title>504 Gateway Timeout </title></head>\r\n"
+            "<body>\r\n"
+            "<h1>504 Gateway Timeout</h1>\r\n"
+            "<p>-___-Script took too long -___-</p>\r\n"
+            "</body>\r\n"
+            "</html>\r\n\r\n", ev);
+    }
 }
 
 bool EpollLoop::do_write_fd( int fd, int epollfd, epoll_event &ev ) {
@@ -626,47 +680,56 @@ bool EpollLoop::readingSocket(
                 {
                     CGI *cgi = it->second;
                     int activeFd = events[n].data.fd;
-                    int i;
                     if (activeFd == cgi->getStdinFd())
                     {
-                        i = cgi->onWritable();
-                        if (i == SUCCESS)
+                        Result w = cgi->onWritable();
+                        if (w == SUCCESS)
                         {
                             epoll_ctl(epollfd, EPOLL_CTL_DEL, activeFd, NULL);
-                            _fdToCGI.erase(it);
+                            _fdToCGI.erase(activeFd);
                             cgi->closeStdin();
                         }
-                        else if (i == ERR)
+                        else if (w == ERR)
                         {
-                            epoll_ctl(epollfd, EPOLL_CTL_DEL, activeFd, NULL);
-                            _fdToCGI.erase(it);
-                            cgi->closeStdin();
-                            // send ERROR 500 
+                            LOG_ERROR("CGI: write failed; couldn't send request body\n");
+                            cleanupCGI(cgi, epollfd,
+                                "HTTP/1.1 502 Bad Gateway\r\n"
+                                "Content-Type: text/html\r\n"
+                                "Content-Length: 161\r\n\r\n"
+                                "<html>\r\n"
+                                "<head><title>502 Bad Gateway</title></head>\r\n"
+                                "<body>\r\n"
+                                "<h1>502 Bad Gateway</h1>\r\n"
+                                "<p>-___-Took wrong turn somewhere -___-</p>\r\n"
+                                "</body>\r\n"
+                                "</html>\r\n\r\n", ev);
                         }
-                    
-                    } 
-                    else 
-                    {
-                        // collecting the script's output stdout pipe until EOF
-                        if (cgi->onReadable())
-                        {
-                            // EOF: script finished -> reap child, respond
-                            epoll_ctl(epollfd, EPOLL_CTL_DEL, activeFd, NULL);
-                            _fdToCGI.erase(it);
-                            cgi->closeStdout();
-
-                            int clientFd = cgi->getClientFd();
-                            _clientResponseBuffer[clientFd]
-                                += cgi->buildResponse();
-                            ev.events  = EPOLLOUT;
-                            ev.data.fd = clientFd;
-                            epoll_ctl(epollfd, EPOLL_CTL_MOD,
-                                clientFd, &ev);
-                            delete cgi;
-                        }
+                        //hold
                     }
-                
-                } 
+                    else
+                    {
+                        Result r = cgi->onReadable();
+                        if (r == SUCCESS)
+                            cleanupCGI(cgi, epollfd, cgi->buildResponse(), ev);
+                        else if (r == ERR)
+                        {
+                            LOG_ERROR("CGI: read from script failed; couldn't respond to client\n");
+                            cleanupCGI(cgi, epollfd,
+                                "HTTP/1.1 502 Bad Gateway\r\n"
+                                "Content-Type: text/html\r\n"
+                                "Content-Length: 161\r\n\r\n"
+                                "<html>\r\n"
+                                "<head><title>502 Bad Gateway</title></head>\r\n"
+                                "<body>\r\n"
+                                "<h1>502 Bad Gateway</h1>\r\n"
+                                "<p>-___-Took wrong turn somewhere -___-</p>\r\n"
+                                "</body>\r\n"
+                                "</html>\r\n\r\n", ev);
+                        }
+                        //hold
+                    }
+
+                }
                 else 
                 {
                     
@@ -688,6 +751,7 @@ bool EpollLoop::readingSocket(
                 }
             }
         }
+        checkCGITimeout(epollfd, ev);
     }
 
     close(epollfd);

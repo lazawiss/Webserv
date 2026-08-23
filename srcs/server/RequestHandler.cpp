@@ -325,7 +325,7 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
     // ------------ Debug ------------
     LOG_DEBUG("Building response header, code: " + code);
 
-    std::string codeName[14] =
+    std::string codeName[15] =
     {
         "301",
         "302",
@@ -340,11 +340,12 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
         "201",
         "204",
         "500",
-        "502"
+        "502",
+        "504",
     };
     
     int index = -1;
-    for (int i = 0 ;i < 14; i++){
+    for (int i = 0 ;i < 15; i++){
         
         if (codeName[i] == code){
             index = i;
@@ -421,7 +422,11 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
         break;
 
         case(13):
-        str = "502 BADGATEWAY";
+        str = "502 BAD GATEWAY";
+        break;
+
+        case(14):
+        str = "504 GATEWAY TIMEOUT";
         break;
 
         default:
