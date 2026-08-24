@@ -34,11 +34,10 @@ SignalManager::~SignalManager(){
 }
 
 SignalManager & SignalManager::operator=( SignalManager const & other ){
-    
-    if (this != &other )
-        *this = other;
 
+    (void)other;
     return *this;
+
 }
         
 /*
@@ -72,8 +71,6 @@ static void sigHandlerFork(int _sig){
 
         Server::_quit = 0;
     }
-    
-    // exit(_sig);
 }
 
 void    SignalManager::setupSignalsFork(){
