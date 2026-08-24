@@ -30,17 +30,6 @@
 
 int parse_arguments(int argc);
 
-int parse_arguments(int argc)
-{
-    if (argc != 2)
-    {
-        LOG_ERROR("Invalid number of arguments!");
-        LOG_ERROR("Usage: ./webserv ./data/config/<config_file>");
-
-        return -1;
-    }
-    return 1;
-}
 int main(int argc, char **argv)
 {
     int             result;
@@ -65,4 +54,16 @@ int main(int argc, char **argv)
     }
   
     return 0;
+}
+
+int parse_arguments(int argc)
+{
+    if (argc != 2)
+    {
+        LOG_ERROR("Invalid number of arguments!");
+        LOG_ERROR("Usage: ./webserv ./data/config/<config_file>");
+
+        return -1;
+    }
+    return 1;
 }
