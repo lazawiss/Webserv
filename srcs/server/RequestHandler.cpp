@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/23 21:33:12 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/24 15:16:57 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -369,7 +369,6 @@ bool    RequestHandler::answerFile( std::string const & file ){
 
     struct stat sb;
     
-    // if (stat(file.c_str(), &sb) == -1)
     if (stat(file.c_str(), &sb) == -1 || !S_ISREG(sb.st_mode))
     {
         LOG_ERROR("stat failed: " + file + " - " + strerror(errno));

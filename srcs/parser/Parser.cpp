@@ -443,11 +443,11 @@ void Parser::parseDirectiveErrorPage(AConfig &ref)
 
     std::string path = "data" + next().value;
    
-    struct stat info;
-    if (stat(path.c_str(), &info) != 0)
-        throw std::runtime_error("Error path does not exist: '" + path + "'");
-    if (!S_ISREG(info.st_mode))
-        throw std::runtime_error("Error path isn't a file: '" + path + "'");
+    // struct stat info;
+    // if (stat(path.c_str(), &info) != 0)
+    //     throw std::runtime_error("Error path does not exist: '" + path + "'");
+    // if (!S_ISREG(info.st_mode))
+    //     throw std::runtime_error("Error path isn't a file: '" + path + "'");
 
     std::ostringstream oss;
     oss << code;
