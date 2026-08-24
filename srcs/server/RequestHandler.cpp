@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/24 15:16:57 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/24 15:29:07 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -460,7 +460,7 @@ bool    RequestHandler::uploadFile( std::string const & filename, std::string co
 
     struct stat sb;
 
-    if (stat(_pathToFile.c_str(), &sb) == -1){
+    if (stat(_pathToFile.c_str(), &sb) == -1 || !S_ISREG(sb.st_mode)){
         LOG_ERROR("stat failed for uploaded file: " + std::string(strerror(errno)));
         return false;
     }
@@ -482,7 +482,7 @@ bool    RequestHandler::removeFile( std::string const & filename ){
 
     struct stat sb;
 
-    if (stat(_pathToFile.c_str(), &sb) == -1){
+    if (stat(_pathToFile.c_str(), &sb) == -1 || !S_ISREG(sb.st_mode)){
         LOG_ERROR("stat failed for file to delete: " + std::string(strerror(errno)));
         return false;
     }
