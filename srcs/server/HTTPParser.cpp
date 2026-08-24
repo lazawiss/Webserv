@@ -846,11 +846,8 @@ int HTTPParser::checkContentLength( std::string const & value ) {
         return SERVER_ERROR;
     }
 
-    size_t limit = parseBodySize(_serverConfig.getClientMaxBodySize());
-    std::cout << "limit: " << limit << std::endl;
-    if (limit == 0)
-        limit = BUF_SIZE;
- 
+    size_t limit = getEffectiveBodyLimit();
+
     if (len > limit) {
         LOG_ERROR("Content-Length exceeds limit");
 
@@ -862,22 +859,32 @@ int HTTPParser::checkContentLength( std::string const & value ) {
     }
 
     _content_length = len;
+
     std::ostringstream oss;
     oss << _content_length;
-    // ------------ Debug ------------
     LOG_DEBUG("Content-Length: " + oss.str());
-    if (_content_length > 110000){
-        
-        LOG_ERROR("Content-Length exceeds limit");
 
-        _errors = true;
-        _code   = HTTP_413;
-        _type   = "text/html";
-
-        return SERVER_ERROR;
-    }
-    
     return SERVER_OK;
+}
+
+size_t HTTPParser::getEffectiveBodyLimit() const
+{
+    const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
+    int bestIdx = matchLocation(locs, _requesttarget);
+
+    size_t limit;
+
+    if (bestIdx >= 0 && !locs[bestIdx].getClientMaxBodySize().empty())
+        limit = parseBodySize(locs[bestIdx].getClientMaxBodySize());
+    else if (!_serverConfig.getClientMaxBodySize().empty())
+        limit = parseBodySize(_serverConfig.getClientMaxBodySize());
+    else
+        limit = parseBodySize("1M");
+
+    if (limit > BUF_SIZE)
+        limit = BUF_SIZE;
+
+    return limit;
 }
 
 size_t HTTPParser::parseBodySize( std::string const & s ) {

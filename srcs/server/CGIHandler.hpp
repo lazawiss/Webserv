@@ -18,6 +18,8 @@
 #include <unistd.h>
 #include <sys/types.h>
 
+#define CGI_TIMEOUT 10
+
 class RequestHandler;
 class ListenerManager;
 
@@ -36,7 +38,6 @@ enum Result
     SUCCESS,
 };
 
-
 class CGI
 {
 public:
@@ -44,8 +45,7 @@ public:
     ~CGI();
 
     bool        start();
-    // both return true when their side is finished:
-    // onWritable -> whole body written / onReadable -> EOF (script done)
+
     // bool        onWritable();
     Result      onWritable();
     Result      onReadable();
@@ -58,6 +58,8 @@ public:
     int         getClientFd() const;
     int         getStdinFd() const;
     int         getStdoutFd() const;
+
+    bool        hasTimedOut(time_t now) const;
 
 private:
     // a CGI owns a pid and two pipes: copying would double-close them so moved into private
@@ -74,6 +76,7 @@ private:
     int                         _stdout_pipe[2]; // child writes stdout ->[1]  [0]-> parent reads
 
     size_t                      _bytesWritten;   // how much of _body was sent so far
+    time_t                      _startTime;
     std::string                 _output;
 
     std::string                 _scriptFilename;

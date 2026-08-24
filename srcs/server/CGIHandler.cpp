@@ -32,6 +32,7 @@ CGI::CGI(RequestHandler const &req, ListenerManager const &listen, int client_fd
     _pid(-1),
     _client_fd(client_fd),
     _bytesWritten(0),
+    _startTime(0),
     _scriptFilename(req.getFilename()),
     _fullPath(req.getPath()),
     _pathInfo(req.getPathInfo()),
@@ -62,6 +63,13 @@ CGI::~CGI()
         kill(_pid, SIGKILL);
         waitpid(_pid, NULL, 0);
     }
+}
+
+bool CGI::hasTimedOut(time_t now) const
+{
+    if (_startTime == 0)
+        return false;
+    return (now - _startTime) >= CGI_TIMEOUT;
 }
 
 /*
@@ -111,7 +119,7 @@ void CGI::buildEnv()
     _env.push_back("SERVER_PORT=" + _serverPort);
     _env.push_back("REDIRECT_STATUS=200"); 
 
-    if (_method == "POST")
+    if (_method == "POST") 
     {
         _env.push_back("CONTENT_TYPE=" + _contentType);
         _env.push_back("CONTENT_LENGTH=" + _contentLength);
@@ -163,13 +171,8 @@ bool CGI::start()
 
     if (_pid == 0)
     {
-        // CHILD: becomes script, never returns - just exec
         dup2(_stdin_pipe[0], STDIN_FILENO);    // body being read-> script's stdin
         dup2(_stdout_pipe[1], STDOUT_FILENO);  // script's stdout -> pipe
-        // close ALL pipe ends: the dup2 copies stay open. If we kept
-        // _stdin_pipe[1] open here, the script would never see EOF on stdin.
-        // Because kernel will look for ANY write end of this pipe - so even if parent
-        // closed, need to close child or else child read() blocks forever
         close(_stdin_pipe[0]);
         close(_stdin_pipe[1]);
         close(_stdout_pipe[0]);
@@ -187,7 +190,7 @@ bool CGI::start()
         std::exit(1);
     }
 
-    //  PARENT : keep only the ends parents use ----
+    _startTime = time(NULL); 
     close(_stdin_pipe[0]); // child's stdin read end
     _stdin_pipe[0] = -1;
     close(_stdout_pipe[1]); // child's stdout write end
