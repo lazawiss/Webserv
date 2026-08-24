@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/24 15:37:08 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/24 16:20:52 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -510,7 +510,7 @@ void EpollLoop::checkCGITimeout(int epollfd, epoll_event &ev)
         cleanupCGI(expired[i], epollfd,
             "HTTP/1.1 504 Gateway Timeout\r\n"
             "Content-Type: text/html\r\n"
-            "Content-Length: 160\r\n\r\n"
+            "Content-Length: 235\r\n\r\n"
             "<html>\r\n"
             "<head><title>504 Gateway Timeout </title></head>\r\n"
             "<body>\r\n"
