@@ -20,7 +20,7 @@ server {
 
     location / {
         root        data/www/html;
-        //index       index2.html index.html;
+        index       index2.html index.html;
         methods     GET;
         autoindex   on;
     }
@@ -29,6 +29,7 @@ server {
         root            data/cgi-bin;
         methods         POST;
         cgi_extension   .py  /usr/bin/python3;
+        cgi_extension   .php /usr/bin/php-cgi;
         index           index.py;
     }
 
