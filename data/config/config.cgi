@@ -11,3 +11,4 @@ server {
     cgi_extension   .php /usr/bin/php-cgi;
     }
 }
+

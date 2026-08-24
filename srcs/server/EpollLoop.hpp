@@ -84,6 +84,8 @@ public:
     bool        do_write_fd( int fd, int epollfd, epoll_event &ev );
 
     void        cleanupClient( int fd, int epollfd );
+    void        cleanupCGI(CGI *cgi, int epollfd, std::string const& response, epoll_event &ev);
+    void        checkCGITimeout(int epollfd, epoll_event &ev);
     
     // bool        do_use_fd( int fd, std::vector<ListenerManager*> const & listeners, const GlobalConfig &config, int epollfd , epoll_event& ev);
     bool        readingSocket( std::vector<ListenerManager*> const & listeners, const GlobalConfig &config );
