@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   EpollLoop.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: leazannis <leazannis@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/24 16:20:52 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/24 23:44:30 by leazannis        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -311,7 +311,7 @@ bool EpollLoop::do_read_fd(
             "HTTP/1.1 400 Bad Request\r\n"
             "Content-Type: text/html\r\n"
             "Content-Length: 0\r\n\r\n";
-        ev.events = EPOLLOUT;
+        //ev.events = EPOLLOUT;
         ev.data.fd = fd;
         epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, NULL);
         // cleanupClient(fd, epollfd);
@@ -322,7 +322,7 @@ bool EpollLoop::do_read_fd(
             "HTTP/1.1 411 Length Required\r\n"
             "Content-Type: text/html\r\n"
             "Content-Length: 0\r\n\r\n";
-        ev.events = EPOLLOUT;
+        //ev.events = EPOLLOUT;
         ev.data.fd = fd;
         epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &ev);
         return true;
@@ -332,7 +332,7 @@ bool EpollLoop::do_read_fd(
             "HTTP/1.1 413 Content Too Large\r\n"
             "Content-Type: text/html\r\n"
             "Content-Length: 0\r\n\r\n";
-        ev.events = EPOLLOUT;
+        //ev.events = EPOLLOUT;
         ev.data.fd = fd;
         epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &ev);
         return true;
@@ -399,7 +399,7 @@ bool EpollLoop::do_read_fd(
         "</body>\r\n"
         "</html>\r\n\r\n";
         
-        ev.events = EPOLLOUT;
+        //ev.events = EPOLLOUT;
         ev.data.fd = fd;
         epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &ev);
         
@@ -423,18 +423,18 @@ bool EpollLoop::do_read_fd(
             "</body>\r\n"
             "</html>\r\n\r\n";
             
-            ev.events = EPOLLOUT;
+            //ev.events = EPOLLOUT;
             ev.data.fd = fd;
             epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &ev);
             
             return true;
         }
-        ev.events = EPOLLOUT;
+        //ev.events = EPOLLOUT;
         ev.data.fd = cgi->getStdinFd();
         epoll_ctl(epollfd, EPOLL_CTL_ADD, cgi->getStdinFd(), &ev);
         _fdToCGI[cgi->getStdinFd()] = cgi;
 
-        ev.events = EPOLLIN;
+        //ev.events = EPOLLIN;
         ev.data.fd = cgi->getStdoutFd();
         epoll_ctl(epollfd, EPOLL_CTL_ADD, cgi->getStdoutFd(), &ev);
         _fdToCGI[cgi->getStdoutFd()] = cgi;
@@ -452,7 +452,7 @@ bool EpollLoop::do_read_fd(
         requestHandler.getBuffer().c_str(),
         requestHandler.getNReadIndex());
 
-    ev.events = EPOLLOUT;
+    //ev.events = EPOLLOUT;
 
     ev.data.fd = fd;
     epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &ev);
@@ -481,7 +481,7 @@ void EpollLoop::cleanupCGI(CGI *cgi, int epollfd, std::string const& response,
     int clientFd = cgi->getClientFd();
     _clientResponseBuffer[clientFd] += response;
 
-    ev.events  = EPOLLOUT;
+    //ev.events  = EPOLLOUT;
     ev.data.fd = clientFd;
     epoll_ctl(epollfd, EPOLL_CTL_MOD, clientFd, &ev);
 
@@ -546,7 +546,7 @@ bool EpollLoop::do_write_fd( int fd, int epollfd, epoll_event &ev ) {
     if (headerSent < static_cast<ssize_t>(response.size()))
     {
         response = response.substr(headerSent);
-        ev.events = EPOLLOUT;
+        //ev.events = EPOLLOUT;
 
         ev.data.fd = fd;
         epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &ev);
@@ -582,7 +582,7 @@ bool EpollLoop::readingSocket(
 
     // register all listener fds in the kernel epoll table
     // EPOLLIN = notify when a client wants to connect
-    ev.events = EPOLLIN;
+    ev.events = EPOLLIN | EPOLLOUT;
     for (size_t i = 0; i < listeners.size(); i++)
     {
         ev.data.fd = listeners[i]->getSockfd();
@@ -649,7 +649,7 @@ bool EpollLoop::readingSocket(
                 }
                 // add client fd to the kernel epoll table
                 // EPOLLIN only because new client have nothing to write yet
-                ev.events = EPOLLIN;
+                ev.events = EPOLLIN | EPOLLOUT;
 
                 ev.data.fd = clientfd;
                 if (epoll_ctl(epollfd, EPOLL_CTL_ADD, clientfd, &ev) == -1)

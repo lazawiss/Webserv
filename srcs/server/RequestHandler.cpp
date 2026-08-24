@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestHandler.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: leazannis <leazannis@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/24 18:00:05 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/24 22:54:40 by leazannis        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -891,7 +891,7 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         if (HTTPParser.getCode() == HTTP_AUTOINDEX)
         {
             std::string path = HTTPParser.getPath();
-            17:55:08.238 [Error]   Client closed connection
+           
             _body = generateAutoindex(path, HTTPParser.getRequestTarget());
             if (_body.empty()) {
                 HTTPParser.setError(true);
@@ -915,7 +915,7 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     if (status == -1)
     {
         LOG_ERROR("AutoIndex is off and Index does not exist.");
-        sendError(HTTPParser, HTTPParser.getCode());17:55:08.238 [Error]   Client closed connection
+        sendError(HTTPParser, HTTPParser.getCode());
         if (_alterError == false)
             buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");
         return true;
@@ -960,7 +960,7 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
                     sendError(HTTPParser, HTTPParser.setCode(HTTP_404));
                 else 
                     sendError(HTTPParser, HTTPParser.setCode(HTTP_500));
-            }17:55:08.238 [Error]   Client closed connection
+            }
 
         } else {
 
@@ -976,7 +976,7 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         }
 
     } 
-    else if (HTTPParser.getMethod() == "POST") {17:55:08.238 [Error]   Client closed connection
+    else if (HTTPParser.getMethod() == "POST") {
 
         std::string content = HTTPParser.getFileBuf();
         if (content.empty())
@@ -988,7 +988,7 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
             HTTPParser.setCode(HTTP_201);
         }
     } 
-17:55:08.238 [Error]   Client closed connection
+
     else if (HTTPParser.getType() == "text/html"
         || HTTPParser.getType() == "text/css"
         || HTTPParser.getType() == "text/javascript"

@@ -75,7 +75,7 @@ server {
         autoindex   off;
     }
 
-    llocation /cgi-bin/python {
+    location /cgi-bin/python {
         root            data/cgi-bin;
         methods         POST;
         cgi_extension   .py  /usr/bin/python3;
@@ -109,14 +109,19 @@ Une fois lancé, le serveur écoute sur les adresses/ports définis dans la conf
 http://localhost:8080
 ````
 
-
+(ouvrir dans un second terminal)
 - avec `curl` :
 
 ```bash
 curl -v http://127.0.0.1:8080/
 ```
 
-- avec un outil de stress test (ex : `siege`) pour vérifier la stabilité du serveur sous charge.
+- avec telnet :
+telnet localhost 8080
+
+- avec un outil de stress test (ex : `siege`) pour vérifier la stabilité du serveur sous charge :
+ siege -c 10 -t 1M http://127.0.0.1:8080/
+
 
 ## Architecture
 
@@ -128,7 +133,7 @@ Lexer / Parser      →  lit le fichier de config  →  GlobalConfig / ServerCon
 Server
 ├── SignalManager       gère SIGINT / SIGQUIT
 ├── ListenerManager     sockets d'écoute (un par `listen`)
-├── EpollLoop           boucle principale (epoll)
+├── EpollLoop           boucle principale (epoll) : reçoit la requête du client et envoie une réponse
 │   ├── HTTPParser      parse la requête brute
 │   ├── RequestHandler  construit la réponse
 │   └── CGIHandler      exécute les scripts Python / PHP
