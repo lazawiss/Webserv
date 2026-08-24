@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestHandler.hpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: leazannis <leazannis@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:00:06 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/19 11:41:28 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/20 16:11:59 by leazannis        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,6 +93,7 @@ public:
     std::string         getFile( std::string const & code, bool const & error );
     std::string         getFileImage( std::string const & code);
     std::string         getFileUpload( std::string const & code);
+    
     std::string         getPath() const;
     std::string         getPathInfo() const;
     std::string         getScriptName() const;

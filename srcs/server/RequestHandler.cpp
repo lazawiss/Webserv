@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestHandler.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
+/*   By: leazannis <leazannis@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/19 15:44:39 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/22 21:30:15 by leazannis        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -184,93 +184,6 @@ std::string RequestHandler::getMethod() const
 ** ============================================================================
 */
 
-// bool RequestHandler::resolveRoot(const ServerConfig &cfg, HTTPParser HTTPParser)
-// {
-//     const std::vector<LocationConfig> &locs = cfg.getLocations();
-//     std::string root;
-//     std::string uri = HTTPParser.getRequestTarget();
-
-//     LOG_INFO(COLOR_PINK + std::string("URI: ") + uri + COLOR_RESET);
-
-//     char const *lastSlash = strrchr(uri.c_str(), '/');
-//     if (!lastSlash){
-        
-//         HTTPParser.setError(true);
-//         HTTPParser.setCode(HTTP_400);
-//         HTTPParser.setType("text/html");
-        
-//         return false;
-//     }
-//     LOG_INFO(COLOR_PINK + std::string("lasttSlash: ") + lastSlash + COLOR_RESET);
-    
-//     int len = strlen(lastSlash);
-//     std::cout << "len: " << len << std::endl;
-   
-//     int urilen = uri.size(); 
-//     std::cout << "urilen: " << urilen << std::endl;
-    
-//     std::string newSlash = uri.substr(0, urilen - len);
-//     LOG_INFO(COLOR_PINK + std::string("newSlash : ") + newSlash  + COLOR_RESET);
-
-    
-//     for (size_t i = 0; i < locs.size(); ++i)
-//     {
-//         const std::string &path = locs[i].getPath();
-//         LOG_INFO(COLOR_CYAN + std::string("path: ") + path + COLOR_RESET);
-      
-//         if (uri.find(path) == 0 )
-//         {
-//             // pathLen = path.size();
-//             root = locs[i].getRoot();
-//             LOG_INFO(COLOR_CYAN + std::string("root: ") + root + COLOR_RESET);
-
-//             char const *lastSlashRoot = strrchr(root.c_str(), '/');
-//             if (!lastSlashRoot){
-//             LOG_INFO(COLOR_RED + std::string("NO lastSlashRoot: ") + COLOR_RESET);
-                
-//                 HTTPParser.setError(true);
-//                 HTTPParser.setCode(HTTP_400);
-//                 HTTPParser.setType("text/html");
-//                 return false;
-//             }
-        
-//             LOG_INFO(COLOR_PINK + std::string("lastSlashRoot: ") + lastSlashRoot + COLOR_RESET);
-
-//             if (newSlash.compare(lastSlashRoot) == 0)
-//             {
-//                 std::cout << "C EST UN MATCH" << std::endl;
-//                 _root = locs[i].getRoot();
-//                 break;
-//             }
-//         }
-//     }
-
-    
-//     LOG_INFO(COLOR_PINK + std::string("ROOT: ") + _root + COLOR_RESET);
-
-//     // MARQUE
-//     if (_root.empty())
-//     {
-//         // root = bestLen->getRoot();
-//         _root = _fullPath;
-//         LOG_INFO(COLOR_CYAN + std::string("ROOT (buildFullPath(1)): ") + _root + COLOR_RESET);
-//     }
-
-//     std::string filename = std::string(lastSlash,len);
-//     if (filename[0] == '/'){
-//         filename.erase(filename.begin());
-//         LOG_INFO(COLOR_PINK + std::string("filename after match: ") + filename + COLOR_RESET);
-        
-//         HTTPParser.setFileName(filename);
-        
-//         LOG_INFO(COLOR_CYAN + std::string("_filename after match: ") +  HTTPParser.getFileName() + COLOR_RESET);
-//     }
-//         LOG_INFO(COLOR_CYAN + std::string("_filename after match2: ") +  HTTPParser.getFileName() + COLOR_RESET);
-
-//     return true;
-
-// }
-
 std::string RequestHandler::getFile( std::string const & code, bool const & error ){
 
     std::string file;
@@ -283,13 +196,10 @@ std::string RequestHandler::getFile( std::string const & code, bool const & erro
     }
     else {
         
-        LOG_INFO(COLOR_PINK + std::string("filename getFile: ") + code + COLOR_RESET);
-        
         file = _root;
         file += "/";
         file += code;
 
-        std::cout << "FULL PATH FROM get FILE " << code << std::endl;
     }
 
     // ------------ Debug ------------
@@ -300,7 +210,7 @@ std::string RequestHandler::getFile( std::string const & code, bool const & erro
 
 std::string RequestHandler::getFileImage( std::string const & code){
     
-    std::string file = "data/www/images";
+    std::string file = _root;
     file += "/";
     file += code;
     // ------------ Debug ------------
@@ -459,7 +369,7 @@ bool    RequestHandler::answerFile( std::string const & file ){
 
     struct stat sb;
     
-    if (stat(file.c_str(), &sb) == -1)
+    if (stat(file.c_str(), &sb) == -1 && S_ISREG(sb.st_mode))
     {
         LOG_ERROR("stat failed: " + file + " - " + strerror(errno));
         return false;
@@ -482,8 +392,12 @@ bool    RequestHandler::answerFile( std::string const & file ){
     }
     _n_read_index = read(indexfd, _buffer, BUF_SIZE);
     close(indexfd);
-    if (_n_read_index == -1 || _n_read_index > BUF_SIZE || _n_read_index == 0)
+    std::ostringstream oss; oss << _n_read_index;
+    if (_n_read_index == -1 || _n_read_index > BUF_SIZE || _n_read_index == 0){
+        
+        LOG_ERROR("Failed to read file: " + oss.str() + " - " + strerror(errno));
         return false;
+    }
 
     return true;
 
@@ -583,46 +497,63 @@ bool    RequestHandler::removeFile( std::string const & filename ){
 
 std::string RequestHandler::generateAutoindex(const std::string &fullPath, const std::string &requestTarget)
 {
-    
     DIR *dir = opendir(fullPath.c_str());
     if (dir == NULL)
         return ("");
-    // and then after should be 403? or 500, is it an error unexpected though?
+        
     std::string html;
     html += "<!DOCTYPE html>\n<html>\n<head><title>Index of ";
-    html+= requestTarget; // or requestTarget - is it same thing here?
+    html+= requestTarget;
     html += "</title></head>\n<body>\n<h1>Index of ";
     html += requestTarget;
     html += "</h1>\n<hr>\n<ul>\n";
 
-    // format of directory entries, useful to grab all the files that are existing, girl
+    // format of directory entries, useful to grab all the files that are existing
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL)
     {
         std::string name = entry->d_name;
+
         if (name == ".")
             continue;
+        
         std::string entryPath = fullPath;  // check entry a dir
+ 
+        char const *lastSlash = strrchr(entryPath.c_str(), '/');
+        if (!lastSlash){
+            return "";
+        }
+        std::string dir = std::string(lastSlash, strlen(lastSlash));
+
         if (entryPath[entryPath.size() - 1] != '/')
             entryPath += "/";
         entryPath += name;
-        
+
         struct stat entry_stat;
         bool isDir = (stat(entryPath.c_str(), &entry_stat) == 0 
             && S_ISDIR(entry_stat.st_mode));
+
         html = html + "<li><a href=\"";
-        html += name;
-        if (isDir)
+        if (isDir){
+            html += name;
+        }
+        else{
+            
+            html += dir;
             html += "/"; // this = trailing slash on directory
+            html += name;
+        }
         html += "\">";
         html += name;
         if (isDir)
             html += "/";
         html += "</a></li>\n";
     }
+    
     closedir(dir);
 
     html += "</ul>\n<hr>\n</body>\n</html>\n";
+    
     return html;
 }
 
@@ -683,9 +614,11 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         HTTPParser.setType("text/html"); 
         return false;
     }
-
-    _root = locs[bestIdx].getRoot();
     
+    _root = locs[bestIdx].getRoot();
+    if (_root.empty())
+        _root = HTTPParser.getPath();
+        
     if (HTTPParser.isCGI()) 
     {
         if (HTTPParser.validateCGIRequest() == false)
@@ -729,14 +662,15 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), HTTPParser.getType());
         return true;
     }
+    
     int status = HTTPParser.findAutoIndex(locs, bestIdx);
     if (status == 2)
     {
         if (HTTPParser.getCode() == HTTP_AUTOINDEX)
         {
-            // HTTPParser.getPath() is the resolved on-disk directory (root + URI).
-            _body = generateAutoindex(HTTPParser.getPath(),
-            HTTPParser.getRequestTarget());
+            std::string path = HTTPParser.getPath();
+            
+            _body = generateAutoindex(path, HTTPParser.getRequestTarget());
             if (_body.empty()) {
                 HTTPParser.setError(true);
                 HTTPParser.setCode(HTTP_403); // if real dir didn't open
@@ -774,23 +708,9 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         }
     }
     
-    // if (_root.empty()){
-        
-    //     std::cout << "ROOT EMPTY" << std::endl;
-    // if (HTTPParser.getIsIndex() == false &&  resolveRoot(_serverConfig, HTTPParser) == false){
-    //     LOG_INFO(COLOR_RED + std::string("ERROR") + COLOR_RESET);
-                
-    //     LOG_ERROR("resolveRoot() failed");
-    //     return false;
-    // }
-    
-    LOG_INFO(COLOR_PINK + std::string("filename after resolve(): ") + HTTPParser.getFileName() + COLOR_RESET);
-
     if (HTTPParser.getIsIndex() == false)
         _root = HTTPParser.getHttpRoot();
 
-    LOG_INFO(COLOR_CYAN + std::string("filename after resolve(): ") + _root + COLOR_RESET);
-    
     bool rangeHandled = false;
 
     if (HTTPParser.getMethod() == "DELETE")
@@ -835,7 +755,6 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         else {
 
             HTTPParser.setCode(HTTP_201);
-            // TODO: set _content_type from HTTPParser.getType() if needed
         }
     } 
 
@@ -844,20 +763,18 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         || HTTPParser.getType() == "text/javascript"
         || HTTPParser.getType() == "application/javascript") 
     {
-        
-      
         std::string file = HTTPParser.getError()
             ? getFile(HTTPParser::httpCodeToString(HTTPParser.getCode()), true)
             : getFile(HTTPParser.getFileName(), false);
 
-            if (answerFile(file) == false){
-                if (errno == EACCES)
-                    sendError(HTTPParser, HTTPParser.setCode(HTTP_403));
-                else if (errno == ENOENT)
-                    sendError(HTTPParser, HTTPParser.setCode(HTTP_404));
-                else 
-                    sendError(HTTPParser, HTTPParser.setCode(HTTP_500));
-            }
+        if (answerFile(file) == false){
+            if (errno == EACCES)
+                sendError(HTTPParser, HTTPParser.setCode(HTTP_403));
+            else if (errno == ENOENT)
+                sendError(HTTPParser, HTTPParser.setCode(HTTP_404));
+            else 
+                sendError(HTTPParser, HTTPParser.setCode(HTTP_500));
+        }
             
     } 
     else if (HTTPParser.getType() == "text/plain") 
@@ -876,14 +793,16 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
 
     } 
     else if (HTTPParser.getType() == "image/jpeg"
+        || HTTPParser.getType() == "image/jpg"
         || HTTPParser.getType() == "image/png"
         || HTTPParser.getType() == "image/gif"
         || HTTPParser.getType() == "image/webp") {
 
-            
         std::string file = getFileImage(HTTPParser.getFileName());
-        std::cout << "FILE: "<< file << std::endl;
-
+        
+        if (file.find("favicon.ico") != std::string::npos)
+            file = HTTPParser.getPath();
+        
         //  206 Partial Content path (only range set)
         struct stat sb;
         std::string range = HTTPParser.getRange();
@@ -904,7 +823,6 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         if (HTTPParser.getUpload() == true) {
 
             std::string uploadFile = getFileUpload(HTTPParser.getFileName());
-            std::cout << "uploadFile: "<< uploadFile << std::endl;
             
             if (answerFile(uploadFile) == false){
                 
@@ -919,10 +837,7 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         }
         else {
 
-            std::string imgFile = getFileImage(HTTPParser.getFileName());
-            std::cout << "imgFile: "<< imgFile<< std::endl;
-
-            if (answerFile(imgFile) == false){
+            if (answerFile(file) == false){
                 
                 if (errno == EACCES)
                     sendError(HTTPParser, HTTPParser.setCode(HTTP_403));
@@ -968,7 +883,6 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     return true;
 }
 
-// SO GIRLS: flow is set at the top of handleRequest()'s file branches:
 //  HTTPParser.getRange() gives the raw "Range:" value ("", if none)
 //  parseRangeHeader(value, fileSize) -> ByteRange
 //  r.unsatisfiable -> send build416Header(); r.valid -> answerFilePartial 
