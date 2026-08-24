@@ -26,7 +26,7 @@ server {
 
     location /upload {
         root        data/upload;
-        index       index.html;
+        //index       index.html;
         methods     GET POST DELETE;
         autoindex   off;
     }
@@ -34,6 +34,7 @@ server {
     location /cgi-bin {
     root            data/cgi-bin;
     methods         GET POST;
+    index           index.py;
     //cgi_extension   .py  /usr/bin/python3;
     //cgi_extension   .php /usr/bin/php-cgi;
     }

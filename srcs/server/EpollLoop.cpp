@@ -6,7 +6,7 @@
 /*   By: leazannis <leazannis@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/24 23:44:30 by leazannis        ###   ########.fr       */
+/*   Updated: 2026/08/25 00:09:48 by leazannis        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -446,6 +446,8 @@ bool EpollLoop::do_read_fd(
     // ------------ Debug ------------
     dbg << "\nResponse header:" << fd;
     LOG_DEBUG(dbg.str());
+    std::cout << "_HEADER EPOLL: " << requestHandler.getHeader() << std::endl;
+    std::cout << "_HEADER EPOLL: " << _header << std::endl;
 
     _clientResponseBuffer[fd] += requestHandler.getHeader();
     _clientResponseBuffer[fd] += std::string(

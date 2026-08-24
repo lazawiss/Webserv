@@ -6,7 +6,7 @@
 /*   By: leazannis <leazannis@student.42.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/24 22:54:40 by leazannis        ###   ########.fr       */
+/*   Updated: 2026/08/25 00:20:26 by leazannis        ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -532,7 +532,7 @@ void    RequestHandler::ErrorPage504(){
 std::string RequestHandler::buildAlternativErrorPage( std::string const & code ){
     
     // ------------ Debug ------------
-    LOG_DEBUG("Building response header, code: " + code);
+    LOG_DEBUG("Building Alternative Error Page, code: " + code);
 
     std::string codeName[11] =
     {
@@ -573,17 +573,21 @@ std::string RequestHandler::buildAlternativErrorPage( std::string const & code )
         }
     }
     _alterError = true;
+    std::cout << "_HEADER: " << _header << std::endl;
     return _header;
 }
 // open file + stock it in buffer to send back to client
 // content = text
 bool    RequestHandler::answerFile( std::string const & file ){
 
+    std::cout << "answerFile" << std::endl;
+    
     struct stat sb;
     
     if (stat(file.c_str(), &sb) == -1 || !S_ISREG(sb.st_mode))
     {
-        LOG_ERROR("stat failed: " + file + " - " + strerror(errno));
+        
+        LOG_ERROR("stat failed answerFile: " + file + " - " + strerror(errno));
         return false;
     }
     if (access(file.c_str(), R_OK) != 0)
@@ -770,6 +774,7 @@ std::string RequestHandler::generateAutoindex(const std::string &fullPath, const
 
 void RequestHandler::sendError( HTTPParser & parser, HttpCode code ) {
     
+    std::cout << "sendError" << std::endl;
     parser.setError(true);
     parser.setCode(code);
     parser.setType("text/html");
@@ -778,7 +783,7 @@ void RequestHandler::sendError( HTTPParser & parser, HttpCode code ) {
     struct stat sb;
     if (stat(file.c_str(), &sb) == -1 || !S_ISREG(sb.st_mode))
     {
-        LOG_ERROR("stat failed: " + file + " - " + strerror(errno));
+        LOG_ERROR("stat failed sendError: " + file + " - " + strerror(errno));
         buildAlternativErrorPage(HTTPParser::httpCodeToString(parser.getCode()));
         return ;
     }
@@ -960,6 +965,9 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
                     sendError(HTTPParser, HTTPParser.setCode(HTTP_404));
                 else 
                     sendError(HTTPParser, HTTPParser.setCode(HTTP_500));
+
+                if (_alterError == true)
+                    return true;
             }
 
         } else {
@@ -1016,6 +1024,9 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
                 sendError(HTTPParser, HTTPParser.setCode(HTTP_404));
             else 
                 sendError(HTTPParser, HTTPParser.setCode(HTTP_500));
+                
+            if (_alterError == true)
+                return true;
         }
             
     } 
@@ -1031,6 +1042,8 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
                 sendError(HTTPParser, HTTPParser.setCode(HTTP_404));
             else 
                 sendError(HTTPParser, HTTPParser.setCode(HTTP_500));
+            if (_alterError == true)
+                return true;
         }
 
     } 
@@ -1074,6 +1087,8 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
                     sendError(HTTPParser, HTTPParser.setCode(HTTP_404));
                 else 
                     sendError(HTTPParser, HTTPParser.setCode(HTTP_500));
+                if (_alterError == true)
+                    return true;
             }
 
         }
@@ -1087,6 +1102,8 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
                     sendError(HTTPParser, HTTPParser.setCode(HTTP_404));
                 else 
                     sendError(HTTPParser, HTTPParser.setCode(HTTP_500));
+                if (_alterError == true)
+                    return true;
             }
         }
 
@@ -1100,13 +1117,19 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
                 sendError(HTTPParser, HTTPParser.setCode(HTTP_404));
             else 
                 sendError(HTTPParser, HTTPParser.setCode(HTTP_500));
+            if (_alterError == true)
+                return true;
         }
 
     } else if (HTTPParser.getType() == "multipart/form-data") {
 
         if (uploadFile(HTTPParser.getFileName(),
-            HTTPParser.getFileBuf()) == false)
+            HTTPParser.getFileBuf()) == false){
+                
             sendError(HTTPParser, HTTP_500);
+            if (_alterError == true)
+                return true;
+        }
         else
         {
             HTTPParser.setCode(HTTP_201);

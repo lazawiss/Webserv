@@ -168,7 +168,7 @@ Un **serveur** est un programme qui attend des connexions (requête HTTP) et ré
 
 ### HTTP (HyperText Transfer Protocol)
 Protocole texte au-dessus de TCP qui définit le format des échanges entre client et serveur. Une **requête** HTTP contient :
-- une **ligne de requête** (request-line) : méthode + chemin + version (`GET /index.html HTTP/1.1`)
+- une **ligne de requête** (request-line) : méthode + chemin + version (`GET / HTTP/1.1`)
 - des **headers** : métadonnées (`Host:`, `Content-Type:`, `Content-Length:`…)
 - un **body** (optionnel) : données envoyées (formulaire, fichier uploadé…)
 
