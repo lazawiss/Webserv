@@ -1,12 +1,11 @@
 
 # ─────────────────────────────────────────
-#  SERVEUR 2 — Second virtual host (port 8081)
+#  SERVEUR - 2 servers
 # ─────────────────────────────────────────
-server {
-    listen       0.0.0.0:8080;
-    server_name  second.localhost;
 
-    error_page 404 /errors/404.html;
+server {
+    listen          0.0.0.0:8080;
+    server_name     webserv;
 
     location / {
         root        data/www/html;
@@ -14,22 +13,21 @@ server {
         methods     GET;
         autoindex   off;
     }
-    
+
     location /upload {
         root        data/upload;
         index       index.html;
         methods     GET POST DELETE;
         autoindex   off;
     }
-
 }
 
 # ─────────────────────────────────────────
-#  SERVEUR 3 — Même port, autre interface
+#  SERVEUR - 2 servers
 # ─────────────────────────────────────────
+
 server {
     listen       127.0.0.1:8081;
-    server_name  internal.localhost;
 
     error_page 404 /errors/404.html;
 
@@ -40,4 +38,3 @@ server {
         autoindex   off;
     }
 }
-

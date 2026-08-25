@@ -1,19 +1,18 @@
 # ─────────────────────────────────────────
-#  SERVEUR 1
+#  SERVEUR
 # ─────────────────────────────────────────
 
 server {
-
-    listen       127.0.0.1:8080;
-    server_name  internal.localhost;
+    listen          127.0.0.1:8080;
+    server_name     webserv;
 
     error_page 400 /errors/404.html;
 
     location / {
-        root        data/www/;
-        #index       index.html;
+        root        data/www/nasa;
+        index       index.html;
         methods     GET;
-        autoindex   on;
+        autoindex   off;
     }
-}
 
+}
