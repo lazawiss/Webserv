@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brochure — Vespera</title>
+<link rel="stylesheet" href="/vespera/style.css">
+</head>
+<body>
+
+  <div class="hud" aria-hidden="true">
+    <div class="hud_track">
+      <span>SECTEUR : <b>NEXUS-7</b></span>
+      <span>POPULATION : <b>14,2M</b></span>
+      <span>MÉTÉO : <b>PLUIE ACIDE — 68%</b></span>
+      <span>HEURE LOCALE : <b data-hud-clock>--:--</b></span>
+      <span>NIVEAU DE SÉCURITÉ : <b>ORANGE</b></span>
+      <span>RÉSEAU NÉON : <b>STABLE</b></span>
+    </div>
+  </div>
+
+  <nav class="nav">
+    <div class="nav_logo">VESPERA<span>.</span></div>
+    <ul class="nav_links">
+      <li><a href="/vespera/index.html">Accueil</a></li>
+      <li><a href="/vespera/ville.html">La Ville</a></li>
+      <li><a href="/vespera/brochure.html" aria-current="page">Brochure</a></li>
+      <li><a href="/vespera/evenements.html">Événements</a></li>
+    </ul>
+  </nav>
+
+  <section class="section">
+    <div class="section--head" style="margin:0 auto 3rem;text-align:center">
+      <span class="slash">// Demande d'accès</span>
+      <h1 style="font-size:clamp(2rem,5vw,3rem)">Recevoir la brochure !</h1>
+      <p>Renseigne ton nom et ton adresse mail, le terminal municipal t'enverra le dossier complet sur la ville.</p>
+    </div>
+
+    <div class="terminal">
+      <div class="terminal__bar">Vespera terminal — demande_brochure.exe</div>
+      <div class="terminal__body">
+        <form id="brochure-form" action="/cgi-bin/database.py" method="POST">
+          <div class="field">
+            <label for="nom">Nom</label>
+            <input type="text" id="nom" name="nom" placeholder="Ton nom" autocomplete="name" required>
+          </div>
+          <div class="field">
+            <label for="email">Adresse mail</label>
+            <input type="email" id="email" name="email" placeholder="toi@exemple.com" autocomplete="email" required>
+          </div>
+          <button type="submit" class="btn btn--fill">Envoyer la demande</button>
+          <div class="form-status" role="status"></div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <script src="/vespera/script.js"></script>
+</body>
+</html>
