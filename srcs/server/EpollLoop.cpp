@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/25 17:08:43 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/25 21:28:25 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -543,6 +543,18 @@ bool EpollLoop::do_write_fd( int fd, int epollfd, epoll_event &ev ) {
         _clientToListener.erase(fd);
  
         return false;
+    }
+    
+    if (headerSent == 0)
+    {
+        LOG_INFO("Message completely sent.");
+        
+        epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, NULL);
+        close(fd);
+        _clientResponseBuffer.erase(fd);
+        _clientToListener.erase(fd);
+        
+        return true;
     }
 
     if (headerSent < static_cast<ssize_t>(response.size()))

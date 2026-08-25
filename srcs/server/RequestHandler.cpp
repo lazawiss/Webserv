@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/25 12:58:12 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/25 21:14:08 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -640,13 +640,15 @@ bool    RequestHandler::answerFileIcon(){
     int indexfd = open(faviconPath.c_str(), O_RDONLY);
     if (indexfd == -1){
         LOG_ERROR("Failed to open favicon: " + std::string(strerror(errno)));
-
         return false;
     }
     _n_read_index = read(indexfd, _buffer, BUF_SIZE);
     close(indexfd);
-    if (_n_read_index == -1 || _n_read_index > BUF_SIZE || _n_read_index == 0)
+    std::ostringstream oss; oss << _n_read_index;
+    if (_n_read_index == -1 || _n_read_index > BUF_SIZE || _n_read_index == 0){
+        LOG_ERROR("Failed to read file: " + oss.str() + " - ");
         return false;
+    }
 
     return true;
 }
@@ -1250,6 +1252,13 @@ bool RequestHandler::answerFilePartial(std::string const & file, ByteRange const
         LOG_ERROR("Short partial read");
         return false;
     }
+    std::ostringstream oss; oss << _n_read_index;
+    if (_n_read_index == -1 || _n_read_index == 0){
+        
+        LOG_ERROR("Failed to read file: " + oss.str() + " - ");
+        return false;
+    }
+    
     return true;
 }
 

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CGIHandler.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
+/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 18:29:42 by andikim           #+#    #+#             */
-/*   Updated: 2026/08/18 16:19:12 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/25 21:26:21 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -228,8 +228,12 @@ Result CGI::onWritable()
         if (_bytesWritten >= _body.size())
             return SUCCESS;
     }
-
+    
+    if (n == 0)
+        return HOLD;
+        
     return HOLD;
+    
 }
 
 Result CGI::onReadable()
