@@ -1,4 +1,4 @@
-root            data;
+//root            data;
 autoindex       on;
 server {
 
