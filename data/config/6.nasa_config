@@ -4,7 +4,7 @@
 
 server {
     listen          127.0.0.1:8080;
-    server_name     webserv;
+    server_name     nasa;
 
     error_page 400 /errors/404.html;
 

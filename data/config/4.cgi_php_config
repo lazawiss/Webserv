@@ -14,8 +14,8 @@ server {
     error_page 500 /errors/500.html;
 
     location / {
-        root                data/www/html;
-        index               index2.html index.html;
+        root                data/www/vespera;
+        index               index.html;
         methods             GET;
         autoindex           off;
     }
@@ -23,14 +23,7 @@ server {
     location /cgi-bin {
         root                data/cgi-bin;
         methods             POST;
-        cgi_extension       .php /usr/bin/php-cgi;
+        cgi_extension       .py  /usr/bin/python3;
         index               index.py;
-    }
-
-    location /upload {
-        root                data/upload;
-        index               index.html;
-        methods             GET POST DELETE;
-        autoindex           off;
     }
 }
