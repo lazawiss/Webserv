@@ -3,56 +3,51 @@
 # Webserv
 
 ## Description
+**Webserv** is an HTTP server, written in **C++98**. The goal of this project is to create a web server, heavily inspired by the very popular web server, **NGINX**; its main role is to receive HTTP requests of clients and respond to it. NGINX serves as the model of reference for the general behavior of this project.
 
-**Webserv** est un serveur HTTP écrit en **C++98**. L'objectif de ce projet est de créer un serveur web à l'image d'**NGINX**, serveur web très répandu, dont le rôle principal est de recevoir des requêtes HTTP de clients et d'y répondre. NGINX sert, ainsi, de modèle de référence pour le comportement général de ce projet.
-
-Webserv repose notamment sur les fonctionnalités suivantes :
-
-- lire un **fichier de configuration** inspiré de la syntaxe NGINX ;
-- créer un ou plusieurs **sockets d'écoute** (une paire adresse:port par server) ;
-- gèrer **plusieurs clients simultanément**, de manière **non bloquante**,
-grâce à une boucle événementielle basée sur epoll() ;
-- **parser** les requêtes HTTP reçues et répondre avec les méthodes **GET**, **POST** et **DELETE** ;
-- servir des **fichiers statiques**, gèrer l'**upload** de fichiers,
-le **listing de répertoire** (autoindex), les **redirections**
-et les **pages d'erreur** personnalisées ;
-- exécuter des scripts **CGI** (Python et PHP) en fonction de l'extension du fichier demandé ;
+Webserv runs based on the following functions :
+- read a **configuration file**, with a syntax inspired of that which could be found on NGINX.
+- create one or several **listening sockets** (a pair address:port is assigned to each server);
+- handle **several clients simultaneously**, in a **non-blocking** manner;
+- **parse** received HTTP requests and respond with the **GET**, **POST**, and **DELETE** methods;
+- serve **static files**, handling the **upload** function of files,
+the **listing of the directory** (autoindex), **redirections**
+and personalized **error pages**;
+- be able to execute CGI scripts (written in either Python or PHP), based on the extension of the requested file.
 
 ## Instructions
 
-### Prérequis
+### Prerequisites
 
-- Compilateur C++ compatible **C++98** (`g++` ou `clang++`)
-- Système **Linux** (la boucle événementielle repose sur `epoll`, spécifique à Linux)
-- **Python 3** et/ou **PHP-CGI** si l'on souhaite utiliser les fonctionnalités CGI
+- A compiler C++ that is compatible **C++98** (`g++` or `clang++`)
+- A **Linux** system (the event loop is carried by `epoll`, a Linux kernel function)
+- **Python 3** and/or **PHP-CGI** if we want to be access CGI functionalities. 
 
 ### Compilation
-
 ```bash
 git clone [url]
 cd webserv
 make
 ```
 
-La compilation génère un exécutable `webserv` à la racine du projet. Le `Makefile` fournit également les règles classiques :
-
+Compiling generates a runnable program,`webserv` at the root of the project. The `Makefile` additionally enables the following functions: 
 ```bash
-make clean          # supprime les fichiers objets
-make fclean         # supprime les fichiers objets et l'exécutable
-make re             # recompile entièrement le projet
+make clean          # delete all the object files
+make fclean         # delete all object files as well as the program
+make re             # recompiles entirely the project
 ```
 
-### Exécution
+### Execution
 
 ```bash
 ./webserv [fichier de configuration]
 ```
 
-Un fichier de configuration doit être passé en argument. Des exemples sont disponibles dans `data/config/`.
+A configuration file must be passed as an argument. Examples are available in `data/config/`.
 
-### Syntaxe de configuration
+### Configuration syntax
 
-La configuration suit une syntaxe inspirée de NGINX, avec trois niveaux : `global`, `server` et `location`.
+The configuration follows a syntax inspired by NGINX, on three different levels: `global`, `server` and `location`.
 
 ```nginx
 client_max_body_size 10M;
@@ -84,130 +79,135 @@ server {
 }
 ```
 
-**Directives disponibles :**
+**Available directives :**
+| Directive              | Context                          | Description                            | 
+|------------------------|----------------------------------|----------------------------------------|
+| `client_max_body_size` | `global` / `server` / `location` | Max size of the request body           |
+| `root`                 | `global` / `server` / `location` | Root directory of the files served     |
+| `index`                | `global` / `server` / `location` | Default file served                    |
+| `error_page`           | `global` / `server` / `location` | Personalized error pages               |
+| `autoindex`            | `global` / `server` / `location` | Activation for directory listing       |
+| `listen`               | `server`                         | IP address and the listening port      |
+| `server_name`          | `server`                         | Domain name (virtual hosting)          |
+| `methods`              | `location`                       | Authorized HTTP methods                | 
+| `return`               | `location`                       | HTTP Redirections                      |
+| `cgi_extension`        | `location`                       | Extension specifications → for CGIs    |
 
-| Directive | Contexte | Description |
-|---|---|---|
-| `client_max_body_size` | `global` / `server` / `location` | Taille maximale du corps de la requête |
-| `root` | `global` / `server` / `location` | Répertoire racine des fichiers servis |
-| `index` | `global` / `server` / `location` | Fichier servi par défaut |
-| `error_page` | `global` / `server` / `location` | Page d'erreur personnalisée |
-| `autoindex` | `global` / `server` / `location` | Activation du listing de répertoire |
-| `listen` | `server` | Adresse IP et port d'écoute |
-| `server_name` | `server` | Nom de domaine (virtual hosting) |
-| `methods` | `location` | Méthodes HTTP autorisées |
-| `return` | `location` | Redirection HTTP |
-| `cgi_extension` | `location` | Association extension → interpréteur CGI |
 
 ### Tester le serveur
 
-Une fois lancé, le serveur écoute sur les adresses/ports définis dans la configuration. Il peut être testé :
+Once the program is running, the server listens on the addresses/ ports definied in the configuration file. It can be tested via : 
 
-- avec un navigateur web :
+- with a web browser :
 
 ```bash
 http://localhost:8080
 ````
 
-
-- avec `curl` :
+- with `curl` :
 
 ```bash
 curl -v http://127.0.0.1:8080/
 ```
+- with telnet :
+```bash
+telnet localhost 8080
+```
 
-- avec un outil de stress test (ex : `siege`) pour vérifier la stabilité du serveur sous charge.
+- with a stress test tool (ex : `siege`) in order to verify the stability of the server under load.
+```bash
+siege -c 10 -t 1M http://127.0.0.1:8080/
+```
 
 ## Architecture
 
-**Architecture du projet :**
+**Architecture of projet :**
 
 ```
-Lexer / Parser      →  lit le fichier de config  →  GlobalConfig / ServerConfig / LocationConfig
+Lexer / Parser      →  reads the config file  →  GlobalConfig / ServerConfig / LocationConfig
 
 Server
-├── SignalManager       gère SIGINT / SIGQUIT
-├── ListenerManager     sockets d'écoute (un par `listen`)
-├── EpollLoop           boucle principale (epoll)
-│   ├── HTTPParser      parse la requête brute
-│   ├── RequestHandler  construit la réponse
-│   └── CGIHandler      exécute les scripts Python / PHP
+├── SignalManager       handles SIGINT / SIGQUIT
+├── ListenerManager     listening sockets (one per `listen`)
+├── EpollLoop           our main loop (epoll)
+│   ├── HTTPParser      parses the raw request
+│   ├── RequestHandler  constructs the response
+│   └── CGIHandler      executes the Python / PHP scripts
 ```
 
-**Flux d'une requête :**
+**The flow of a request :**
 
 ```
 Client
   │  TCP connect
   ▼
-ListenerManager  ──accept()──►  nouveau fd client
+ListenerManager  ──accept()──►  new fd client
   │
   ▼
 EpollLoop  (epoll_wait)
   │
-  ├─ EPOLLIN  ──►  HTTPParser       parse méthode / headers / body
+  ├─ EPOLLIN  ──►  HTTPParser       parses methods / headers / body
   │                    │
   │                    ▼
-  │               RequestHandler    décide de la réponse
-  │                    ├── fichier statique  →  lecture disque
-  │                    ├── upload            →  écriture disque
+  │               RequestHandler    decides on the response
+  │                    ├── static files      →  read from disk
+  │                    ├── upload            →  write from disk
   │                    └── CGI (.py/.php)    →  CGIHandler (fork + pipe)
   │
-  └─ EPOLLOUT ──►  envoie la réponse  ──►  Client
+  └─ EPOLLOUT ──►  send the response  ──►  Client
 ```
 
-## Lexique
+## Vocabulary
 
-### Client / Serveur
-Un **serveur** est un programme qui attend des connexions (requête HTTP) et répond aux demandes. Un **client** (navigateur, `curl`, etc.) est celui qui initie la connexion et envoie une requête HTTP. La communication passe par un réseau TCP/IP : le client ouvre une connexion vers l'adresse IP et le port du serveur.
+### Client / Server
+A **server** is a program that waits for connections (HTTP requests) and responds to the different asks. A **client** (browser, `curl`, etc.) initiates the connection and sends an HTTP request. The communications passes by a TCP/IP network : the client opens the connection towards the IP address and the port of the server. 
 
 ### HTTP (HyperText Transfer Protocol)
-Protocole texte au-dessus de TCP qui définit le format des échanges entre client et serveur. Une **requête** HTTP contient :
-- une **ligne de requête** (request-line) : méthode + chemin + version (`GET /index.html HTTP/1.1`)
-- des **headers** : métadonnées (`Host:`, `Content-Type:`, `Content-Length:`…)
-- un **body** (optionnel) : données envoyées (formulaire, fichier uploadé…)
+The text protocol on top of TCP that defines the shape of exchanges between client and server. An **HTTP request** contains:
+- a **request line**: with method + the path + the version (`GET /index.html HTTP/1.1`) 
+- **headers**: metadata (`Host:`, `Content-Type:`, `Content-Length:`…)
+- a **body** (optional) : sent data (forms, uploaded files)
 
-Une **réponse** contient un code de statut (`200 OK`, `404 Not Found`…), des headers, et le contenu.
+A **response** contains a status code (`200 OK`, `404 Not Found`…), headers, and the content.
 
 ### Socket
-Point d'entrée réseau représenté par un descripteur de fichier (fd). Le serveur crée un socket d'écoute par directive `listen`, accepte les connexions entrantes (`accept()`), puis chaque client obtient son propre fd pour lire/écrire.
+Network entry point represented by a file descriptor (fd). The server creates a listening socket via directive `listen`, accepts the incoming connections (`accept()`), then each client acquires its own fd to read/ write.
 
-### Méthodes HTTP
-- **GET** : demander une ressource (page, image…)
-- **POST** : envoyer des données au serveur (formulaire, upload)
-- **DELETE** : supprimer une ressource
+### HTTP Methods
+- **GET** : request a resource (page, image…)
+- **POST** : send data to the server (forms, upload)
+- **DELETE** : delete a resource
 
 ### epoll()
-Table Linux pour surveiller de nombreux fds simultanément **sans bloquer**. Au lieu d'attendre sur un seul fd, `epoll_wait()` retourne la liste des fds prêts à lire ou à écrire. C'est ce qui permet de gérer des dizaines de clients en parallèle dans **un seul thread**, sans créer un thread par connexion.
+Linux table that keeps an eye out on several fds silmultaneously **without blocking**. Instead of waiting on a single fd, `epoll_wait()` returns a list of fds that are ready to read or to write. It is what allows us to handle dozens of clients in parallel of each other, in a **single thread**, with creating a thread per connection.
 
-### Non-bloquant (I/O non-bloquante)
-Par défaut un appel `read()` ou `write()` attend que des données soient disponibles. En mode non-bloquant, il retourne immédiatement si rien n'est prêt. Couplé à epoll, cela évite qu'un client lent bloque tous les autres.
+### Non-blocking (non-blocking I/O)
+By default, a `read()` ou `write()` call waits for the data to be available. In the non-blocking mode, it returns immediately if nothing is ready. Coupled with epoll, we never wait for a slow client that would block.
 
 ### CGI (Common Gateway Interface)
-Interface standard pour qu'un serveur web exécute un script externe (Python, PHP…). Le serveur crée un processus fils via `fork()` + `execve()`, lui passe la requête via des variables d'environnement et un pipe, et lit la réponse générée sur stdout. Ici, c'est `CGIHandler` qui orchestre ça.
+The standard interface for a web server to excute an external script (Python, PHP..). The server creates a child process via `fork()`, sends him the request via the environment variables and via `execve()` + pipes, the response is generated and readable on stdout. In our case, it is `CGIHandler` that orchestrates this.
 
 ### Parsing / Lexer / Parser
-Transformer du texte brut en données structurées. Le **Lexer** découpe le fichier de config en tokens. Le **Parser** lit ces tokens et construit les objets `GlobalConfig` / `ServerConfig` / `LocationConfig`. Même principe pour `HTTPParser` sur les requêtes HTTP brutes.
+Transform raw text into structured data. The **lexer** cuts the config file into tokens. The **Parser** reads these tokens and constructs the objects `GlobalConfig` / `ServerConfig` / `LocationConfig`. The same pricinipal for `HTTPParser`, which are for raw HTTP requests. 
 
 ### Virtual hosting
-Faire tourner plusieurs sites sur le même serveur (même IP/port) en différenciant par le header `Host:`. Chaque bloc `server` avec un `server_name` différent correspond à un site distinct.
+Host several sites on the same server (same IP/port) by distinguishing via the header `Host`. Each `server` block with a different `server_name` corresponds to its own unique site. 
 
-## Ressources
+## Resources
 
-### Documentation et articles
+### Documentation and articles
 
-- [Documentation officielle NGINX](https://nginx.org/en/docs/) — modèle de référence pour la syntaxe de configuration et le comportement général du serveur
+- [Official NGINX Documentation](https://nginx.org/en/docs/) — reference model for the syntax of the configuration and the general behavior of server
 - [RFC 9110 – HTTP Semantics](https://www.rfc-editor.org/rfc/rfc9110.html)
 - [RFC 9112 – HTTP/1.1](https://www.rfc-editor.org/rfc/rfc9112.html)
-- [Beej's Guide to Network Programming](https://beej.us/guide/bgnet/) — référence classique pour la programmation socket en C/C++
+- [Beej's Guide to Network Programming](https://beej.us/guide/bgnet/) — classic reference for socket programming in C/C++
 - [man epoll(7)](https://man7.org/linux/man-pages/man7/epoll.7.html)
 - [The Common Gateway Interface (CGI) — RFC 3875](https://www.rfc-editor.org/rfc/rfc3875)
-- [Simple HTTP webserver in C – bruinsslot.jp](https://bruinsslot.jp/post/simple-http-webserver-in-c/) — tutoriel utilisé pour comprendre la structure générale d'un serveur HTTP en C
+- [Simple HTTP webserver in C – bruinsslot.jp](https://bruinsslot.jp/post/simple-http-webserver-in-c/) — tutorial used to understand the general structure of an HTTP server in C
 - [Codes de statut HTTP – MDN](https://developer.mozilla.org/fr/docs/Web/HTTP/Status)
 
-### Utilisation de l'IA
+### AI Usage
 
-L'IA (Claude, Anthropic) a été utilisée ponctuellement comme outil d'accompagnement, notamment pour :
+AI (Claude, Anthropic) was used punctually as a support tool, notably for :
 
-- reformuler et structurer les notes de travail prises pendant la phase de recherche en une documentation claire.
-
+- to reword and to re-structure notes taken during the research phase into a clear documentation

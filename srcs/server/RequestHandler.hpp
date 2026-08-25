@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:00:06 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/24 14:49:07 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/24 16:45:15 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,6 +57,7 @@ private:
     std::string         _pathToFile;
     char                _buffer[BUF_SIZE];
     ssize_t             _n_read_index;
+    bool                _alterError;
     /*CGI */
     bool                _isCGI;
     std::string         _fullPath;
@@ -82,10 +83,10 @@ public:
     std::string         getSize() const;
     ssize_t             getNReadIndex() const;
 
-    // bool                resolveRoot(const ServerConfig &cfg, HTTPParser HTTPParser);
-    
     std::string         generateAutoindex(const std::string &fullPath, const std::string &requestTarget);
     std::string         buildAnswerHeader( std::string const & code, std::string const & type );
+    std::string         buildAlternativErrorPage( std::string const & code );
+    
     
     std::string         getFile( std::string const & code, bool const & error );
     std::string         getFileImage( std::string const & code);
@@ -129,7 +130,19 @@ public:
     
     void                sendError( HTTPParser & parser, HttpCode code = HTTP_404 );
 
-
     bool                handleRequest(  ListenerManager const & listen );
     bool                getCGI() const;
+
+    void                ErrorPage400();
+    void                ErrorPage403();
+    void                ErrorPage404();
+    void                ErrorPage405();
+    void                ErrorPage411();
+    void                ErrorPage413();
+    void                ErrorPage414();
+    void                ErrorPage421();
+    void                ErrorPage500();
+    void                ErrorPage502();
+    void                ErrorPage504();
+    
 };

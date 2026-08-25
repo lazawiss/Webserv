@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/22 18:45:45 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/25 16:39:26 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -864,6 +864,16 @@ int HTTPParser::checkContentLength( std::string const & value ) {
     oss << _content_length;
     LOG_DEBUG("Content-Length: " + oss.str());
 
+    if (_content_length > 400000){
+        
+        LOG_ERROR("Content-Length exceeds limit");
+        _errors = true;
+        _code   = HTTP_413;
+        _type   = "text/html";
+        
+        return SERVER_ERROR;
+    }
+
     return SERVER_OK;
 }
 
@@ -1296,6 +1306,7 @@ int HTTPParser::findAutoIndex(const std::vector<LocationConfig> &locs, int bestI
         
         std::string root = _fullPath.size() < locs[bestIdx].getRoot().size() ?  
             locs[bestIdx].getRoot() : _fullPath;
+        std::cout << "ROOT FINDAUTOINDEX1"<< root << std::endl;
         
         if (root <= _httpRoot){
             
@@ -1306,7 +1317,7 @@ int HTTPParser::findAutoIndex(const std::vector<LocationConfig> &locs, int bestI
                 _fullPath = root;
             }
         }
-        
+        std::cout << "ROOT FINDAUTOINDEX2"<< root << std::endl;
         struct stat path_stat;
     
         if (stat(root.c_str(), &path_stat) != -1 && S_ISDIR(path_stat.st_mode))

@@ -6,12 +6,19 @@ server {
     listen       0.0.0.0:8080;
     server_name  second.localhost;
 
-    error_page 400 /errors/404.html;
+    error_page 404 /errors/404.html;
 
     location / {
         root        data/www/html;
         index       index.html;
         methods     GET;
+        autoindex   off;
+    }
+    
+    location /upload {
+        root        data/upload;
+        index       index.html;
+        methods     GET POST DELETE;
         autoindex   off;
     }
 
@@ -24,7 +31,7 @@ server {
     listen       127.0.0.1:8081;
     server_name  internal.localhost;
 
-    error_page 400 /errors/404.html;
+    error_page 404 /errors/404.html;
 
     location / {
         root        data/www/diary;

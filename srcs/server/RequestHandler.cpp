@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestHandler.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: leazannis <leazannis@student.42.fr>        +#+  +:+       +#+        */
+/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/22 21:30:15 by leazannis        ###   ########.fr       */
+/*   Updated: 2026/08/25 12:58:12 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,7 @@ RequestHandler::RequestHandler(
     const ServerConfig & serverConfig) :
     _request(request), _serverConfig(serverConfig),
     _root(serverConfig.getRoot()), _header(), _size(),
-    _pathToFile(), _n_read_index(0), _isCGI(false),
+    _pathToFile(), _n_read_index(0), _alterError(false), _isCGI(false),
     _fullPath(), _query_string(), _scriptFilename(),
     _body(), _content_type(), _content_length(),
     _method(), _pathInfo(), _scriptName(), _interpreter()
@@ -44,7 +44,7 @@ RequestHandler::RequestHandler( RequestHandler const & src ) :
     _request(src._request), _serverConfig(src._serverConfig),
     _root(src._root), _header(src._header),
     _size(src._size), _pathToFile(src._pathToFile),
-    _n_read_index(src._n_read_index), _isCGI(src._isCGI),
+    _n_read_index(src._n_read_index), _alterError(src._alterError),_isCGI(src._isCGI),
     _fullPath(src._fullPath), _query_string(src._query_string),
     _scriptFilename(src._scriptFilename),
     _body(src._body), _content_type(src._content_type),
@@ -70,6 +70,7 @@ RequestHandler & RequestHandler::operator=( RequestHandler const & other )
         memcpy(_buffer, other._buffer, BUF_SIZE);
 
         _n_read_index   = other._n_read_index;
+        _alterError     = other._alterError;
         _isCGI          = other._isCGI;
         _fullPath       = other._fullPath;
         _query_string   = other._query_string;
@@ -77,7 +78,7 @@ RequestHandler & RequestHandler::operator=( RequestHandler const & other )
         _body           = other._body;
         _content_type   = other._content_type;
         _content_length = other._content_length;
-        _method = other._method;
+        _method         = other._method;
         _pathInfo       = other._pathInfo;
         _scriptName     = other._scriptName;
         _interpreter    = other._interpreter;
@@ -363,15 +364,230 @@ std::string RequestHandler::buildAnswerHeader( std::string const & code, std::st
     return _header;
 }
 
+void    RequestHandler::ErrorPage400(){
+    
+    _header =
+    "HTTP/1.1 400 BAD REQUEST\r\n"
+    "Content-Type: text/html\r\n"
+    "Content-Length: 241\r\n\r\n"
+    "<html>\r\n"
+    "<head><title>400 - Bad Request</title></head>\r\n"
+    "<body>\r\n"
+    "<h1>400 - Bad Request</h1>\r\n"
+    "<p>-____-The request seems to be incorrect.-____-</p>\r\n"
+    "</body>\r\n"
+    "</html>\r\n\r\n";
+}
+
+void    RequestHandler::ErrorPage403(){
+    
+    _header =
+    "HTTP/1.1 403 FORBIDDEN\r\n"
+    "Content-Type: text/html\r\n"
+    "Content-Length: 218\r\n\r\n"
+    "<html>\r\n"
+    "<head><title>403 FORBIDDEN</title></head>\r\n"
+    "<body>\r\n"
+    "<h1>403 Forbidden</h1>\r\n"
+    "<p>-___-You should not be here.-___-</p>\r\n"
+    "</body>\r\n"
+    "</html>\r\n\r\n";
+}
+
+void    RequestHandler::ErrorPage404(){
+    
+    _header =
+    "HTTP/1.1 404 NOT FOUND\r\n"
+    "Content-Type: text/html\r\n"
+    "Content-Length: 252\r\n\r\n"
+    "<html>\r\n"
+    "<head><title>404 NOT FOUND</title></head>\r\n"
+    "<body>\r\n"
+    "<h1>404 - Page Not Found</h1>\r\n"
+    "<p>-___-Sorry, the page you are looking for doesn't exist.-___-</p>\r\n"
+    "</body>\r\n"
+    "</html>\r\n\r\n";
+}
+
+void    RequestHandler::ErrorPage405(){
+    
+    _header =
+    "HTTP/1.1 405 METHOD NOT ALLOWED\r\n"
+    "Content-Type: text/html\r\n"
+    "Content-Length: 237\r\n\r\n"
+    "<html>\r\n"
+    "<head><title>405 METHOD NOT ALLOWED</title></head>\r\n"
+    "<body>\r\n"
+    "<h1>405 - Method Not Allowed</h1>\r\n"
+    "<p>-___-WRONG METHOD.-___-</p>\r\n"
+    "</body>\r\n"
+    "</html>\r\n\r\n";
+}
+
+void    RequestHandler::ErrorPage411(){
+    
+    _header =
+    "HTTP/1.1 411 LENGTH REQUIRED\r\n"
+    "Content-Type: text/html\r\n"
+    "Content-Length: 265\r\n\r\n"
+    "<html>\r\n"
+    "<head><title>411 LENGTH REQUIRED</title></head>\r\n"
+    "<body>\r\n"
+    "<h1>411 - Length Required</h1>\r\n"
+    "<p>-___-We need the Content-Length to answer this request.-___-</p>\r\n"
+    "</body>\r\n"
+    "</html>\r\n\r\n";
+}
+
+void    RequestHandler::ErrorPage413(){
+    
+    _header =
+    "HTTP/1.1 413 CONTENT TOO LARGE\r\n"
+    "Content-Type: text/html\r\n"
+    "Content-Length: 253\r\n\r\n"
+    "<html>\r\n"
+    "<head><title>413 CONTENT TOO LARGE</title></head>\r\n"
+    "<body>\r\n"
+    "<h1>413 - Content Too Large</h1>\r\n"
+    "<p>-___-Request is too large to process.-___-</p>\r\n"
+    "</body>\r\n"
+    "</html>\r\n\r\n";
+}
+
+void    RequestHandler::ErrorPage414(){
+    
+    _header =
+    "HTTP/1.1 414 URI TOO LONG\r\n"
+    "Content-Type: text/html\r\n"
+    "Content-Length: 233\r\n\r\n"
+    "<html>\r\n"
+    "<head><title>414 URI TOO LONG</title></head>\r\n"
+    "<body>\r\n"
+    "<h1>414 - URI too long</h1>\r\n"
+    "<p>-___-URI too long to be honest. -___-</p>\r\n"
+    "</body>\r\n"
+    "</html>\r\n\r\n";
+}
+
+void    RequestHandler::ErrorPage421(){
+    
+    _header =
+    "HTTP/1.1 421 MISDIRECTED REQUEST\r\n"
+    "Content-Type: text/html\r\n"
+    "Content-Length: 282\r\n\r\n"
+    "<html>\r\n"
+    "<head><title>421 MISDIRECTED REQUEST</title></head>\r\n"
+    "<body>\r\n"
+    "<h1>421 - Misdirected Request</h1>\r\n"
+    "<p>-___-Sorry, the requested host is not served by this server.-___-</p>\r\n"
+    "</body>\r\n"
+    "</html>\r\n\r\n";
+}
+
+void    RequestHandler::ErrorPage500(){
+    
+    _header =
+    "HTTP/1.1 500 Internal Server Error\r\n"
+    "Content-Type: text/html\r\n"
+    "Content-Length: 245\r\n\r\n"
+    "<html>\r\n"
+    "<head><title>500 Internal Server Error</title></head>\r\n"
+    "<body>\r\n"
+    "<h1>Internal Server Error</h1>\r\n"
+    "<p>-___-The server failed -___-</p>\r\n"
+    "</body>\r\n"
+    "</html>\r\n\r\n";
+}
+
+void    RequestHandler::ErrorPage502(){
+    
+    _header =
+    "HTTP/1.1 502 Bad Gateway\r\n"
+    "Content-Type: text/html\r\n"
+    "Content-Length: 227\r\n\r\n"
+    "<html>\r\n"
+    "<head><title>502 Bad Gateway</title></head>\r\n"
+    "<body>\r\n"
+    "<h1>502 Bad Gateway</h1>\r\n"
+    "<p>-___-Took wrong turn somewhere -___-</p>\r\n"
+    "</body>\r\n"
+    "</html>\r\n\r\n";
+}
+
+void    RequestHandler::ErrorPage504(){
+    
+    _header =
+    "HTTP/1.1 504 Gateway Timeout\r\n"
+    "Content-Type: text/html\r\n"
+    "Content-Length: 235\r\n\r\n"
+    "<html>\r\n"
+    "<head><title>504 Gateway Timeout </title></head>\r\n"
+    "<body>\r\n"
+    "<h1>504 Gateway Timeout</h1>\r\n"
+    "<p>-___-Script took too long -___-</p>\r\n"
+    "</body>\r\n"
+    "</html>\r\n\r\n";
+}
+
+std::string RequestHandler::buildAlternativErrorPage( std::string const & code ){
+    
+    // ------------ Debug ------------
+    LOG_DEBUG("Building Alternative Error Page, code: " + code);
+
+    std::string codeName[11] =
+    {
+        "400",
+        "403",
+        "404",
+        "405",
+        "411",
+        "413",
+        "414",
+        "421",
+        "500",
+        "502",
+        "504",
+    };
+    
+    void (RequestHandler::*f_stringPtr[]) () = {
+        
+        &RequestHandler::ErrorPage400,
+        &RequestHandler::ErrorPage403,
+        &RequestHandler::ErrorPage404,
+        &RequestHandler::ErrorPage405,
+        &RequestHandler::ErrorPage411,
+        &RequestHandler::ErrorPage413,
+        &RequestHandler::ErrorPage414,
+        &RequestHandler::ErrorPage421,
+        &RequestHandler::ErrorPage500,
+        &RequestHandler::ErrorPage502,
+        &RequestHandler::ErrorPage504
+    };
+
+    
+    for (int i = 0 ;i < 11; i++){
+        
+        if (codeName[i] == code){
+            (this->*f_stringPtr[i]) ();
+            break;
+        }
+    }
+    _alterError = true;
+    std::cout << "_HEADER: " << _header << std::endl;
+    return _header;
+}
 // open file + stock it in buffer to send back to client
 // content = text
 bool    RequestHandler::answerFile( std::string const & file ){
 
+    std::cout << "answerFile" << std::endl;
+    
     struct stat sb;
     
-    if (stat(file.c_str(), &sb) == -1 && S_ISREG(sb.st_mode))
+    if (stat(file.c_str(), &sb) == -1 || !S_ISREG(sb.st_mode))
     {
-        LOG_ERROR("stat failed: " + file + " - " + strerror(errno));
+        
+        LOG_ERROR("stat failed answerFile: " + file + " - " + strerror(errno));
         return false;
     }
     if (access(file.c_str(), R_OK) != 0)
@@ -395,7 +611,7 @@ bool    RequestHandler::answerFile( std::string const & file ){
     std::ostringstream oss; oss << _n_read_index;
     if (_n_read_index == -1 || _n_read_index > BUF_SIZE || _n_read_index == 0){
         
-        LOG_ERROR("Failed to read file: " + oss.str() + " - " + strerror(errno));
+        LOG_ERROR("Failed to read file: " + oss.str() + " - ");
         return false;
     }
 
@@ -411,7 +627,7 @@ bool    RequestHandler::answerFileIcon(){
     struct stat sb;
     
     std::string faviconPath = "data/www/favicon.ico/favicon-16x16.png";
-    if (stat(faviconPath.c_str(), &sb) == -1 && S_ISREG(sb.st_mode)){
+    if (stat(faviconPath.c_str(), &sb) == -1 || !S_ISREG(sb.st_mode)){
         LOG_ERROR("Stat failed for favicon: " + std::string(strerror(errno)));
         return false;
     }
@@ -424,7 +640,6 @@ bool    RequestHandler::answerFileIcon(){
     int indexfd = open(faviconPath.c_str(), O_RDONLY);
     if (indexfd == -1){
         LOG_ERROR("Failed to open favicon: " + std::string(strerror(errno)));
-
 
         return false;
     }
@@ -460,7 +675,7 @@ bool    RequestHandler::uploadFile( std::string const & filename, std::string co
 
     struct stat sb;
 
-    if (stat(_pathToFile.c_str(), &sb) == -1){
+    if (stat(_pathToFile.c_str(), &sb) == -1 || !S_ISREG(sb.st_mode)){
         LOG_ERROR("stat failed for uploaded file: " + std::string(strerror(errno)));
         return false;
     }
@@ -482,7 +697,7 @@ bool    RequestHandler::removeFile( std::string const & filename ){
 
     struct stat sb;
 
-    if (stat(_pathToFile.c_str(), &sb) == -1){
+    if (stat(_pathToFile.c_str(), &sb) == -1 || !S_ISREG(sb.st_mode)){
         LOG_ERROR("stat failed for file to delete: " + std::string(strerror(errno)));
         return false;
     }
@@ -513,17 +728,18 @@ std::string RequestHandler::generateAutoindex(const std::string &fullPath, const
     while ((entry = readdir(dir)) != NULL)
     {
         std::string name = entry->d_name;
-
+        LOG_INFO(COLOR_PINK + std::string("name dans generateAutoindex: ") + name + COLOR_RESET);
         if (name == ".")
             continue;
         
         std::string entryPath = fullPath;  // check entry a dir
- 
+        LOG_INFO(COLOR_CYAN + std::string("entryPath dans generateAutoindex: ") + entryPath + COLOR_RESET);
         char const *lastSlash = strrchr(entryPath.c_str(), '/');
         if (!lastSlash){
             return "";
         }
         std::string dir = std::string(lastSlash, strlen(lastSlash));
+        LOG_INFO(COLOR_GREEN + std::string(" HTML: ") + html + COLOR_RESET);
 
         if (entryPath[entryPath.size() - 1] != '/')
             entryPath += "/";
@@ -553,16 +769,27 @@ std::string RequestHandler::generateAutoindex(const std::string &fullPath, const
     closedir(dir);
 
     html += "</ul>\n<hr>\n</body>\n</html>\n";
+    LOG_INFO(COLOR_GREEN + std::string(" HTML: ") + html + COLOR_RESET);
+
     
     return html;
 }
 
 void RequestHandler::sendError( HTTPParser & parser, HttpCode code ) {
     
+    std::cout << "sendError" << std::endl;
     parser.setError(true);
     parser.setCode(code);
     parser.setType("text/html");
     std::string file = getFile(HTTPParser::httpCodeToString(parser.getCode()), parser.getError());
+
+    struct stat sb;
+    if (stat(file.c_str(), &sb) == -1 || !S_ISREG(sb.st_mode))
+    {
+        LOG_ERROR("stat failed sendError: " + file + " - " + strerror(errno));
+        buildAlternativErrorPage(HTTPParser::httpCodeToString(parser.getCode()));
+        return ;
+    }
     if (answerFile(file) == false){
         if (errno == EACCES)
             parser.setCode(HTTP_403);
@@ -588,7 +815,8 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     if (HTTPParser.isRequestValid(listen) == false)
     {
         sendError(HTTPParser, HTTPParser.getCode());
-        buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");
+        if (_alterError == false)
+            buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");
         return true;
 
     }
@@ -625,14 +853,16 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         {
             LOG_ERROR("CGI request validation failed");
             sendError(HTTPParser, HTTP_502);
-            buildAnswerHeader("502", "text/html");
+            if (_alterError == false)
+                buildAnswerHeader("502", "text/html");
             return true;
         }
         if (HTTPParser.getMethod() != "GET" && HTTPParser.getMethod() != "POST")
         {
             LOG_ERROR("CGI request validation failed: Need GET or POST as method");
             sendError(HTTPParser, HTTP_405);
-            buildAnswerHeader("405", "text/html");
+            if (_alterError == false)
+                buildAnswerHeader("405", "text/html");
             return true;
         }
 
@@ -669,7 +899,7 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         if (HTTPParser.getCode() == HTTP_AUTOINDEX)
         {
             std::string path = HTTPParser.getPath();
-            
+           
             _body = generateAutoindex(path, HTTPParser.getRequestTarget());
             if (_body.empty()) {
                 HTTPParser.setError(true);
@@ -694,7 +924,8 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     {
         LOG_ERROR("AutoIndex is off and Index does not exist.");
         sendError(HTTPParser, HTTPParser.getCode());
-        buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");
+        if (_alterError == false)
+            buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");
         return true;
     }
     
@@ -703,7 +934,8 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         if (HTTPParser.findMethods(locs, bestIdx) == false) {
         LOG_ERROR("Method not implemented");
         sendError(HTTPParser, HTTPParser.getCode());
-        buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");
+        if (_alterError == false)
+            buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");
         return true;
         }
     }
@@ -720,6 +952,14 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
 
             std::string file = getFile(HTTPParser::httpCodeToString(HTTPParser.getCode()),
                 HTTPParser.getError());
+            
+            struct stat sb;
+            if (stat(file.c_str(), &sb) == -1 || !S_ISREG(sb.st_mode))
+            {
+                LOG_ERROR("stat failed: " + file + " - " + strerror(errno));
+                buildAlternativErrorPage(HTTPParser::httpCodeToString(HTTPParser.getCode()));
+                return true;
+            }
             if (answerFile(file) == false){
                 
                 if (errno == EACCES)
@@ -728,6 +968,9 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
                     sendError(HTTPParser, HTTPParser.setCode(HTTP_404));
                 else 
                     sendError(HTTPParser, HTTPParser.setCode(HTTP_500));
+
+                if (_alterError == true)
+                    return true;
             }
 
         } else {
@@ -753,7 +996,6 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         if (uploadFile(HTTPParser.getFileName(), content) == false)
             sendError(HTTPParser, HTTP_500);
         else {
-
             HTTPParser.setCode(HTTP_201);
         }
     } 
@@ -767,6 +1009,17 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
             ? getFile(HTTPParser::httpCodeToString(HTTPParser.getCode()), true)
             : getFile(HTTPParser.getFileName(), false);
 
+        if (HTTPParser.getError() == true) {
+            
+            struct stat sb;
+            if (stat(file.c_str(), &sb) == -1 || !S_ISREG(sb.st_mode))
+            {
+                LOG_ERROR("stat failed: " + file + " - " + strerror(errno));
+                buildAlternativErrorPage(HTTPParser::httpCodeToString(HTTPParser.getCode()));
+                return true;
+            }
+        }
+            
         if (answerFile(file) == false){
             if (errno == EACCES)
                 sendError(HTTPParser, HTTPParser.setCode(HTTP_403));
@@ -774,6 +1027,9 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
                 sendError(HTTPParser, HTTPParser.setCode(HTTP_404));
             else 
                 sendError(HTTPParser, HTTPParser.setCode(HTTP_500));
+                
+            if (_alterError == true)
+                return true;
         }
             
     } 
@@ -789,6 +1045,8 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
                 sendError(HTTPParser, HTTPParser.setCode(HTTP_404));
             else 
                 sendError(HTTPParser, HTTPParser.setCode(HTTP_500));
+            if (_alterError == true)
+                return true;
         }
 
     } 
@@ -832,6 +1090,8 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
                     sendError(HTTPParser, HTTPParser.setCode(HTTP_404));
                 else 
                     sendError(HTTPParser, HTTPParser.setCode(HTTP_500));
+                if (_alterError == true)
+                    return true;
             }
 
         }
@@ -845,6 +1105,8 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
                     sendError(HTTPParser, HTTPParser.setCode(HTTP_404));
                 else 
                     sendError(HTTPParser, HTTPParser.setCode(HTTP_500));
+                if (_alterError == true)
+                    return true;
             }
         }
 
@@ -858,13 +1120,19 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
                 sendError(HTTPParser, HTTPParser.setCode(HTTP_404));
             else 
                 sendError(HTTPParser, HTTPParser.setCode(HTTP_500));
+            if (_alterError == true)
+                return true;
         }
 
     } else if (HTTPParser.getType() == "multipart/form-data") {
 
         if (uploadFile(HTTPParser.getFileName(),
-            HTTPParser.getFileBuf()) == false)
+            HTTPParser.getFileBuf()) == false){
+                
             sendError(HTTPParser, HTTP_500);
+            if (_alterError == true)
+                return true;
+        }
         else
         {
             HTTPParser.setCode(HTTP_201);
