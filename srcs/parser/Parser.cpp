@@ -396,24 +396,36 @@ void Parser::parseDirectiveClientMaxBodySize(AConfig &ref)
 
 void Parser::parseSize(const std::string &word) const
 {
-    size_t i = 0;
+    static const size_t MAX_BODY_SIZE = 1048576; // 1M
 
+    size_t i = 0;
     while (i < word.size() && std::isdigit(word[i]))
         i++;
+
     if (i == 0)
         throw std::runtime_error("Invalid size value (e.g. '1M')");
 
-    if (i == word.size())
-        return;
+    size_t bytes = std::stoul(word.substr(0, i));
 
-    if (i != word.size() - 1)
-        throw std::runtime_error("Invalid size value: expected at least "
-            "one digit (e.g. '10M', '512K', '1G', or '1024')");
+    if (i != word.size())
+    {
+        if (i != word.size() - 1)
+            throw std::runtime_error("Invalid size value: expected at least "
+                "one digit (e.g. '1M', '512K', or '1024')");
 
-    char unit = word[i];
-    if (unit != 'K' && unit != 'k' && unit != 'M' && unit != 'm')
-            throw std::runtime_error("Invalid size unit: expected 'K', 'M' or "
-            "'G' after the number (e.g. '10M', '512K', '1G')");
+        char unit = word[i];
+        if (unit == 'K' || unit == 'k')
+            bytes *= 1024;
+        else if (unit == 'M' || unit == 'm')
+            bytes *= 1048576;
+        else
+            throw std::runtime_error("Invalid size unit: expected 'K' or 'M' "
+                "(e.g. '1M', '512K')");
+    }
+
+    if (bytes > MAX_BODY_SIZE)
+        throw std::runtime_error("Invalid size value: "
+                "client_max_body_size exceeds maximum allowed (1M)");
 }
 
 void Parser::parseDirectiveErrorPage(AConfig &ref)

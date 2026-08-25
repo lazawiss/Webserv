@@ -898,6 +898,7 @@ size_t HTTPParser::getEffectiveBodyLimit() const
 }
 
 size_t HTTPParser::parseBodySize( std::string const & s ) {
+
     if (s.empty())
         return 0;
 
@@ -913,7 +914,6 @@ size_t HTTPParser::parseBodySize( std::string const & s ) {
     switch (std::toupper(static_cast<unsigned char>(unit))) {
         case 'K': return value * 1024UL;
         case 'M': return value * 1024UL * 1024UL;
-        case 'G': return value * 1024UL * 1024UL * 1024UL;
 
         default:  return value;
     }
