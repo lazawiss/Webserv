@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/25 14:46:30 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/25 15:32:18 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -864,15 +864,15 @@ int HTTPParser::checkContentLength( std::string const & value ) {
     oss << _content_length;
     LOG_DEBUG("Content-Length: " + oss.str());
 
-    if (_content_length > 400000){
+    // if (_content_length > 400000){
         
-        LOG_ERROR("Content-Length exceeds limit");
-        _errors = true;
-        _code   = HTTP_413;
-        _type   = "text/html";
+    //     LOG_ERROR("Content-Length exceeds limit");
+    //     _errors = true;
+    //     _code   = HTTP_413;
+    //     _type   = "text/html";
         
-        return SERVER_ERROR;
-    }
+    //     return SERVER_ERROR;
+    // }
 
     return SERVER_OK;
 }
