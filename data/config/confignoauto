@@ -32,7 +32,7 @@ server {
 
     location /upload {
         //root        data/upload;
-        index       index.html;
+        //index       index.html;
         methods     GET POST DELETE;
     }
 }

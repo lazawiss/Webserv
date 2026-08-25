@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestHandler.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: leazannis <leazannis@student.42.fr>        +#+  +:+       +#+        */
+/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/25 00:20:26 by leazannis        ###   ########.fr       */
+/*   Updated: 2026/08/25 12:58:12 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -728,17 +728,18 @@ std::string RequestHandler::generateAutoindex(const std::string &fullPath, const
     while ((entry = readdir(dir)) != NULL)
     {
         std::string name = entry->d_name;
-
+        LOG_INFO(COLOR_PINK + std::string("name dans generateAutoindex: ") + name + COLOR_RESET);
         if (name == ".")
             continue;
         
         std::string entryPath = fullPath;  // check entry a dir
- 
+        LOG_INFO(COLOR_CYAN + std::string("entryPath dans generateAutoindex: ") + entryPath + COLOR_RESET);
         char const *lastSlash = strrchr(entryPath.c_str(), '/');
         if (!lastSlash){
             return "";
         }
         std::string dir = std::string(lastSlash, strlen(lastSlash));
+        LOG_INFO(COLOR_GREEN + std::string(" HTML: ") + html + COLOR_RESET);
 
         if (entryPath[entryPath.size() - 1] != '/')
             entryPath += "/";
@@ -768,6 +769,8 @@ std::string RequestHandler::generateAutoindex(const std::string &fullPath, const
     closedir(dir);
 
     html += "</ul>\n<hr>\n</body>\n</html>\n";
+    LOG_INFO(COLOR_GREEN + std::string(" HTML: ") + html + COLOR_RESET);
+
     
     return html;
 }
