@@ -44,14 +44,14 @@ void ServerConfig::setListen(const std::string& listen)
 }
 
 // ── server names ────────────────────────────────────────────────────────────
-const std::vector<std::string>& ServerConfig::getServerNames() const
+const std::string& ServerConfig::getServerName() const
 {
-    return _server_names;
+    return _server_name;
 }
 
-void ServerConfig::addServerName(const std::string& name)
+void ServerConfig::setServerName(const std::string& name)
 {
-    _server_names.push_back(name);
+    _server_name = name;
 }
 
 // ── locations ───────────────────────────────────────────────────────────────

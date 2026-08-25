@@ -411,8 +411,7 @@ void Parser::parseSize(const std::string &word) const
             "one digit (e.g. '10M', '512K', '1G', or '1024')");
 
     char unit = word[i];
-    if (unit != 'K' && unit != 'k' && unit != 'M' && unit != 'm' 
-        && unit != 'G' && unit != 'g')
+    if (unit != 'K' && unit != 'k' && unit != 'M' && unit != 'm')
             throw std::runtime_error("Invalid size unit: expected 'K', 'M' or "
             "'G' after the number (e.g. '10M', '512K', '1G')");
 }
@@ -523,10 +522,13 @@ void Parser::parseDirectiveServerName(ServerConfig &ref)
     if (current().type != Word)
         throw std::runtime_error("Unexpected token '" +  current().value
             + "', should be a 'word' type");
+
+    if (!ref.getServerName().empty())
+        throw std::runtime_error("Duplicate 'methods' directive");
     
     while (current().type == Word)
     {
-        ref.addServerName(current().value);
+        ref.setServerName(current().value);
         next();
     }
 

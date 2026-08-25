@@ -379,9 +379,8 @@ bool EpollLoop::do_read_fd(
 
     std::string requestLine = request.substr(0, request.find("\r\n"));
 
-    const std::vector<std::string> &names = serverConfig->getServerNames();
-    std::string serverName = names.empty() ? listener->getService() : names[0];
-    LOG_INFO("[" + serverName + "] " + requestLine);
+    const std::string &serverName = serverConfig->getServerName();
+    LOG_INFO("[" + (serverName.empty() ? listener->getService() : serverName) + "] " + requestLine);
 
     RequestHandler requestHandler(request, *serverConfig);
     if (requestHandler.handleRequest(*listener) == false)
