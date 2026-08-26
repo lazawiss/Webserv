@@ -1,0 +1,14 @@
+# ─────────────────────────────────────────
+#  SERVEUR
+# ─────────────────────────────────────────
+
+server {
+
+    listen          127.0.0.1:8081;
+
+    location /diary {
+        root        data/www/diary;
+        index       index.html;
+        methods     GET;
+    }
+}

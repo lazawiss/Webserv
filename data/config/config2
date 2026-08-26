@@ -1,12 +1,12 @@
 # ─────────────────────────────────────────
-#  SERVEUR 3 — Même port, autre interface
+#  SERVEUR
 # ─────────────────────────────────────────
 
 autoindex   on;
 
 server {
 
-    listen       127.0.0.1:8080;     # même port, mais interface différente
+    listen       127.0.0.1:8080;
     server_name  internal.localhost;
     root        data/www;
     error_page 404 /errors/404.html;
@@ -63,4 +63,3 @@ server {
     #}
   
 }
-
