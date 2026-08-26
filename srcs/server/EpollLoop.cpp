@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/26 19:11:58 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/26 20:58:35 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -431,18 +431,8 @@ bool EpollLoop::do_read_fd(
         if (!cgi->start())
         {
             delete cgi;
-            _clientResponseBuffer[fd] =
-           "HTTP/1.1 502 Bad Gateway\r\n"
-            "Content-Type: text/html\r\n"
-            "Content-Length: 161\r\n\r\n"
-            "<html>\r\n"
-            "<head><title>502 Bad Gateway EPOLL START</title></head>\r\n"
-            "<body>\r\n"
-            "<h1>502 Bad Gateway</h1>\r\n"
-            "<p>-___-Took wrong turn somewhere -___-</p>\r\n"
-            "</body>\r\n"
-            "</html>\r\n\r\n";
-            
+            _clientResponseBuffer[fd] = requestHandler.buildAlternativErrorPage("502");
+        
             ev.events = EPOLLOUT;
             ev.data.fd = fd;
             epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &ev);

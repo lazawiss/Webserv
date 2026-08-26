@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/26 20:28:19 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/26 20:56:10 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -465,7 +465,7 @@ bool HTTPParser::buildCGIPath()
     // data/cgi-bin/database.py/42/lol?name=x
 
     std::string uriPath = _requesttarget;
-    size_t q = uriPath.find('?');
+    size_t q = uriPath.find('?');//varNotFound400
     if (q != std::string::npos)
         uriPath = uriPath.substr(0, q);
 
@@ -537,8 +537,8 @@ bool HTTPParser::validateCGIRequest() {
     if (_scriptFilename.empty())
         return false;
 
-    if (buildCGIPath() == false)
-        return false;
+    // if (buildCGIPath() == false)
+    //     return false;
 
     struct stat st;
     if (stat(_fullPath.c_str(), &st) != 0 || !S_ISREG(st.st_mode))

@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/26 20:16:45 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/26 20:47:58 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -863,12 +863,19 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         
     if (HTTPParser.isCGI()) 
     {
+        
+        std::string uriPath = HTTPParser.getRequestTarget();
+        size_t q = uriPath.find('?');
+        if (q != std::string::npos)
+            uriPath = uriPath.substr(0, q);
+
+        
         if (HTTPParser.validateCGIRequest() == false)
         {
             LOG_ERROR("CGI request validation failed");
-            sendError(HTTPParser, HTTP_502);
+            sendError(HTTPParser, HTTP_500);
             if (_alterError == false)
-                buildAnswerHeader("502", "text/html");
+                buildAnswerHeader("500", "text/html");
             return true;
         }
         if (HTTPParser.compareMethodWithConfigFile(locs, bestIdx) == false){
