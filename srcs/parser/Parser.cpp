@@ -537,7 +537,7 @@ void Parser::parseDirectiveServerName(ServerConfig &ref)
             + "', should be a 'word' type");
 
     if (!ref.getServerName().empty())
-        throw std::runtime_error("Duplicate 'methods' directive");
+        throw std::runtime_error("Duplicate 'server_name' directive");
     
     while (current().type == Word)
     {
