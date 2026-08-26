@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   EpollLoop.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
+/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:27:21 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/11 17:46:18 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/26 19:04:35 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -83,11 +83,9 @@ public:
     bool        do_read_fd( int fd, std::vector<ListenerManager*> const & listeners, const GlobalConfig &config, int epollfd , epoll_event& ev);
     bool        do_write_fd( int fd, int epollfd, epoll_event &ev );
 
-    void        cleanupClient( int fd, int epollfd );
     void        cleanupCGI(CGI *cgi, int epollfd, std::string const& response, epoll_event &ev);
     void        checkCGITimeout(int epollfd, epoll_event &ev);
     
-    // bool        do_use_fd( int fd, std::vector<ListenerManager*> const & listeners, const GlobalConfig &config, int epollfd , epoll_event& ev);
     bool        readingSocket( std::vector<ListenerManager*> const & listeners, const GlobalConfig &config );
  
 };

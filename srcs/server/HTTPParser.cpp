@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/25 16:39:26 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/26 19:52:51 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -412,7 +412,9 @@ void HTTPParser::parseCGI()
         _scriptFilename = _requesttarget.substr(0, pos);
         _query_string = _requesttarget.substr(pos + 1);
     
-    } else {
+    } 
+    
+    else {
 
         _scriptFilename = _requesttarget;
         _query_string = "";
@@ -527,6 +529,8 @@ bool HTTPParser::buildCGIPath()
 
 bool HTTPParser::validateCGIRequest() {
 
+    LOG_INFO(COLOR_CYAN + std::string("validateCGIRequest")+ COLOR_RESET);
+
     if (_scriptFilename.empty())
         return false;
 
@@ -536,6 +540,8 @@ bool HTTPParser::validateCGIRequest() {
     struct stat st;
     if (stat(_fullPath.c_str(), &st) != 0 || !S_ISREG(st.st_mode))
         return false;
+        
+    LOG_INFO(COLOR_CYAN + std::string("validateCGIRequest RETURN")+ COLOR_RESET);
 
     return true;
 }

@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/26 19:02:10 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/26 19:11:58 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -436,7 +436,7 @@ bool EpollLoop::do_read_fd(
             "Content-Type: text/html\r\n"
             "Content-Length: 161\r\n\r\n"
             "<html>\r\n"
-            "<head><title>502 Bad Gateway</title></head>\r\n"
+            "<head><title>502 Bad Gateway EPOLL START</title></head>\r\n"
             "<body>\r\n"
             "<h1>502 Bad Gateway</h1>\r\n"
             "<p>-___-Took wrong turn somewhere -___-</p>\r\n"
@@ -719,7 +719,7 @@ bool EpollLoop::readingSocket(
                                 "Content-Type: text/html\r\n"
                                 "Content-Length: 161\r\n\r\n"
                                 "<html>\r\n"
-                                "<head><title>502 Bad Gateway</title></head>\r\n"
+                                "<head><title>502 Bad Gateway EPOLL WRITE</title></head>\r\n"
                                 "<body>\r\n"
                                 "<h1>502 Bad Gateway</h1>\r\n"
                                 "<p>-___-Took wrong turn somewhere -___-</p>\r\n"
@@ -741,7 +741,7 @@ bool EpollLoop::readingSocket(
                                 "Content-Type: text/html\r\n"
                                 "Content-Length: 161\r\n\r\n"
                                 "<html>\r\n"
-                                "<head><title>502 Bad Gateway</title></head>\r\n"
+                                "<head><title>502 Bad Gateway EPOLL READ</title></head>\r\n"
                                 "<body>\r\n"
                                 "<h1>502 Bad Gateway</h1>\r\n"
                                 "<p>-___-Took wrong turn somewhere -___-</p>\r\n"
