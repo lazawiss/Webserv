@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:00:06 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/26 16:02:16 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/26 17:05:42 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,7 +55,7 @@ private:
     std::string         _header;
     std::string         _size;
     std::string         _pathToFile;
-    char                _buffer[BUF_SIZE];
+    std::vector<char>   _buffer;
     ssize_t             _n_read_index;
     bool                _alterError;
     /*CGI */

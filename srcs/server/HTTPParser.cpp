@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/26 15:58:17 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/26 16:29:55 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,7 @@ HTTPParser::HTTPParser( std::string const & request,
     _code(HTTP_INDEX), _type(), _method(),
     _requesttarget(), _httpversion(), _boundary(),
     _fileLength(), _fileName(), _fileBuf(),
-    _errors(false), _upload(false), _isIndex(false), _httpMaxbodysize(getEffectiveBodyLimit()), _content_length(0), 
+    _errors(false), _upload(false), _isIndex(false), _httpMaxbodysize(0), _content_length(0), 
     _connectionType(CONN_KEEP_ALIVE), _host("8080"),
     _isCGI(false), _fullPath(), _query_string(), _scriptFilename(),
     _body(), _content_type(), _content_int(0),
@@ -293,11 +293,14 @@ static RequestParser getHeaderType( const std::string & key ) {
 
 bool HTTPParser::isRequestValid( ListenerManager const & listen ) {
 
-    if (checkSize() == false)
-        return LOG_ERROR("Request size exceeds limit"), false;
-
+    
     if (checkRequestLine() == false)
         return LOG_ERROR("Invalid request line"), false;
+    
+    _httpMaxbodysize = getEffectiveBodyLimit();
+        
+    if (checkSize() == false)
+        return LOG_ERROR("Request size exceeds limit"), false;
     
     size_t headerEnd = _request.find("\r\n\r\n");
     if (headerEnd == std::string::npos)
@@ -893,6 +896,7 @@ size_t HTTPParser::getEffectiveBodyLimit() const
     else
         limit = parseBodySize("1M");
 
+    std::cout << "_HTTPMAXBODYSIZE: " << limit << std::endl;
     return limit;
 }
 
