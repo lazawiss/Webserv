@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/21 14:12:24 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/24 14:14:33 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/26 16:02:33 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,7 +62,6 @@ std::string logTimestamp();
 #define COLOR_RESET "\033[0m"
 
 
-#define BUF_SIZE 800000
 #define LISTEN_BACKLOG 255 //max connections accepted by socket
 #define MAX_EVENTS 255
 

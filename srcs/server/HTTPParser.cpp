@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/25 16:39:26 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/26 16:29:55 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,7 @@ HTTPParser::HTTPParser( std::string const & request,
     _code(HTTP_INDEX), _type(), _method(),
     _requesttarget(), _httpversion(), _boundary(),
     _fileLength(), _fileName(), _fileBuf(),
-    _errors(false), _upload(false), _isIndex(false), _content_length(0), 
+    _errors(false), _upload(false), _isIndex(false), _httpMaxbodysize(0), _content_length(0), 
     _connectionType(CONN_KEEP_ALIVE), _host("8080"),
     _isCGI(false), _fullPath(), _query_string(), _scriptFilename(),
     _body(), _content_type(), _content_int(0),
@@ -44,7 +44,8 @@ HTTPParser::HTTPParser( HTTPParser const & src ) :
     _httpversion(src._httpversion), _boundary(src._boundary),
     _fileLength(src._fileLength), _fileName(src._fileName),
     _fileBuf(src._fileBuf), _errors(src._errors),
-    _upload(src._upload), _isIndex(src._isIndex), _content_length(src._content_length), 
+    _upload(src._upload), _isIndex(src._isIndex), _httpMaxbodysize(src._httpMaxbodysize),
+    _content_length(src._content_length), 
     _connectionType(src._connectionType),
     _host(src._host), _isCGI(src._isCGI),
     _fullPath(src._fullPath), _query_string(src._query_string),
@@ -79,6 +80,7 @@ HTTPParser &    HTTPParser::operator=( HTTPParser const & other )
         _errors                 = other._errors;
         _upload                 = other._upload;
         _isIndex                = other._isIndex;
+        _httpMaxbodysize        = other._httpMaxbodysize;
         _connectionType         = other._connectionType;
         _content_length         = other._content_length;
         _host                   = other._host;
@@ -291,11 +293,14 @@ static RequestParser getHeaderType( const std::string & key ) {
 
 bool HTTPParser::isRequestValid( ListenerManager const & listen ) {
 
-    if (checkSize() == false)
-        return LOG_ERROR("Request size exceeds limit"), false;
-
+    
     if (checkRequestLine() == false)
         return LOG_ERROR("Invalid request line"), false;
+    
+    _httpMaxbodysize = getEffectiveBodyLimit();
+        
+    if (checkSize() == false)
+        return LOG_ERROR("Request size exceeds limit"), false;
     
     size_t headerEnd = _request.find("\r\n\r\n");
     if (headerEnd == std::string::npos)
@@ -548,7 +553,7 @@ bool HTTPParser::validateCGIRequest() {
 
 bool HTTPParser::checkSize() {
     
-    if (_request.size() > BUF_SIZE) {
+    if (_request.size() > _httpMaxbodysize) {
         
         _errors = true;
         _code = HTTP_413;
@@ -846,7 +851,7 @@ int HTTPParser::checkContentLength( std::string const & value ) {
         return SERVER_ERROR;
     }
 
-    size_t limit = getEffectiveBodyLimit();
+    size_t limit = _httpMaxbodysize;
 
     if (len > limit) {
         LOG_ERROR("Content-Length exceeds limit");
@@ -864,15 +869,15 @@ int HTTPParser::checkContentLength( std::string const & value ) {
     oss << _content_length;
     LOG_DEBUG("Content-Length: " + oss.str());
 
-    if (_content_length > 400000){
+    // if (_content_length > 400000){
         
-        LOG_ERROR("Content-Length exceeds limit");
-        _errors = true;
-        _code   = HTTP_413;
-        _type   = "text/html";
+    //     LOG_ERROR("Content-Length exceeds limit");
+    //     _errors = true;
+    //     _code   = HTTP_413;
+    //     _type   = "text/html";
         
-        return SERVER_ERROR;
-    }
+    //     return SERVER_ERROR;
+    // }
 
     return SERVER_OK;
 }
@@ -891,9 +896,7 @@ size_t HTTPParser::getEffectiveBodyLimit() const
     else
         limit = parseBodySize("1M");
 
-    if (limit > BUF_SIZE)
-        limit = BUF_SIZE;
-
+    std::cout << "_HTTPMAXBODYSIZE: " << limit << std::endl;
     return limit;
 }
 
@@ -1089,11 +1092,12 @@ void HTTPParser::buildFullPath() {
     else
         root = _serverConfig.getRoot();
 
-    _autoindexOn = (bestLoc && bestLoc->getAutoindex() == "on");
     if (bestLoc->getAutoindex().empty()){
-        const std::string autoserver = _serverConfig.getAutoindex();
-        if (autoserver == "on")
-            _autoindexOn = true;
+        if (!_serverConfig.getAutoindex().empty())
+        _autoindexOn = (_serverConfig.getAutoindex() == "on");
+    }
+    else {
+        _autoindexOn = (bestLoc && bestLoc->getAutoindex() == "on");
     }
 
     std::string suffix = _requesttarget;

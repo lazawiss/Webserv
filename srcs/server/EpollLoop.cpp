@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/25 21:28:25 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/26 17:32:11 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,18 +20,19 @@
 #include "Server.hpp"
 #include "RequestHandler.hpp"
 
+
 /*
 ** ============================================================================
 ** The Rule of Three
 ** ============================================================================
 */
 
-EpollLoop:: EpollLoop() : _header(), _content() {}
+EpollLoop:: EpollLoop() : _header(), _content(), _maxbodysize(0) {}
 
 EpollLoop::EpollLoop( EpollLoop const & src ) :
     _clientToListener(src._clientToListener),
     _clientResponseBuffer(src._clientResponseBuffer),
-    _header(src._header), _content(src._content) {}
+    _header(src._header), _content(src._content), _maxbodysize(src._maxbodysize) {}
 
 EpollLoop::~EpollLoop() {}
 
@@ -43,6 +44,7 @@ EpollLoop & EpollLoop::operator=( EpollLoop const & other )
         _clientResponseBuffer   = other._clientResponseBuffer;
         _header                 = other._header;
         _content                = other._content;
+        _maxbodysize            = other._maxbodysize;
     }
 
     return *this;
@@ -164,7 +166,7 @@ static std::string rebuildWithContentLength(
 }
 
 
-static RequestState dechunkBody( const std::string &body, std::string &decoded )
+RequestState EpollLoop::dechunkBody( const std::string &body, std::string &decoded )
 {
     size_t pos = 0;
     decoded.clear();
@@ -191,7 +193,7 @@ static RequestState dechunkBody( const std::string &body, std::string &decoded )
         ss >> std::hex >> num;
         std::cout << "what is num : " << num << std::endl;
         chunkSize = num; 
-        if (decoded.size() + chunkSize > BUF_SIZE)
+        if (decoded.size() + chunkSize > _maxbodysize)
             return REQ_BAD_413;
         
 
@@ -220,7 +222,7 @@ static RequestState dechunkBody( const std::string &body, std::string &decoded )
     }
 }
 
-static RequestState analyzeRequest( const std::string &acc, std::string &request)
+RequestState EpollLoop::analyzeRequest( const std::string &acc, std::string &request)
 {
     size_t headerEnd = acc.find("\r\n\r\n");
     if (headerEnd == std::string::npos)     
@@ -250,7 +252,7 @@ static RequestState analyzeRequest( const std::string &acc, std::string &request
             if (!std::isdigit((unsigned char)cl[k]))
                 return REQ_BAD_411;
         size_t expected = (size_t)strtoul(cl.c_str(), NULL, 10);
-        if (expected > BUF_SIZE)
+        if (expected > _maxbodysize)
             return REQ_BAD_413;
         if (acc.size() - bodyStart < expected)
             return REQ_INCOMPLETE; 
@@ -260,6 +262,40 @@ static RequestState analyzeRequest( const std::string &acc, std::string &request
     // if no body request ends at the header term
     request = acc.substr(0, bodyStart);
     return REQ_READY;
+}
+
+ssize_t EpollLoop::parseBodySize( std::string const & s ) {
+
+    if (s.empty())
+        return 0;
+
+    std::stringstream ss(s);
+    ssize_t value;
+    ss >> value;
+    if (ss.fail())
+        return 0;
+
+    char unit = '\0';
+    ss >> unit;
+
+    switch (std::toupper(static_cast<unsigned char>(unit))) {
+        case 'K': return value * 1024UL;
+        case 'M': return value * 1024UL * 1024UL;
+
+        default:  return value;
+    }
+}
+
+ssize_t EpollLoop::getMaxBodySize(const GlobalConfig & config)
+{
+    ssize_t limit;
+
+    if (config.getClientMaxBodySize().empty())
+        limit = parseBodySize("1M");
+    else
+        limit = parseBodySize(config.getClientMaxBodySize());
+
+    return limit;
 }
 
 
@@ -280,9 +316,12 @@ bool EpollLoop::do_read_fd(
     int fd, std::vector<ListenerManager*> const & listeners,
     const GlobalConfig & config, int epollfd, epoll_event & ev)
 {
-    char    buf[BUF_SIZE];
 
-    ssize_t n_read = read(fd, buf, BUF_SIZE);
+    _maxbodysize = getMaxBodySize(config);
+    
+    char    buf[_maxbodysize];
+
+    ssize_t n_read = read(fd, buf, _maxbodysize);
     if (n_read == 0)
     {
         LOG_ERROR("Client closed connection");
@@ -744,7 +783,9 @@ bool EpollLoop::readingSocket(
                             break;
                     
                     } 
-                    else if ( events[n].events & EPOLLOUT ) 
+                    // else if ( events[n].events & EPOLLOUT ) 
+                    
+                    else
                     {
 
                         if (!do_write_fd(events[n].data.fd,
