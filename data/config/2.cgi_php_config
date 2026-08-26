@@ -14,6 +14,8 @@ server {
     error_page 500 /errors/500.html;
 
     location / {
+        client_max_body_size    1M;
+
         root                data/www/html;
         index               index2.html index.html;
         methods             GET;
@@ -21,6 +23,9 @@ server {
     }
 
     location /cgi-bin {
+        
+        client_max_body_size    1M;
+
         root                data/cgi-bin;
         methods             POST;
         cgi_extension       .php /usr/bin/php-cgi;
@@ -28,6 +33,8 @@ server {
     }
 
     location /upload {
+        client_max_body_size    1M;
+
         root                data/upload;
         index               index.html;
         methods             GET POST DELETE;
