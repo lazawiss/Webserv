@@ -780,13 +780,25 @@ void RequestHandler::sendError( HTTPParser & parser, HttpCode code ) {
     parser.setError(true);
     parser.setCode(code);
     parser.setType("text/html");
-    std::string file = getFile(HTTPParser::httpCodeToString(parser.getCode()), parser.getError());
+
+    std::string code_string = HTTPParser::httpCodeToString(parser.getCode());
+    int code_int = std::atoi(code_string.c_str());
+
+    const std::map<int, std::string> & errorPages = _serverConfig.getErrorPages();
+    std::map<int, std::string>::const_iterator it = errorPages.find(code_int);
+
+    if (it == errorPages().end())
+    {
+        buildAlternativErrorPage(code_string);
+        return;
+    }
+    std::string file = it->second;
 
     struct stat sb;
     if (stat(file.c_str(), &sb) == -1 || !S_ISREG(sb.st_mode))
     {
         LOG_ERROR("stat failed sendError: " + file + " - " + strerror(errno));
-        buildAlternativErrorPage(HTTPParser::httpCodeToString(parser.getCode()));
+        buildAlternativErrorPage(code_string);
         return ;
     }
     if (answerFile(file) == false){

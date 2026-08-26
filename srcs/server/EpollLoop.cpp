@@ -443,7 +443,7 @@ bool EpollLoop::do_read_fd(
 
     std::ostringstream dbg;
     // ------------ Debug ------------
-    dbg << fd;
+    dbg << "\nResponse header:" << fd;
     LOG_DEBUG(dbg.str());
 
     _clientResponseBuffer[fd] += requestHandler.getHeader();
