@@ -573,14 +573,12 @@ std::string RequestHandler::buildAlternativErrorPage( std::string const & code )
         }
     }
     _alterError = true;
-    std::cout << "_HEADER: " << _header << std::endl;
+
     return _header;
 }
 // open file + stock it in buffer to send back to client
 // content = text
 bool    RequestHandler::answerFile( std::string const & file ){
-
-    std::cout << "answerFile" << std::endl;
     
     struct stat sb;
     
@@ -779,7 +777,6 @@ std::string RequestHandler::generateAutoindex(const std::string &fullPath, const
 
 void RequestHandler::sendError( HTTPParser & parser, HttpCode code ) {
     
-    std::cout << "sendError" << std::endl;
     parser.setError(true);
     parser.setCode(code);
     parser.setType("text/html");
