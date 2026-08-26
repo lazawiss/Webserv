@@ -787,7 +787,7 @@ void RequestHandler::sendError( HTTPParser & parser, HttpCode code ) {
     const std::map<int, std::string> & errorPages = _serverConfig.getErrorPages();
     std::map<int, std::string>::const_iterator it = errorPages.find(code_int);
 
-    if (it == errorPages().end())
+    if (it == errorPages.end())
     {
         buildAlternativErrorPage(code_string);
         return;
