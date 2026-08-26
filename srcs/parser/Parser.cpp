@@ -405,7 +405,8 @@ void Parser::parseSize(const std::string &word) const
     if (i == 0)
         throw std::runtime_error("Invalid size value (e.g. '1M')");
 
-    size_t bytes = std::stoul(word.substr(0, i));
+    std::string new_word = word.substr(0, i);
+    size_t bytes = strtoul(new_word.c_str(), NULL, 10);
 
     if (i != word.size())
     {
