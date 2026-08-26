@@ -1,0 +1,65 @@
+# ─────────────────────────────────────────
+#  SERVEUR
+# ─────────────────────────────────────────
+
+autoindex   on;
+
+server {
+
+    listen       127.0.0.1:8080;
+    server_name  internal.localhost;
+    root        data/www;
+    error_page 404 /errors/404.html;
+    
+    location /vespera {
+        root        data/www/vespera;
+        index       index.html;
+        methods     GET;
+        autoindex   off;
+    }
+
+    location / {
+        root        data/www/html;
+        index       index2.html index.html;
+        methods     GET;
+        autoindex   on;
+    }
+
+    location /cgi-bin {
+        root            data/cgi-bin;
+        methods         POST;
+        //cgi_extension   .py  /usr/bin/python3;
+        cgi_extension   .php /usr/bin/php-cgi;
+        index           index.py;
+    }
+
+    location /api {
+        root        data/www/diary;
+        index       index2.html index.html;
+        methods     GET;
+        autoindex   on;
+    }
+
+    location /upload {
+        root        data/upload;
+        index       index.html;
+        methods     GET POST DELETE;
+        autoindex   off;
+    }
+
+    #location /html/image.html {
+    #    return      301 /redirection/index.html; # redirection permanent        
+    #}
+#
+    #location /google {
+    #    return      302 https://www.google.com; # redirection externe
+    #}
+#
+#
+    #location /redirection {
+    #    root        data/www/redirection;
+    #    index       index.html;
+    #    methods     GET;
+    #}
+  
+}
