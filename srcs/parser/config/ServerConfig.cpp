@@ -9,7 +9,7 @@
 ServerConfig::ServerConfig(): AConfig() {}
 
 ServerConfig::ServerConfig(const ServerConfig &ref) : AConfig(ref),
-    _listen(ref._listen), _server_names(ref._server_names),
+    _listen(ref._listen), _server_name(ref._server_name),
     _locations(ref._locations) {}
 
 ServerConfig& ServerConfig::operator=(const ServerConfig &ref)
@@ -18,7 +18,7 @@ ServerConfig& ServerConfig::operator=(const ServerConfig &ref)
     {
         AConfig::operator=(ref);
         _listen = ref._listen;
-        _server_names = ref._server_names;
+        _server_name = ref._server_name;
         _locations = ref._locations;
     }
     return *this;
@@ -44,14 +44,14 @@ void ServerConfig::setListen(const std::string& listen)
 }
 
 // ── server names ────────────────────────────────────────────────────────────
-const std::vector<std::string>& ServerConfig::getServerNames() const
+const std::string& ServerConfig::getServerName() const
 {
-    return _server_names;
+    return _server_name;
 }
 
-void ServerConfig::addServerName(const std::string& name)
+void ServerConfig::setServerName(const std::string& name)
 {
-    _server_names.push_back(name);
+    _server_name = name;
 }
 
 // ── locations ───────────────────────────────────────────────────────────────

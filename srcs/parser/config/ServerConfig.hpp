@@ -19,7 +19,7 @@ class ServerConfig : public AConfig
 {
 private:
     std::string                     _listen;
-    std::vector<std::string>        _server_names; 
+    std::string                     _server_name; 
     std::vector<LocationConfig>     _locations;
 
 public:
@@ -31,13 +31,13 @@ public:
 
     // ── Getters ─────────────────────────────────────────────────────────────
     const std::string&                  getListen()         const;
-    const std::vector<std::string>&     getServerNames()    const;
+    const std::string&                  getServerName()    const;
     const std::vector<LocationConfig>&  getLocations()      const;
     std::vector<LocationConfig>&        getLocations();
 
     // ── Setters ─────────────────────────────────────────────────────────────
     void setListen(const std::string& listen);
-    void addServerName(const std::string& name);
+    void setServerName(const std::string& name);
     void addLocation(const LocationConfig& location);
 };
 
