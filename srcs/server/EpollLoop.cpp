@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/25 21:28:25 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/26 19:02:10 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -308,9 +308,16 @@ bool EpollLoop::do_read_fd(
         return true;
     if (state == REQ_BAD){
         _clientResponseBuffer[fd] = 
-            "HTTP/1.1 400 Bad Request\r\n"
+           "HTTP/1.1 400 BAD REQUEST\r\n"
             "Content-Type: text/html\r\n"
-            "Content-Length: 0\r\n\r\n";
+            "Content-Length: 241\r\n\r\n"
+            "<html>\r\n"
+            "<head><title>400 - Bad Request</title></head>\r\n"
+            "<body>\r\n"
+            "<h1>400 - Bad Request</h1>\r\n"
+            "<p>-____-The request seems to be incorrect.-____-</p>\r\n"
+            "</body>\r\n"
+            "</html>\r\n\r\n";
         ev.events = EPOLLOUT;
         ev.data.fd = fd;
         epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, NULL);
@@ -319,9 +326,16 @@ bool EpollLoop::do_read_fd(
     }
     else if (state == REQ_BAD_411){
         _clientResponseBuffer[fd] = 
-            "HTTP/1.1 411 Length Required\r\n"
+            "HTTP/1.1 411 LENGTH REQUIRED\r\n"
             "Content-Type: text/html\r\n"
-            "Content-Length: 0\r\n\r\n";
+            "Content-Length: 265\r\n\r\n"
+            "<html>\r\n"
+            "<head><title>411 LENGTH REQUIRED</title></head>\r\n"
+            "<body>\r\n"
+            "<h1>411 - Length Required</h1>\r\n"
+            "<p>-___-We need the Content-Length to answer this request.-___-</p>\r\n"
+            "</body>\r\n"
+            "</html>\r\n\r\n";
         ev.events = EPOLLOUT;
         ev.data.fd = fd;
         epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &ev);
@@ -329,9 +343,16 @@ bool EpollLoop::do_read_fd(
     }
     else if (state == REQ_BAD_413){
         _clientResponseBuffer[fd] = 
-            "HTTP/1.1 413 Content Too Large\r\n"
+            "HTTP/1.1 413 CONTENT TOO LARGE\r\n"
             "Content-Type: text/html\r\n"
-            "Content-Length: 0\r\n\r\n";
+            "Content-Length: 253\r\n\r\n"
+            "<html>\r\n"
+            "<head><title>413 CONTENT TOO LARGE</title></head>\r\n"
+            "<body>\r\n"
+            "<h1>413 - Content Too Large</h1>\r\n"
+            "<p>-___-Request is too large to process.-___-</p>\r\n"
+            "</body>\r\n"
+            "</html>\r\n\r\n";
         ev.events = EPOLLOUT;
         ev.data.fd = fd;
         epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &ev);
