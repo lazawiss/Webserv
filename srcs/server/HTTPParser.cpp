@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/26 19:52:51 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/26 20:28:19 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -481,6 +481,9 @@ bool HTTPParser::buildCGIPath()
     //data/cgi-bin/database.py
 
     const std::map<std::string, std::string> &allExtensions = loc.getMap();
+    if (allExtensions.empty()){
+        return false;
+    }
     std::string scriptPath = uriPath;
 
     for (size_t i = 0; i <= uriPath.size(); ++i)

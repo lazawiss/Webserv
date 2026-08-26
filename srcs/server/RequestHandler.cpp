@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/26 20:12:49 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/26 20:16:45 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -871,7 +871,6 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
                 buildAnswerHeader("502", "text/html");
             return true;
         }
-         LOG_INFO(COLOR_CYAN + std::string("METHOD ISCGI ") + HTTPParser.getMethod() + COLOR_RESET);
         if (HTTPParser.compareMethodWithConfigFile(locs, bestIdx) == false){
             LOG_ERROR("CGI request validation failed: Need GET or POST as method");
             sendError(HTTPParser, HTTP_405);
