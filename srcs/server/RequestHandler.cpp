@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/27 17:07:55 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/27 19:54:37 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -947,8 +947,8 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
                 // put the listing where epoll reads the response body
                 // (getBuffer()/getNReadIndex()) and let Content-Length mirror
                 if (_body.size() > (size_t)BUF_SIZE)
-                _body.resize(BUF_SIZE);
-                memcpy(_buffer.data(), _body.data(), _body.size());
+                    _body.resize(BUF_SIZE);
+                _buffer.assign(_body.begin(), _body.end());
                 _n_read_index = (ssize_t)_body.size();
                 buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");
             }
