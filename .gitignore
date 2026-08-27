@@ -4,3 +4,8 @@ vgcore.*
 data/www/nasa/config.js
 .DS_Store
 data/.DS_Store
+data/upload/*.png
+data/upload/*.jpg
+data/upload/*.jepg
+data/upload/*.gif
+data/upload/*.webp

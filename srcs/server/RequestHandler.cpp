@@ -617,7 +617,6 @@ bool    RequestHandler::answerFile( std::string const & file ){
 
 }
 
-
 // open file + stock it in buffer to send back to client
 // content = x-icon
 bool    RequestHandler::answerFileIcon(){
@@ -669,7 +668,7 @@ bool    RequestHandler::uploadFile( std::string const & filename, std::string co
         LOG_ERROR("Failed to write upload file: " + std::string(strerror(errno)));
         return false;
     }
-    // _n_read_index = buf.size();
+
     _n_read_index = 0;
     outfile.close();
 
@@ -1189,7 +1188,6 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
 // Range : start - end
 // range : start - EOF
 // range : -N bytes
-
 RequestHandler::ByteRange RequestHandler::parseRangeHeader(std::string const& rangeValue, long fileSize)
 {
     ByteRange r;
