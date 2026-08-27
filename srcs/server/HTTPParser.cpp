@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HTTPParser.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/26 20:56:10 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/27 09:46:42 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -462,6 +462,8 @@ bool HTTPParser::buildCGIPath()
     if (!_cgiInterpreter.empty())
         _cgiInterpreter.clear();
 
+    std::cout << "HERE IS WHAT REQUEST TARGET LOOKS LIKE : " << _requesttarget << std::endl;
+
     // data/cgi-bin/database.py/42/lol?name=x
 
     std::string uriPath = _requesttarget;
@@ -537,8 +539,8 @@ bool HTTPParser::validateCGIRequest() {
     if (_scriptFilename.empty())
         return false;
 
-    // if (buildCGIPath() == false)
-    //     return false;
+    if (buildCGIPath() == false)
+        return false;
 
     struct stat st;
     if (stat(_fullPath.c_str(), &st) != 0 || !S_ISREG(st.st_mode))

@@ -15,7 +15,7 @@ server {
     error_page 504 /errors/504.html;
 
     location / {
-        root                data/www/vespera;
+        root                data/www/timeout;
         index               index.html;
         methods             GET;
         autoindex           off;
