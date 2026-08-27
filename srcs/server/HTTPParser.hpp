@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HTTPParser.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
+/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/27 11:47:27 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/27 14:31:52 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,7 +71,7 @@ enum HttpCode
 #include <cstdio>
 #include <limits>
 
-#define BUF_SIZE 800000
+
 
 typedef enum RequestParser
 {
@@ -105,6 +105,10 @@ private:
     bool                        _errors;            // true if a parsing error occurred
     bool                        _upload;            // true if this is a file upload request
     bool                        _isIndex;           // true if this is file is an index
+    size_t                     _httpMaxbodysize;   // get client-max-body-size form Location < Server < Global 
+                                                    // + translate str into ssize_t
+
+
 
 
     size_t                      _content_length;    // validated Content-Length value

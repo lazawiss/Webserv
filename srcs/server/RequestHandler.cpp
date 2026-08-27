@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestHandler.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
+/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/27 12:20:10 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/27 14:32:22 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,18 +32,18 @@ RequestHandler::RequestHandler(
     const ServerConfig & serverConfig) :
     _request(request), _serverConfig(serverConfig),
     _root(serverConfig.getRoot()), _header(), _size(),
-    _pathToFile(), _n_read_index(0), _alterError(false), _isCGI(false),
+    _pathToFile(), _buffer(), _n_read_index(0), _alterError(false), _isCGI(false),
     _fullPath(), _query_string(), _scriptFilename(),
     _body(), _content_type(), _content_length(),
     _method(), _pathInfo(), _scriptName(), _interpreter()
 {
-    memset(_buffer, 0, BUF_SIZE);
+    
 }
 
 RequestHandler::RequestHandler( RequestHandler const & src ) :
     _request(src._request), _serverConfig(src._serverConfig),
     _root(src._root), _header(src._header),
-    _size(src._size), _pathToFile(src._pathToFile),
+    _size(src._size), _pathToFile(src._pathToFile), _buffer(src._buffer),
     _n_read_index(src._n_read_index), _alterError(src._alterError),_isCGI(src._isCGI),
     _fullPath(src._fullPath), _query_string(src._query_string),
     _scriptFilename(src._scriptFilename),
@@ -52,7 +52,7 @@ RequestHandler::RequestHandler( RequestHandler const & src ) :
     _method(src._method), _pathInfo(src._pathInfo),
     _scriptName(src._scriptName), _interpreter(src._interpreter)
 {
-    memcpy(_buffer, src._buffer, BUF_SIZE);
+    
 }
 
 RequestHandler::~RequestHandler() {}
@@ -66,9 +66,7 @@ RequestHandler & RequestHandler::operator=( RequestHandler const & other )
         _header         = other._header;
         _size           = other._size;
         _pathToFile     = other._pathToFile;
-
-        memcpy(_buffer, other._buffer, BUF_SIZE);
-
+        _buffer         = other._buffer;
         _n_read_index   = other._n_read_index;
         _alterError     = other._alterError;
         _isCGI          = other._isCGI;
@@ -96,7 +94,7 @@ RequestHandler & RequestHandler::operator=( RequestHandler const & other )
 // ── buffer ──────────────────────────────────────────────────────────────────
 std::string RequestHandler::getBuffer() const
 {
-    return std::string(_buffer, _n_read_index);
+    return std::string(_buffer.begin(), _buffer.end());
 }
 
 // ── header ──────────────────────────────────────────────────────────────────
@@ -579,7 +577,8 @@ std::string RequestHandler::buildAlternativErrorPage( std::string const & code )
 // open file + stock it in buffer to send back to client
 // content = text
 bool    RequestHandler::answerFile( std::string const & file ){
-    
+
+    _buffer.resize(BUF_SIZE,0);
     struct stat sb;
     
     if (stat(file.c_str(), &sb) == -1 || !S_ISREG(sb.st_mode))
@@ -604,7 +603,7 @@ bool    RequestHandler::answerFile( std::string const & file ){
         LOG_ERROR("Failed to open file: " + file + " - " + strerror(errno));
         return false;
     }
-    _n_read_index = read(indexfd, _buffer, BUF_SIZE);
+    _n_read_index = read(indexfd, _buffer.data(), _buffer.size());
     close(indexfd);
     std::ostringstream oss; oss << _n_read_index;
     if (_n_read_index == -1 || _n_read_index > BUF_SIZE || _n_read_index == 0){
@@ -620,6 +619,8 @@ bool    RequestHandler::answerFile( std::string const & file ){
 // open file + stock it in buffer to send back to client
 // content = x-icon
 bool    RequestHandler::answerFileIcon(){
+
+    _buffer.resize(BUF_SIZE,0);
 
     struct stat sb;
     
@@ -639,7 +640,7 @@ bool    RequestHandler::answerFileIcon(){
         LOG_ERROR("Failed to open favicon: " + std::string(strerror(errno)));
         return false;
     }
-    _n_read_index = read(indexfd, _buffer, BUF_SIZE);
+    _n_read_index = read(indexfd, _buffer.data(), _buffer.size());
     close(indexfd);
     std::ostringstream oss; oss << _n_read_index;
     if (_n_read_index == -1 || _n_read_index > BUF_SIZE || _n_read_index == 0){
@@ -941,7 +942,7 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
                 // (getBuffer()/getNReadIndex()) and let Content-Length mirror
                 if (_body.size() > (size_t)BUF_SIZE)
                 _body.resize(BUF_SIZE);
-                memcpy(_buffer, _body.data(), _body.size());
+                memcpy(_buffer.data(), _body.data(), _body.size());
                 _n_read_index = (ssize_t)_body.size();
                 buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");
             }
@@ -1271,7 +1272,8 @@ bool RequestHandler::answerFilePartial(std::string const & file, ByteRange const
         close(fd);
         return false;
     }
-    _n_read_index = read(fd, _buffer, length); // CHECK -1 / 0
+    _buffer.resize(length);
+    _n_read_index = read(fd, _buffer.data(), length); // CHECK -1 / 0
     close(fd);
     if (_n_read_index != length)
     {

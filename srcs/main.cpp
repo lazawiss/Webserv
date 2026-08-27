@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
+/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/05 17:44:47 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/13 21:04:24 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/26 16:56:10 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,17 +33,16 @@ int parse_arguments(int argc);
 int main(int argc, char **argv)
 {
     int             result;
-    
     if ((result = parse_arguments(argc)) != 1)
         return result;
-
+    
     try
     {
         GlobalConfig config;
         
         config = parse_file(argv[1]);
         Server server(config);
-  
+        
         server.start();
         server.run();
     }

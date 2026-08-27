@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:27:21 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/26 19:04:35 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/27 14:28:46 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,25 +67,30 @@ private:
     
     std::string                 _header;
     std::string                 _content;
+    size_t                     _maxbodysize;
 
     
 protected:
 
 public:
 
-                EpollLoop();
-                EpollLoop( EpollLoop const & src );
-                ~EpollLoop();
-    EpollLoop & operator=( EpollLoop const & other );
-
-    int         setnonblocking( int fd );
-
-    bool        do_read_fd( int fd, std::vector<ListenerManager*> const & listeners, const GlobalConfig &config, int epollfd , epoll_event& ev);
-    bool        do_write_fd( int fd, int epollfd, epoll_event &ev );
-
-    void        cleanupCGI(CGI *cgi, int epollfd, std::string const& response, epoll_event &ev);
-    void        checkCGITimeout(int epollfd, epoll_event &ev);
+                    EpollLoop();
+                    EpollLoop( EpollLoop const & src );
+                    ~EpollLoop();
+    EpollLoop &     operator=( EpollLoop const & other );       
+    int             setnonblocking( int fd );       
+    bool            do_read_fd( int fd, std::vector<ListenerManager*> const & listeners, const GlobalConfig &config, int epollfd , epoll_event& ev);
+    bool            do_write_fd( int fd, int epollfd, epoll_event &ev );    
+    void            cleanupCGI(CGI *cgi, int epollfd, std::string const& response, epoll_event &ev);
+    void            checkCGITimeout(int epollfd, epoll_event &ev);
     
-    bool        readingSocket( std::vector<ListenerManager*> const & listeners, const GlobalConfig &config );
+    RequestState    dechunkBody( const std::string &body, std::string &decoded );
+    RequestState    analyzeRequest( const std::string &acc, std::string &request);
+
+
+    ssize_t         getMaxBodySize(const GlobalConfig & config);
+    ssize_t         parseBodySize( std::string const & s );
+        
+    bool            readingSocket( std::vector<ListenerManager*> const & listeners, const GlobalConfig &config );
  
 };
