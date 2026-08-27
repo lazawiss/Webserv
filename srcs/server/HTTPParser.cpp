@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/27 14:29:02 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/27 15:04:53 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -459,11 +459,6 @@ int HTTPParser::matchLocation(const std::vector<LocationConfig> &locs, const std
 
 HttpCode HTTPParser::validateCGIRequest() {
 
-    // LOG_INFO(COLOR_CYAN + std::string("validateCGIRequest")+ COLOR_RESET);
-
-    // if (_scriptFilename.empty())
-    //     return false;
-
     if (!_pathInfo.empty())
         _pathInfo.clear();
     if (!_scriptName.empty())
@@ -471,17 +466,12 @@ HttpCode HTTPParser::validateCGIRequest() {
     if (!_cgiInterpreter.empty())
         _cgiInterpreter.clear();
 
-    std::cout << "HERE IS WHAT REQUEST TARGET LOOKS LIKE : " << _requesttarget << std::endl;
-
     // data/cgi-bin/database.py/42/lol?name=x
 
     std::string uriPath = _requesttarget;
-    size_t q = uriPath.find('?');//varNotFound400
+    size_t q = uriPath.find('?');
     if (q != std::string::npos)
         uriPath = uriPath.substr(0, q);
-    // if not uriPath is request target juste (for getting)
-
-    std::cout << "HERE IS WHAT URI LOOKS LIKE : " << uriPath << std::endl;
 
     const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
     int bestIdx = matchLocation(locs, uriPath);
@@ -489,8 +479,6 @@ HttpCode HTTPParser::validateCGIRequest() {
         return HTTP_500;
 
     const LocationConfig &loc = locs[bestIdx];
-
-    //data/cgi-bin/database.py
 
     const std::map<std::string, std::string> &allExtensions = loc.getMap();
     if (allExtensions.empty()){
@@ -514,7 +502,7 @@ HttpCode HTTPParser::validateCGIRequest() {
 
         std::map<std::string, std::string>::const_iterator it = allExtensions.find(piece.substr(extDot));
         if (it == allExtensions.end())
-            continue;
+            return HTTP_500;
 
         scriptPath      = piece;
         pathInfo       = uriPath.substr(i);
@@ -523,11 +511,7 @@ HttpCode HTTPParser::validateCGIRequest() {
     }
 
     if (!pathInfo.empty())
-    {
-        std::cout << "trop de trucs de merde" << std::endl;
         return HTTP_404;
-    }
-    std::cout << "Si je suis sortie, je suis un .py or .php " << std::endl;
     
     std::string root = loc.getRoot();
     if (root.empty())
@@ -549,7 +533,6 @@ HttpCode HTTPParser::validateCGIRequest() {
     if (stat(_fullPath.c_str(), &st) != 0 || !S_ISREG(st.st_mode))
         return HTTP_500;
         
-    LOG_INFO(COLOR_CYAN + std::string("validateCGIRequest RETURN")+ COLOR_RESET);
 
     return HTTP_CGI;
 }
