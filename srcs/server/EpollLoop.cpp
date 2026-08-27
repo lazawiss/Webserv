@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   EpollLoop.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/26 20:58:35 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/27 12:05:43 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -414,7 +414,7 @@ bool EpollLoop::do_read_fd(
         "<html>\r\n"
         "<head><title>500 Internal Server Error</title></head>\r\n"
         "<body>\r\n"
-        "<h1>Internal Server Error</h1>\r\n"
+        "<h1>500 Internal Server Error</h1>\r\n"
         "<p>-___-The server failed -___-</p>\r\n"
         "</body>\r\n"
         "</html>\r\n\r\n";

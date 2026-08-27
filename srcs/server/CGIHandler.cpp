@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CGIHandler.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 18:29:42 by andikim           #+#    #+#             */
-/*   Updated: 2026/08/25 21:26:21 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/27 11:39:15 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,6 @@ CGI::CGI(RequestHandler const &req, ListenerManager const &listen, int client_fd
     _startTime(0),
     _scriptFilename(req.getFilename()),
     _fullPath(req.getPath()),
-    _pathInfo(req.getPathInfo()),
     _scriptName(req.getScriptName()),
     _cgiInterpreter(req.getInterpreter()),
     _queryString(req.getQueryString()),
@@ -110,8 +109,6 @@ void CGI::buildEnv()
     _env.push_back("SCRIPT_FILENAME=" + _fullPath);
     _env.push_back("SCRIPT_NAME="
         + (_scriptName.empty() ? _scriptFilename : _scriptName));
-    if (_pathInfo.empty() == false)
-        _env.push_back("PATH_INFO=" + _pathInfo);
     _env.push_back("QUERY_STRING=" + _queryString);
     _env.push_back("GATEWAY_INTERFACE=CGI/1.1");
     _env.push_back("SERVER_PROTOCOL=HTTP/1.1");

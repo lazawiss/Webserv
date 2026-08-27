@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HTTPParser.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/24 14:48:58 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/27 11:47:27 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -174,7 +174,7 @@ public:
     void                        checkRange( std::string const & value );
 
     void                        parseCGI();
-    bool                        validateCGIRequest();
+    HttpCode                    validateCGIRequest();
     bool                        buildCGIPath();
     static int                  matchLocation(const std::vector<LocationConfig> &locs, const std::string &uri);
 

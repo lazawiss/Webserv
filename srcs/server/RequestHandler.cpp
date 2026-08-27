@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestHandler.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/26 20:47:58 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/27 12:20:10 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -862,35 +862,37 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         _root = HTTPParser.getPath();
         
     if (HTTPParser.isCGI()) 
-    {
-        
-        std::string uriPath = HTTPParser.getRequestTarget();
-        size_t q = uriPath.find('?');
-        if (q != std::string::npos)
-            uriPath = uriPath.substr(0, q);
+    {   
+        LOG_INFO(COLOR_CYAN + std::string("compare Methods")+ COLOR_RESET);
 
-        
-        if (HTTPParser.validateCGIRequest() == false)
+        if (HTTPParser.compareMethodWithConfigFile(locs, bestIdx) == false)
         {
-            LOG_ERROR("CGI request validation failed");
+            LOG_ERROR("CGI request validation failed: Need GET or POST as method");
+            sendError(HTTPParser, HTTP_405);
+            if (_alterError == false)
+                buildAnswerHeader("405", "text/html");
+            return true;
+        }
+        LOG_INFO(COLOR_CYAN + std::string("scriptfilename")+ _scriptFilename + COLOR_RESET);
+        _scriptFilename = HTTPParser.getScriptFilename();
+        LOG_INFO(COLOR_CYAN + std::string("scriptfilename after")+ _scriptFilename + COLOR_RESET);
+
+        if (_scriptFilename.empty())
+        {
+            LOG_ERROR("CGI request validation failed lol");
             sendError(HTTPParser, HTTP_500);
             if (_alterError == false)
                 buildAnswerHeader("500", "text/html");
             return true;
         }
-        if (HTTPParser.compareMethodWithConfigFile(locs, bestIdx) == false){
-            LOG_ERROR("CGI request validation failed: Need GET or POST as method");
-            sendError(HTTPParser, HTTP_405);
-            if (_alterError == false)
-                buildAnswerHeader("405", "text/html");
-            return true;
-        }
-        if (HTTPParser.getMethod() != "GET" && HTTPParser.getMethod() != "POST")
+
+        HttpCode code = HTTPParser.validateCGIRequest();
+        if (code != HTTP_CGI)
         {
-            LOG_ERROR("CGI request validation failed: Need GET or POST as method");
-            sendError(HTTPParser, HTTP_405);
+            LOG_ERROR("CGI request validation failed");
+            sendError(HTTPParser, code);
             if (_alterError == false)
-                buildAnswerHeader("405", "text/html");
+                buildAnswerHeader(HTTPParser.httpCodeToString(code), "text/html");
             return true;
         }
 

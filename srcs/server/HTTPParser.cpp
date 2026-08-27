@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/27 09:46:42 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/27 12:02:34 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -453,8 +453,13 @@ int HTTPParser::matchLocation(const std::vector<LocationConfig> &locs, const std
     return best;
 }
 
-bool HTTPParser::buildCGIPath()
-{
+HttpCode HTTPParser::validateCGIRequest() {
+
+    // LOG_INFO(COLOR_CYAN + std::string("validateCGIRequest")+ COLOR_RESET);
+
+    // if (_scriptFilename.empty())
+    //     return false;
+
     if (!_pathInfo.empty())
         _pathInfo.clear();
     if (!_scriptName.empty())
@@ -470,13 +475,14 @@ bool HTTPParser::buildCGIPath()
     size_t q = uriPath.find('?');//varNotFound400
     if (q != std::string::npos)
         uriPath = uriPath.substr(0, q);
+    // if not uriPath is request target juste (for getting)
 
     std::cout << "HERE IS WHAT URI LOOKS LIKE : " << uriPath << std::endl;
 
     const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
     int bestIdx = matchLocation(locs, uriPath);
     if (bestIdx < 0)
-        return false;
+        return HTTP_500;
 
     const LocationConfig &loc = locs[bestIdx];
 
@@ -484,10 +490,10 @@ bool HTTPParser::buildCGIPath()
 
     const std::map<std::string, std::string> &allExtensions = loc.getMap();
     if (allExtensions.empty()){
-        return false;
+        return HTTP_500;
     }
     std::string scriptPath = uriPath;
-
+    std::string pathInfo = uriPath;
     for (size_t i = 0; i <= uriPath.size(); ++i)
     {
         if (i != uriPath.size() && uriPath[i] != '/')
@@ -507,9 +513,15 @@ bool HTTPParser::buildCGIPath()
             continue;
 
         scriptPath      = piece;
-        _pathInfo       = uriPath.substr(i);
+        pathInfo       = uriPath.substr(i);
         _cgiInterpreter = it->second;
         break;
+    }
+
+    if (!pathInfo.empty())
+    {
+        std::cout << "trop de trucs de merde" << std::endl;
+        return HTTP_404;
     }
     std::cout << "Si je suis sortie, je suis un .py or .php " << std::endl;
     
@@ -529,26 +541,13 @@ bool HTTPParser::buildCGIPath()
     LOG_DEBUG("[CGI] script='" + _fullPath + "' SCRIPT_NAME='" + _scriptName + "' PATH_INFO='" + _pathInfo 
         + "' QUERY='" + _query_string + "'");
 
-    return true;
-}
-
-bool HTTPParser::validateCGIRequest() {
-
-    LOG_INFO(COLOR_CYAN + std::string("validateCGIRequest")+ COLOR_RESET);
-
-    if (_scriptFilename.empty())
-        return false;
-
-    if (buildCGIPath() == false)
-        return false;
-
     struct stat st;
     if (stat(_fullPath.c_str(), &st) != 0 || !S_ISREG(st.st_mode))
-        return false;
+        return HTTP_500;
         
     LOG_INFO(COLOR_CYAN + std::string("validateCGIRequest RETURN")+ COLOR_RESET);
 
-    return true;
+    return HTTP_CGI;
 }
 
 /*

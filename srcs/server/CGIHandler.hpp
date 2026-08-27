@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 18:29:28 by andikim           #+#    #+#             */
-/*   Updated: 2026/08/18 16:20:05 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/27 11:39:25 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -81,7 +81,6 @@ private:
 
     std::string                 _scriptFilename;
     std::string                 _fullPath;
-    std::string                 _pathInfo;
     std::string                 _scriptName;
     std::string                 _cgiInterpreter;
     std::string                 _queryString;
