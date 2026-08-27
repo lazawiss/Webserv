@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/26 17:32:11 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/27 14:28:12 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -347,9 +347,16 @@ bool EpollLoop::do_read_fd(
         return true;
     if (state == REQ_BAD){
         _clientResponseBuffer[fd] = 
-            "HTTP/1.1 400 Bad Request\r\n"
+           "HTTP/1.1 400 BAD REQUEST\r\n"
             "Content-Type: text/html\r\n"
-            "Content-Length: 0\r\n\r\n";
+            "Content-Length: 241\r\n\r\n"
+            "<html>\r\n"
+            "<head><title>400 - Bad Request</title></head>\r\n"
+            "<body>\r\n"
+            "<h1>400 - Bad Request</h1>\r\n"
+            "<p>-____-The request seems to be incorrect.-____-</p>\r\n"
+            "</body>\r\n"
+            "</html>\r\n\r\n";
         ev.events = EPOLLOUT;
         ev.data.fd = fd;
         epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, NULL);
@@ -358,9 +365,16 @@ bool EpollLoop::do_read_fd(
     }
     else if (state == REQ_BAD_411){
         _clientResponseBuffer[fd] = 
-            "HTTP/1.1 411 Length Required\r\n"
+            "HTTP/1.1 411 LENGTH REQUIRED\r\n"
             "Content-Type: text/html\r\n"
-            "Content-Length: 0\r\n\r\n";
+            "Content-Length: 265\r\n\r\n"
+            "<html>\r\n"
+            "<head><title>411 LENGTH REQUIRED</title></head>\r\n"
+            "<body>\r\n"
+            "<h1>411 - Length Required</h1>\r\n"
+            "<p>-___-We need the Content-Length to answer this request.-___-</p>\r\n"
+            "</body>\r\n"
+            "</html>\r\n\r\n";
         ev.events = EPOLLOUT;
         ev.data.fd = fd;
         epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &ev);
@@ -368,9 +382,16 @@ bool EpollLoop::do_read_fd(
     }
     else if (state == REQ_BAD_413){
         _clientResponseBuffer[fd] = 
-            "HTTP/1.1 413 Content Too Large\r\n"
+            "HTTP/1.1 413 CONTENT TOO LARGE\r\n"
             "Content-Type: text/html\r\n"
-            "Content-Length: 0\r\n\r\n";
+            "Content-Length: 253\r\n\r\n"
+            "<html>\r\n"
+            "<head><title>413 CONTENT TOO LARGE</title></head>\r\n"
+            "<body>\r\n"
+            "<h1>413 - Content Too Large</h1>\r\n"
+            "<p>-___-Request is too large to process.-___-</p>\r\n"
+            "</body>\r\n"
+            "</html>\r\n\r\n";
         ev.events = EPOLLOUT;
         ev.data.fd = fd;
         epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &ev);
@@ -432,7 +453,7 @@ bool EpollLoop::do_read_fd(
         "<html>\r\n"
         "<head><title>500 Internal Server Error</title></head>\r\n"
         "<body>\r\n"
-        "<h1>Internal Server Error</h1>\r\n"
+        "<h1>500 Internal Server Error</h1>\r\n"
         "<p>-___-The server failed -___-</p>\r\n"
         "</body>\r\n"
         "</html>\r\n\r\n";
@@ -449,18 +470,8 @@ bool EpollLoop::do_read_fd(
         if (!cgi->start())
         {
             delete cgi;
-            _clientResponseBuffer[fd] =
-           "HTTP/1.1 502 Bad Gateway\r\n"
-            "Content-Type: text/html\r\n"
-            "Content-Length: 161\r\n\r\n"
-            "<html>\r\n"
-            "<head><title>502 Bad Gateway</title></head>\r\n"
-            "<body>\r\n"
-            "<h1>502 Bad Gateway</h1>\r\n"
-            "<p>-___-Took wrong turn somewhere -___-</p>\r\n"
-            "</body>\r\n"
-            "</html>\r\n\r\n";
-            
+            _clientResponseBuffer[fd] = requestHandler.buildAlternativErrorPage("502");
+        
             ev.events = EPOLLOUT;
             ev.data.fd = fd;
             epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &ev);
@@ -484,8 +495,6 @@ bool EpollLoop::do_read_fd(
     // ------------ Debug ------------
     dbg << "\nResponse header:" << fd;
     LOG_DEBUG(dbg.str());
-    std::cout << "_HEADER EPOLL: " << requestHandler.getHeader() << std::endl;
-    std::cout << "_HEADER EPOLL: " << _header << std::endl;
 
     _clientResponseBuffer[fd] += requestHandler.getHeader();
     _clientResponseBuffer[fd] += std::string(
@@ -739,7 +748,7 @@ bool EpollLoop::readingSocket(
                                 "Content-Type: text/html\r\n"
                                 "Content-Length: 161\r\n\r\n"
                                 "<html>\r\n"
-                                "<head><title>502 Bad Gateway</title></head>\r\n"
+                                "<head><title>502 Bad Gateway EPOLL WRITE</title></head>\r\n"
                                 "<body>\r\n"
                                 "<h1>502 Bad Gateway</h1>\r\n"
                                 "<p>-___-Took wrong turn somewhere -___-</p>\r\n"
@@ -761,7 +770,7 @@ bool EpollLoop::readingSocket(
                                 "Content-Type: text/html\r\n"
                                 "Content-Length: 161\r\n\r\n"
                                 "<html>\r\n"
-                                "<head><title>502 Bad Gateway</title></head>\r\n"
+                                "<head><title>502 Bad Gateway EPOLL READ</title></head>\r\n"
                                 "<body>\r\n"
                                 "<h1>502 Bad Gateway</h1>\r\n"
                                 "<p>-___-Took wrong turn somewhere -___-</p>\r\n"

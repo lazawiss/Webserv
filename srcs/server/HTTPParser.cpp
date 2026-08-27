@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/26 16:29:55 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/27 17:21:57 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,6 @@
 
 #include "HTTPParser.hpp"
 #include "Server.hpp"
-
 
 /*
 ** ============================================================================
@@ -417,7 +416,9 @@ void HTTPParser::parseCGI()
         _scriptFilename = _requesttarget.substr(0, pos);
         _query_string = _requesttarget.substr(pos + 1);
     
-    } else {
+    } 
+    
+    else {
 
         _scriptFilename = _requesttarget;
         _query_string = "";
@@ -456,8 +457,8 @@ int HTTPParser::matchLocation(const std::vector<LocationConfig> &locs, const std
     return best;
 }
 
-bool HTTPParser::buildCGIPath()
-{
+HttpCode HTTPParser::validateCGIRequest() {
+
     if (!_pathInfo.empty())
         _pathInfo.clear();
     if (!_scriptName.empty())
@@ -472,20 +473,19 @@ bool HTTPParser::buildCGIPath()
     if (q != std::string::npos)
         uriPath = uriPath.substr(0, q);
 
-    std::cout << "HERE IS WHAT URI LOOKS LIKE : " << uriPath << std::endl;
-
     const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
     int bestIdx = matchLocation(locs, uriPath);
     if (bestIdx < 0)
-        return false;
+        return HTTP_500;
 
     const LocationConfig &loc = locs[bestIdx];
 
-    //data/cgi-bin/database.py
-
     const std::map<std::string, std::string> &allExtensions = loc.getMap();
+    if (allExtensions.empty()){
+        return HTTP_500;
+    }
     std::string scriptPath = uriPath;
-
+    std::string pathInfo = uriPath;
     for (size_t i = 0; i <= uriPath.size(); ++i)
     {
         if (i != uriPath.size() && uriPath[i] != '/')
@@ -502,14 +502,16 @@ bool HTTPParser::buildCGIPath()
 
         std::map<std::string, std::string>::const_iterator it = allExtensions.find(piece.substr(extDot));
         if (it == allExtensions.end())
-            continue;
+            return HTTP_500;
 
         scriptPath      = piece;
-        _pathInfo       = uriPath.substr(i);
+        pathInfo       = uriPath.substr(i);
         _cgiInterpreter = it->second;
         break;
     }
-    std::cout << "Si je suis sortie, je suis un .py or .php " << std::endl;
+
+    if (!pathInfo.empty())
+        return HTTP_404;
     
     std::string root = loc.getRoot();
     if (root.empty())
@@ -527,22 +529,12 @@ bool HTTPParser::buildCGIPath()
     LOG_DEBUG("[CGI] script='" + _fullPath + "' SCRIPT_NAME='" + _scriptName + "' PATH_INFO='" + _pathInfo 
         + "' QUERY='" + _query_string + "'");
 
-    return true;
-}
-
-bool HTTPParser::validateCGIRequest() {
-
-    if (_scriptFilename.empty())
-        return false;
-
-    if (buildCGIPath() == false)
-        return false;
-
     struct stat st;
     if (stat(_fullPath.c_str(), &st) != 0 || !S_ISREG(st.st_mode))
-        return false;
+        return HTTP_500;
+        
 
-    return true;
+    return HTTP_CGI;
 }
 
 /*
@@ -1067,8 +1059,6 @@ bool HTTPParser::containsCaseInsensitive( std::string const & haystack, std::str
     return true;
 }
 
-
-
 void HTTPParser::buildFullPath() {
 
     const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
@@ -1244,13 +1234,34 @@ bool HTTPParser::compareMethodWithConfigFile(const std::vector<LocationConfig> &
         if (_method == methodVector[j])
             return true;
     }
+    
+    int idx = -1;
+    for (size_t i = 0; i < locs.size(); i++)
+    {
 
+        const std::string &path = locs[i].getPath();
+        
+        if (_requesttarget == path)
+        {
+            idx = (int)i;
+            break;
+        }
+    }
+    
+    if (idx == -1) {
+
+        _errors = true;
+        _code = HTTP_404 ;
+        _type = "text/html";
+        return false; 
+    }
     _errors = true;
     _code = HTTP_405;
     _type = "text/html";
 
     return false;
 }
+
 // Check every location from config file to confirm a match
 // then check map of return<code, name_of_the_new_file>
 // no for cause only one new location per redirection 
@@ -1268,15 +1279,16 @@ bool HTTPParser::isRedir(){
     for (size_t i = 0; i < locs.size(); i++)
     {
         const std::string &path = locs[i].getPath();
+        
         if (_requesttarget.find(path) == 0)
             bestIdx = (int)i;
     }
     
     if (bestIdx == -1) {
         _errors = true;
-        _code = HTTP_405;
+        _code = HTTP_404 ;
         _type = "text/html";
-        return false;
+        return false; 
     }
     
     const std::map<int, std::string> &returnMap = locs[bestIdx].getReturn();
@@ -1310,7 +1322,6 @@ int HTTPParser::findAutoIndex(const std::vector<LocationConfig> &locs, int bestI
         
         std::string root = _fullPath.size() < locs[bestIdx].getRoot().size() ?  
             locs[bestIdx].getRoot() : _fullPath;
-        std::cout << "ROOT FINDAUTOINDEX1"<< root << std::endl;
         
         if (root <= _httpRoot){
             
@@ -1321,9 +1332,8 @@ int HTTPParser::findAutoIndex(const std::vector<LocationConfig> &locs, int bestI
                 _fullPath = root;
             }
         }
-        std::cout << "ROOT FINDAUTOINDEX2"<< root << std::endl;
+
         struct stat path_stat;
-    
         if (stat(root.c_str(), &path_stat) != -1 && S_ISDIR(path_stat.st_mode))
         {
             if (_autoindexOn)
@@ -1463,6 +1473,17 @@ bool HTTPParser::findMethods(const std::vector<LocationConfig> &locs, int bestId
 
                 if (resolveRoot() == false){
                     LOG_ERROR("resolveRoot() failed");
+                    return false;
+                }
+
+                std::string fullPath = _httpRoot + '/' + _fileName;
+
+                struct stat info;
+                if (stat(fullPath.c_str(), &info) == -1 || !S_ISREG(info.st_mode))
+                {
+                    _errors = true;
+                    _code = HTTP_404;
+                    _type = "text/html";
                     return false;
                 }
                 char const *lastPoint = strrchr(_requesttarget.c_str(), '.');

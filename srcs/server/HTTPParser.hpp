@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/26 16:02:22 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/27 16:05:08 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -178,8 +178,7 @@ public:
     void                        checkRange( std::string const & value );
 
     void                        parseCGI();
-    bool                        validateCGIRequest();
-    bool                        buildCGIPath();
+    HttpCode                    validateCGIRequest();
     static int                  matchLocation(const std::vector<LocationConfig> &locs, const std::string &uri);
 
     bool                        varNotFound400 ( size_t var );

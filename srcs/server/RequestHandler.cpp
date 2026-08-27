@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/26 17:36:59 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/27 17:07:55 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -571,7 +571,7 @@ std::string RequestHandler::buildAlternativErrorPage( std::string const & code )
         }
     }
     _alterError = true;
-    std::cout << "_HEADER: " << _header << std::endl;
+
     return _header;
 }
 // open file + stock it in buffer to send back to client
@@ -615,7 +615,6 @@ bool    RequestHandler::answerFile( std::string const & file ){
     return true;
 
 }
-
 
 // open file + stock it in buffer to send back to client
 // content = x-icon
@@ -670,7 +669,7 @@ bool    RequestHandler::uploadFile( std::string const & filename, std::string co
         LOG_ERROR("Failed to write upload file: " + std::string(strerror(errno)));
         return false;
     }
-    // _n_read_index = buf.size();
+
     _n_read_index = 0;
     outfile.close();
 
@@ -778,19 +777,33 @@ std::string RequestHandler::generateAutoindex(const std::string &fullPath, const
 
 void RequestHandler::sendError( HTTPParser & parser, HttpCode code ) {
     
-    std::cout << "sendError" << std::endl;
     parser.setError(true);
     parser.setCode(code);
     parser.setType("text/html");
-    std::string file = getFile(HTTPParser::httpCodeToString(parser.getCode()), parser.getError());
+
+    std::string code_string = HTTPParser::httpCodeToString(parser.getCode());
+    int code_int = std::atoi(code_string.c_str());
+
+    const std::map<int, std::string> & errorPages = _serverConfig.getErrorPages();
+    std::map<int, std::string>::const_iterator it = errorPages.find(code_int);
+
+    if (it == errorPages.end())
+    {
+        buildAlternativErrorPage(code_string);
+        return;
+    }
+    std::string file = it->second;
 
     struct stat sb;
     if (stat(file.c_str(), &sb) == -1 || !S_ISREG(sb.st_mode))
     {
         LOG_ERROR("stat failed sendError: " + file + " - " + strerror(errno));
-        buildAlternativErrorPage(HTTPParser::httpCodeToString(parser.getCode()));
+        buildAlternativErrorPage(code_string);
         return ;
     }
+    
+    LOG_INFO(COLOR_CYAN + std::string("sendError")+ COLOR_RESET);
+    
     if (answerFile(file) == false){
         if (errno == EACCES)
             parser.setCode(HTTP_403);
@@ -836,10 +849,13 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
             bestIdx = (int)i;
         }
     }
-
+   
     if (bestIdx == -1) {
+        
+    LOG_INFO(COLOR_RED + std::string("ENTER ")+ COLOR_RESET);
+
         HTTPParser.setError(true);
-        HTTPParser.setCode(HTTP_405);
+        HTTPParser.setCode(HTTP_404);
         HTTPParser.setType("text/html"); 
         return false;
     }
@@ -849,21 +865,40 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         _root = HTTPParser.getPath();
         
     if (HTTPParser.isCGI()) 
-    {
-        if (HTTPParser.validateCGIRequest() == false)
+    {   
+        LOG_INFO(COLOR_CYAN + std::string("compare Methods")+ COLOR_RESET);
+
+        if (HTTPParser.compareMethodWithConfigFile(locs, bestIdx) == false)
         {
-            LOG_ERROR("CGI request validation failed");
-            sendError(HTTPParser, HTTP_502);
+            if (HTTPParser.getCode() == HTTP_405)
+                LOG_ERROR("CGI request validation failed: Need GET or POST as method");
+            if ( HTTPParser.getCode() == HTTP_404)
+                LOG_ERROR("Location does not exist.");
+            sendError(HTTPParser, HTTPParser.getCode());
             if (_alterError == false)
-                buildAnswerHeader("502", "text/html");
+                buildAnswerHeader(HTTPParser.httpCodeToString(HTTPParser.getCode()), "text/html");
             return true;
         }
-        if (HTTPParser.getMethod() != "GET" && HTTPParser.getMethod() != "POST")
+        LOG_INFO(COLOR_CYAN + std::string("scriptfilename")+ _scriptFilename + COLOR_RESET);
+        _scriptFilename = HTTPParser.getScriptFilename();
+        LOG_INFO(COLOR_CYAN + std::string("scriptfilename after")+ _scriptFilename + COLOR_RESET);
+
+        if (_scriptFilename.empty())
         {
-            LOG_ERROR("CGI request validation failed: Need GET or POST as method");
-            sendError(HTTPParser, HTTP_405);
+            LOG_ERROR("CGI request validation failed lol");
+            sendError(HTTPParser, HTTP_500);
             if (_alterError == false)
-                buildAnswerHeader("405", "text/html");
+                buildAnswerHeader("500", "text/html");
+            return true;
+        }
+
+        HttpCode code = HTTPParser.validateCGIRequest();
+        if (code != HTTP_CGI)
+        {
+            LOG_ERROR("CGI request validation failed");
+            sendError(HTTPParser, code);
+            if (_alterError == false)
+                buildAnswerHeader(HTTPParser.httpCodeToString(code), "text/html");
             return true;
         }
 
@@ -933,7 +968,10 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     if (status == 1)
     {
         if (HTTPParser.findMethods(locs, bestIdx) == false) {
-        LOG_ERROR("Method not implemented");
+        if ( HTTPParser.getCode() == HTTP_405)
+            LOG_ERROR("Method not implemented.");
+        if ( HTTPParser.getCode() == HTTP_404)
+            LOG_ERROR("Location does not exist.");
         sendError(HTTPParser, HTTPParser.getCode());
         if (_alterError == false)
             buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");
@@ -1162,7 +1200,6 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
 // Range : start - end
 // range : start - EOF
 // range : -N bytes
-
 RequestHandler::ByteRange RequestHandler::parseRangeHeader(std::string const& rangeValue, long fileSize)
 {
     ByteRange r;
