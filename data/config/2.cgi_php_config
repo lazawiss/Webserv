@@ -35,7 +35,7 @@ server {
         client_max_body_size    1M;
 
         root                data/cgi-bin;
-        methods             POST;
+        methods             GET POST;
         cgi_extension       .php /usr/bin/php-cgi;
         index               index.py;
     }
@@ -45,7 +45,7 @@ server {
 
         root                data/upload;
         index               index.html;
-        methods             GET DELETE;
+        methods             GET POST DELETE;
         autoindex           off;
     }
 }
