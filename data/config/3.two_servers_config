@@ -4,7 +4,7 @@
 # ─────────────────────────────────────────
 
 server {
-    listen          0.0.0.0:8081;
+    listen          0.0.0.0:3081;
     server_name     webserv;
 
     error_page 404 /errors/404.html;
@@ -13,16 +13,16 @@ server {
     location / {
         root        data/www/html;
         index       index.html;
-        methods     POST;
+        methods     GET;
         autoindex   off;
     }
 
-    #location /upload {
-    #    root        data/upload;
-    #    index       index.html;
-    #    methods     GET POST DELETE;
-    #    autoindex   off;
-    #}
+    location /upload {
+        root        data/upload;
+        index       index.html;
+        methods     GET POST DELETE;
+        autoindex   off;
+    }
 }
 
 # ─────────────────────────────────────────

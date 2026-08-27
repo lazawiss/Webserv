@@ -71,7 +71,8 @@
             statusDiv.innerHTML = '<span class="loading">Uploading photo...</span>';
 
             try {
-                const request = new Request("http://127.0.0.1:8080/upload", {
+
+                const request = new Request("/upload", {
                     method: "POST",
                     body: formData,
                 });
