@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/27 14:32:22 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/27 17:07:55 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -849,10 +849,13 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
             bestIdx = (int)i;
         }
     }
-
+   
     if (bestIdx == -1) {
+        
+    LOG_INFO(COLOR_RED + std::string("ENTER ")+ COLOR_RESET);
+
         HTTPParser.setError(true);
-        HTTPParser.setCode(HTTP_405);
+        HTTPParser.setCode(HTTP_404);
         HTTPParser.setType("text/html"); 
         return false;
     }
@@ -867,10 +870,13 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
 
         if (HTTPParser.compareMethodWithConfigFile(locs, bestIdx) == false)
         {
-            LOG_ERROR("CGI request validation failed: Need GET or POST as method");
-            sendError(HTTPParser, HTTP_405);
+            if (HTTPParser.getCode() == HTTP_405)
+                LOG_ERROR("CGI request validation failed: Need GET or POST as method");
+            if ( HTTPParser.getCode() == HTTP_404)
+                LOG_ERROR("Location does not exist.");
+            sendError(HTTPParser, HTTPParser.getCode());
             if (_alterError == false)
-                buildAnswerHeader("405", "text/html");
+                buildAnswerHeader(HTTPParser.httpCodeToString(HTTPParser.getCode()), "text/html");
             return true;
         }
         LOG_INFO(COLOR_CYAN + std::string("scriptfilename")+ _scriptFilename + COLOR_RESET);
@@ -962,7 +968,10 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     if (status == 1)
     {
         if (HTTPParser.findMethods(locs, bestIdx) == false) {
-        LOG_ERROR("Method not implemented");
+        if ( HTTPParser.getCode() == HTTP_405)
+            LOG_ERROR("Method not implemented.");
+        if ( HTTPParser.getCode() == HTTP_404)
+            LOG_ERROR("Location does not exist.");
         sendError(HTTPParser, HTTPParser.getCode());
         if (_alterError == false)
             buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");

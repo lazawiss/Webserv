@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/27 15:04:53 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/27 17:21:57 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -1234,13 +1234,34 @@ bool HTTPParser::compareMethodWithConfigFile(const std::vector<LocationConfig> &
         if (_method == methodVector[j])
             return true;
     }
+    
+    int idx = -1;
+    for (size_t i = 0; i < locs.size(); i++)
+    {
 
+        const std::string &path = locs[i].getPath();
+        
+        if (_requesttarget == path)
+        {
+            idx = (int)i;
+            break;
+        }
+    }
+    
+    if (idx == -1) {
+
+        _errors = true;
+        _code = HTTP_404 ;
+        _type = "text/html";
+        return false; 
+    }
     _errors = true;
     _code = HTTP_405;
     _type = "text/html";
 
     return false;
 }
+
 // Check every location from config file to confirm a match
 // then check map of return<code, name_of_the_new_file>
 // no for cause only one new location per redirection 
@@ -1258,15 +1279,16 @@ bool HTTPParser::isRedir(){
     for (size_t i = 0; i < locs.size(); i++)
     {
         const std::string &path = locs[i].getPath();
+        
         if (_requesttarget.find(path) == 0)
             bestIdx = (int)i;
     }
     
     if (bestIdx == -1) {
         _errors = true;
-        _code = HTTP_405;
+        _code = HTTP_404 ;
         _type = "text/html";
-        return false;
+        return false; 
     }
     
     const std::map<int, std::string> &returnMap = locs[bestIdx].getReturn();
