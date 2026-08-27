@@ -16,7 +16,6 @@
 #include "HTTPParser.hpp"
 #include "Server.hpp"
 
-
 /*
 ** ============================================================================
 ** The Rule of Three
@@ -1074,8 +1073,6 @@ bool HTTPParser::containsCaseInsensitive( std::string const & haystack, std::str
     return true;
 }
 
-
-
 void HTTPParser::buildFullPath() {
 
     const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
@@ -1316,7 +1313,6 @@ int HTTPParser::findAutoIndex(const std::vector<LocationConfig> &locs, int bestI
         
         std::string root = _fullPath.size() < locs[bestIdx].getRoot().size() ?  
             locs[bestIdx].getRoot() : _fullPath;
-        std::cout << "ROOT FINDAUTOINDEX1"<< root << std::endl;
         
         if (root <= _httpRoot){
             
@@ -1327,9 +1323,8 @@ int HTTPParser::findAutoIndex(const std::vector<LocationConfig> &locs, int bestI
                 _fullPath = root;
             }
         }
-        std::cout << "ROOT FINDAUTOINDEX2"<< root << std::endl;
+
         struct stat path_stat;
-    
         if (stat(root.c_str(), &path_stat) != -1 && S_ISDIR(path_stat.st_mode))
         {
             if (_autoindexOn)
@@ -1469,6 +1464,17 @@ bool HTTPParser::findMethods(const std::vector<LocationConfig> &locs, int bestId
 
                 if (resolveRoot() == false){
                     LOG_ERROR("resolveRoot() failed");
+                    return false;
+                }
+
+                std::string fullPath = _httpRoot + '/' + _fileName;
+
+                struct stat info;
+                if (stat(fullPath.c_str(), &info) == 1 || !S_ISREG(info.st_mode))
+                {
+                    _errors = true;
+                    _code = HTTP_404;
+                    _type = "text/html";
                     return false;
                 }
                 char const *lastPoint = strrchr(_requesttarget.c_str(), '.');
