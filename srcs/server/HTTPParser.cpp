@@ -1471,7 +1471,7 @@ bool HTTPParser::findMethods(const std::vector<LocationConfig> &locs, int bestId
                 std::string fullPath = _httpRoot + '/' + _fileName;
 
                 struct stat info;
-                if (stat(fullPath.c_str(), &info, &info) == 1 || !S_ISREG(info.st_mode))
+                if (stat(fullPath.c_str(), &info) == 1 || !S_ISREG(info.st_mode))
                 {
                     _errors = true;
                     _code = HTTP_404;
