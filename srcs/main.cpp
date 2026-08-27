@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/05 17:44:47 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/26 16:56:10 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/27 20:35:46 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,6 +41,7 @@ int main(int argc, char **argv)
         GlobalConfig config;
         
         config = parse_file(argv[1]);
+        
         Server server(config);
         
         server.start();

@@ -1,5 +1,5 @@
 #include "Parser.hpp"
-
+#include "../server/Server.hpp"
 #include "../lexer/Lexer.hpp"
 
 /*
@@ -108,6 +108,9 @@ GlobalConfig Parser::parse()
 {
     GlobalConfig config;
 
+    if(config.getRoot().empty() || config.getRoot() == "data" || config.getRoot() == "data/")
+        config.setRoot("data/www");
+
     while (current().type != End)
     {
         if (current().type == Word && current().value == "server")
@@ -126,6 +129,8 @@ GlobalConfig Parser::parse()
 
     if (config.getServers().empty())
         throw std::runtime_error("At least one server is required");
+
+    LOG_INFO(COLOR_RED+ std::string("root : ") +  config.getRoot() + COLOR_RESET);
 
     return config;
 }

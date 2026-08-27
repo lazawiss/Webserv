@@ -4,6 +4,7 @@
 # include "./config/GlobalConfig.hpp"
 # include "./config/AConfig.hpp"
 # include "../lexer/Lexer.hpp"
+#include "../server/Server.hpp"
 
 # include <algorithm>
 # include <climits>
