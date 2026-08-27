@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HTTPParser.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
+/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/27 12:02:34 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/27 14:12:06 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -1470,7 +1470,7 @@ bool HTTPParser::findMethods(const std::vector<LocationConfig> &locs, int bestId
                 std::string fullPath = _httpRoot + '/' + _fileName;
 
                 struct stat info;
-                if (stat(fullPath.c_str(), &info) == 1 || !S_ISREG(info.st_mode))
+                if (stat(fullPath.c_str(), &info) == -1 || !S_ISREG(info.st_mode))
                 {
                     _errors = true;
                     _code = HTTP_404;
