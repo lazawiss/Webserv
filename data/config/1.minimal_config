@@ -15,16 +15,4 @@ server {
         methods     GET;
     }
 
-  
-    location /a{
-        root        data/www/redirection;
-        index       index.html;
-        methods     GET;
-    }
-
-    location /a{
-        root        data/www/redirection;
-        index       index.html;
-        methods     GET;
-    }
 }
