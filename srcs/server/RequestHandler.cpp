@@ -3,7 +3,7 @@
 /*                                                        :::      ::::::::   */
 /*   RequestHandler.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
 /*   Updated: 2026/08/27 19:54:37 by lzannis          ###   ########.fr       */
@@ -37,7 +37,7 @@ RequestHandler::RequestHandler(
     _body(), _content_type(), _content_length(),
     _method(), _pathInfo(), _scriptName(), _interpreter()
 {
-    
+    LOG_INFO(COLOR_RED + std::string("root reauestHandler(3) : ") + _root + COLOR_RESET);
 }
 
 RequestHandler::RequestHandler( RequestHandler const & src ) :
@@ -739,7 +739,7 @@ std::string RequestHandler::generateAutoindex(const std::string &fullPath, const
             return "";
         }
         std::string dir = std::string(lastSlash, strlen(lastSlash));
-        LOG_INFO(COLOR_GREEN + std::string(" HTML: ") + html + COLOR_RESET);
+        //LOG_INFO(COLOR_GREEN + std::string(" HTML: ") + html + COLOR_RESET);
 
         if (entryPath[entryPath.size() - 1] != '/')
             entryPath += "/";
@@ -769,7 +769,7 @@ std::string RequestHandler::generateAutoindex(const std::string &fullPath, const
     closedir(dir);
 
     html += "</ul>\n<hr>\n</body>\n</html>\n";
-    LOG_INFO(COLOR_GREEN + std::string(" HTML: ") + html + COLOR_RESET);
+    //LOG_INFO(COLOR_GREEN + std::string(" HTML: ") + html + COLOR_RESET);
 
     
     return html;
@@ -947,7 +947,7 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
                 // put the listing where epoll reads the response body
                 // (getBuffer()/getNReadIndex()) and let Content-Length mirror
                 if (_body.size() > (size_t)BUF_SIZE)
-                    _body.resize(BUF_SIZE);
+                _body.resize(BUF_SIZE);
                 _buffer.assign(_body.begin(), _body.end());
                 _n_read_index = (ssize_t)_body.size();
                 buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");
