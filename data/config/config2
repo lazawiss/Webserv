@@ -2,7 +2,7 @@
 #  SERVEUR
 # ─────────────────────────────────────────
 
-# autoindex   on;
+autoindex   on;
 
 server {
 
@@ -14,39 +14,39 @@ server {
     error_page 405 /errors/405.html;
     
     location /vespera {
-        root        data/www/vespera;
+        # root        data/www/vespera;
         # index       index.html;
         methods     GET;
-        autoindex   on;
+        # autoindex   on;
     }
 
     location / {
-        root        data/www/html;
+        # root        data/www/html;
         # index       index2.html index.html;
         methods     GET;
-        autoindex   on;
+        # autoindex   on;
     }
 
     location /cgi-bin {
-        root            data/cgi-bin;
+        # root            data/cgi-bin;
         methods         GET POST;
         # cgi_extension   .py  /usr/bin/python3;
         cgi_extension   .php /usr/bin/php-cgi;
-        index           index.py;
+        # index           index.py;
     }
 
     location /api {
-        root        data/www/diary;
+        # root        data/www/diary;
         # index       index2.html index.html;
         methods     GET;
-        autoindex   on;
+        # autoindex   on;
     }
 
     location /upload {
-        root        data/upload;
+        # root        data/upload;
         # index       index.html;
         methods     GET POST DELETE;
-        autoindex   on;
+        # autoindex   on;
     }
 
     location /html/image.html {
@@ -58,10 +58,4 @@ server {
     }
 
 
-    location /redirection {
-        root        data/www/redirection;
-        index       index.html;
-        methods     GET;
-    }
-  
 }

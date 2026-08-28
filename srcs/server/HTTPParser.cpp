@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/28 12:25:26 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/28 21:08:56 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -303,24 +303,28 @@ bool HTTPParser::isRequestValid( ListenerManager const & listen ) {
         return LOG_ERROR("Request size exceeds limit"), false;
     
     size_t headerEnd = _request.find("\r\n\r\n");
-    if (headerEnd == std::string::npos)
+    if (varNotFound400 (headerEnd) == false)
         return LOG_ERROR("Malformed request: missing end of header"), false;
     _body = _request.substr(headerEnd + 4);
     
     parseCGI();
     
     size_t i = _request.find("\r\n");
-    if (i == std::string::npos)
+    if (varNotFound400 (i) == false)
         return false;
 
     i += 2;
-    if (i < _request.size() && (_request[i] == ' ' || _request[i] == '\t'))
+    if (i < _request.size() && (_request[i] == ' ' || _request[i] == '\t')){
+        _errors = true;
+        _code = HTTP_400;
+        _type = "text/html";
         return LOG_ERROR("Leading whitespace after request-line"), false;
+    }
 
     while (i < _request.size())
     {
         size_t end = _request.find("\r\n", i);
-        if (end == std::string::npos)
+        if (varNotFound400 (end) == false)
             return LOG_ERROR("Malformed request: missing CRLF"), false;
 
         if (end == i)
@@ -328,7 +332,7 @@ bool HTTPParser::isRequestValid( ListenerManager const & listen ) {
 
         std::string line = _request.substr(i, end - i);
         size_t colon = line.find(":");
-        if (colon == std::string::npos)
+       if (varNotFound400 (colon) == false)
             return LOG_ERROR("Malformed header line: " + line), false;
 
         std::string key = line.substr(0, colon);
@@ -337,15 +341,23 @@ bool HTTPParser::isRequestValid( ListenerManager const & listen ) {
         if (!value.empty() && value[0] == ' ')
             value = value.substr(1);
 
-        if (!value.empty() && (value[0] == ' ' || value[0] == '\t'))
+        if (!value.empty() && (value[0] == ' ')){
+            _errors = true;
+            _code = HTTP_400;
+            _type = "text/html";
             return LOG_ERROR("Invalid whitespace after ':' in header: " + line), false;
+        }
 
         switch (getHeaderType(key))
         {
             case HOST:
 
-                if (_isHostFound == true)
+                if (_isHostFound == true){
+                    _errors = true;
+                    _code = HTTP_400;
+                    _type = "text/html";    
                     return LOG_ERROR("Duplicate 'Host' header"), false;
+                }
 
                 if (checkHost(value, listen) != SERVER_OK)
                     return false;
@@ -361,8 +373,12 @@ bool HTTPParser::isRequestValid( ListenerManager const & listen ) {
 
             case CONTENT_TYPE:
 
-                if (_isContentTypeFound == true)
+                if (_isContentTypeFound == true){
+                    _errors = true;
+                    _code = HTTP_400;
+                    _type = "text/html";    
                     return LOG_ERROR("Duplicate 'Content-type' header"), false;
+                }
 
                 if (checkContentType(value) != SERVER_OK)
                     return false;
@@ -372,8 +388,12 @@ bool HTTPParser::isRequestValid( ListenerManager const & listen ) {
             
             case CONTENT_LENGTH:
 
-                if (_isContentLengthFound)
+                if (_isContentLengthFound){
+                    _errors = true;
+                    _type = "text/html";       
+                    _code = HTTP_400;
                     return LOG_ERROR("Duplicate 'Content-Length' header"), false;
+                }
     
                 if (checkContentLength(value) != SERVER_OK)
                     return false;
@@ -391,12 +411,20 @@ bool HTTPParser::isRequestValid( ListenerManager const & listen ) {
         }
 
         i = end + 2;
-        if (i < _request.size() && (_request[i] == ' ' || _request[i] == '\t'))
+        if (i < _request.size() && (_request[i] == ' ' || _request[i] == '\t')){
+            _errors = true;
+            _code = HTTP_400;
+            _type = "text/html";        
             return LOG_ERROR("Leading whitespace after request-line"), false;
+        }
     }
 
-    if (_isHostFound == false)
+    if (_isHostFound == false){
+        _errors = true;
+        _code = HTTP_400;
+        _type = "text/html";       
         return LOG_ERROR("Host header missing"), false;
+    }
     
     resolveConnectionType();
     buildFullPath();
@@ -532,7 +560,6 @@ HttpCode HTTPParser::validateCGIRequest() {
     if (stat(_fullPath.c_str(), &st) != 0 || !S_ISREG(st.st_mode))
         return HTTP_500;
         
-
     return HTTP_CGI;
 }
 
@@ -860,16 +887,6 @@ int HTTPParser::checkContentLength( std::string const & value ) {
     oss << _content_length;
     LOG_DEBUG("Content-Length: " + oss.str());
 
-    // if (_content_length > 400000){
-        
-    //     LOG_ERROR("Content-Length exceeds limit");
-    //     _errors = true;
-    //     _code   = HTTP_413;
-    //     _type   = "text/html";
-        
-    //     return SERVER_ERROR;
-    // }
-
     return SERVER_OK;
 }
 
@@ -1073,14 +1090,14 @@ void HTTPParser::buildFullPath() {
             bestLoc  = &locs[i];
         }
     }
-    // MARQUE
+    
     std::string root;
     if (bestLoc && !bestLoc->getRoot().empty())
         root = bestLoc->getRoot();
     else
         root = _serverConfig.getRoot();
 
-    if (bestLoc->getAutoindex().empty()){
+    if (bestLoc && bestLoc->getAutoindex().empty()){
         if (!_serverConfig.getAutoindex().empty())
         _autoindexOn = (_serverConfig.getAutoindex() == "on");
     }
@@ -1126,7 +1143,6 @@ bool HTTPParser::resolveRoot()
     int urilen = uri.size(); 
     
     std::string newSlash = uri.substr(0, urilen - len);
-    // int index = -1;
     
     for (size_t i = 0; i < locs.size(); ++i)
     {
@@ -1138,9 +1154,7 @@ bool HTTPParser::resolveRoot()
     
         if (newSlash.compare(lastSlashRoot) == 0)
         {
-            
             _httpRoot = locs[i].getRoot();
-            // index = 1;
             break;
         }
     }
@@ -1188,6 +1202,25 @@ std::string HTTPParser::addSuffix(std::string suffix) {
     return _type;
 }
 
+bool HTTPParser::isAllowedExtension( std::string const & suffix )
+{
+    static const char *allowed[] = {
+        ".jpg", ".jpeg", ".png", ".gif", ".webp",
+        ".txt", ".html", ".css", ".js",
+        NULL
+    };
+
+    std::string lower = suffix;
+    std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+
+    for (int i = 0; allowed[i] != NULL; i++)
+    {
+        if (lower == allowed[i])
+            return true;
+    }
+    return false;
+}
+
 std::string HTTPParser::httpCodeToString( HttpCode code )
 {
     switch (code)
@@ -1223,42 +1256,39 @@ std::string HTTPParser::httpCodeToString( HttpCode code )
 bool HTTPParser::compareMethodWithConfigFile(const std::vector<LocationConfig> &locs, int bestIdx) {
 
     const std::vector<std::string> &methodVector = locs[bestIdx].getMethods();
+
+    for (size_t j = 0; j < methodVector.size(); j++)
+    {
+        if (_isCGI && methodVector[j] == "DELETE")
+        {
+            _errors = true;
+            _code = HTTP_405;
+            _type = "text/html";
+            
+            return false;
+        }
+    }
+    
     for (size_t j = 0; j < methodVector.size(); j++)
     {
         if (_method == methodVector[j])
             return true;
     }
-    
+        
     int idx = -1;
     for (size_t i = 0; i < locs.size(); i++)
     {
-
         const std::string &path = locs[i].getPath();
         
         if (_requesttarget == path)
         {
-            idx = (int)i;
+            idx = static_cast<int>(i);
             break;
         }
-        
-        if (path == "/"){
-            std::string uri = _requesttarget;
-            
-            char const *lastSlash = strrchr(uri.c_str(), '/');
-            if (doesCharCExist400(lastSlash) == false)
-                return false;
-            int len = strlen(lastSlash);
-            int urilen = uri.size(); 
-            std::string newSlash = uri.substr(0, urilen - len);
-            std::string root = locs[i].getRoot();
-            char const *lastSlashRoot = strrchr(root.c_str(), '/');
-             if (doesCharCExist400(lastSlashRoot) == false)
-                return false;
-            if (newSlash.compare(lastSlashRoot) == 0)
-            {
-                idx = (int)i;
-                break;
-            }
+        if (_isCGI == true && _requesttarget.find(path,0) == 0)
+        {
+            idx = static_cast<int>(i);
+            break;
         }
     }
     
@@ -1279,14 +1309,14 @@ bool HTTPParser::compareMethodWithConfigFile(const std::vector<LocationConfig> &
 // Check every location from config file to confirm a match
 // then check map of return<code, name_of_the_new_file>
 // no for cause only one new location per redirection 
-bool HTTPParser::isRedir(){
+HttpCode HTTPParser::isRedir(){
 
     const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
     if (locs.size() == 0) {
         _code = HTTP_INDEX;
         _type = "text/html";
 
-        return true;
+        return _code;
     }
 
     int bestIdx = -1;
@@ -1295,14 +1325,14 @@ bool HTTPParser::isRedir(){
         const std::string &path = locs[i].getPath();
         
         if (_requesttarget.find(path) == 0)
-            bestIdx = (int)i;
+            bestIdx = static_cast<int>(i);
     }
     
     if (bestIdx == -1) {
         _errors = true;
-        _code = HTTP_404 ;
+        _code = HTTP_404;
         _type = "text/html";
-        return false; 
+        return _code; 
     }
     
     const std::map<int, std::string> &returnMap = locs[bestIdx].getReturn();
@@ -1315,17 +1345,17 @@ bool HTTPParser::isRedir(){
             _code = HTTP_301;
             _fileName = it->second;
             _type = "text/html";
-            return true;
+            return _code;
         }
         if (it->first == 302){
             _code = HTTP_302;
             _fileName = it->second;
             _type = "text/uri-list";
-            return true;
+            return _code;
         }
     }
 
-    return false;
+    return _code;
 }
 
 
@@ -1375,41 +1405,41 @@ bool HTTPParser::findMethods(const std::vector<LocationConfig> &locs, int bestId
         if (_method == "GET")
         {
      
-             struct stat path_stat_check;
-             bool isDirRequest = (stat(_fullPath.c_str(), &path_stat_check) != -1
-             && S_ISDIR(path_stat_check.st_mode));
-             
-             if (isDirRequest) {
-                 const std::vector<std::string> &indexVector = locs[bestIdx].getIndex();
-                 if (indexVector.size() > 0){
-                     for (size_t j = 0; j < indexVector.size(); j++)
-                     {
-                         struct stat sb;
-                         
-                         std::string index = _fullPath + "/" + indexVector[j];
-                         
-                         if (stat(index.c_str(), &sb) == 0) {
-                             _fileName = indexVector[j];
-                             _code = HTTP_FILE;
-                             break ;
-                            }
+            struct stat path_stat_check;
+            bool isDirRequest = (stat(_fullPath.c_str(), &path_stat_check) != -1
+            && S_ISDIR(path_stat_check.st_mode));
+            
+            if (isDirRequest) {
+                const std::vector<std::string> &indexVector = locs[bestIdx].getIndex();
+                if (indexVector.size() > 0)
+                {
+                    for (size_t j = 0; j < indexVector.size(); j++)
+                    {
+                        struct stat sb;
+                        
+                        std::string index = _fullPath + "/" + indexVector[j];
+                        
+                        if (stat(index.c_str(), &sb) == 0) {
+                            _fileName = indexVector[j];
+                            _code = HTTP_FILE;
+                            break ;
                         }
                     }
                 }
-                else {
-                    _code = HTTP_INDEX;
-                }
+            }
+            else
+                _code = HTTP_INDEX;
+            {
+                struct stat path_stat;
+                if (stat(_fullPath.c_str(), &path_stat) != -1 && S_ISDIR(path_stat.st_mode))
                 {
-                    struct stat path_stat;
-                    if (stat(_fullPath.c_str(), &path_stat) != -1 && S_ISDIR(path_stat.st_mode))
-                    {
-                        std::string indexPath = _fullPath;
-                        if (indexPath[indexPath.size() - 1] != '/')
-                        indexPath += "/";
-                        indexPath += _fileName;
-                        
-                        struct stat index_stat;
-                        if (stat(indexPath.c_str(), &index_stat) == 0
+                    std::string indexPath = _fullPath;
+                    if (indexPath[indexPath.size() - 1] != '/')
+                    indexPath += "/";
+                    indexPath += _fileName;
+                    
+                    struct stat index_stat;
+                    if (stat(indexPath.c_str(), &index_stat) == 0
                         && S_ISREG(index_stat.st_mode))
                         {
                             _code = HTTP_INDEX;
@@ -1418,9 +1448,7 @@ bool HTTPParser::findMethods(const std::vector<LocationConfig> &locs, int bestId
                             _autoindexOn = false;
                             return true;
                         }
-                    }
-
-        
+                }
             }
             
             if (_requesttarget.find("/images") != std::string::npos)
@@ -1535,6 +1563,26 @@ bool HTTPParser::findMethods(const std::vector<LocationConfig> &locs, int bestId
                         LOG_ERROR("POST upload: missing Content-Disposition");
                         return false;
                     }
+                    
+                    char const *lastPoint = strrchr(_fileName.c_str(), '.');
+                    if (!lastPoint)
+                    {
+                        LOG_ERROR("POST upload: no extension in filename");
+                        _errors = true;
+                        _code = HTTP_403;
+                        _type = "text/html";
+                        return false;
+                    }
+                    
+                    std::string suffix(lastPoint, strlen(lastPoint));
+                    if (isAllowedExtension(suffix) == false) {
+                        LOG_ERROR("POST upload: forbidden file extension: " + suffix);
+                        _errors = true;
+                        _code = HTTP_403;
+                        _type = "text/html";
+                        return false;
+                    }
+                    
                     if (gatherFile(curPos) == false) {
                         LOG_ERROR("POST upload: failed to gather file content");
                         return false;
@@ -1557,7 +1605,16 @@ bool HTTPParser::findMethods(const std::vector<LocationConfig> &locs, int bestId
 
                     if (name.empty())
                         return LOG_ERROR("POST upload: empty filename"), false;
-
+                    
+                    std::string new_suffix = std::string(lastPoint, strlen(lastPoint));
+                    if (isAllowedExtension(new_suffix) == false) {
+                        LOG_ERROR("POST upload: forbidden file extension: " + new_suffix);
+                        _errors = true;
+                        _code = HTTP_403;
+                        _type = "text/html";
+                        return false;
+                    }
+                    
                     // ------------ Debug ------------
                     LOG_DEBUG("POST upload target: " + name);
 

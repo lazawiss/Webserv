@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/28 12:01:44 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/28 20:58:26 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -161,7 +161,6 @@ static std::string rebuildWithContentLength(
     out += cl.str();
     out += "\r\n";
     out += decoded;
-    std::cout << " Return 'out' var" << out << std::endl;
     return out;
 }
 
@@ -170,7 +169,6 @@ RequestState EpollLoop::dechunkBody( const std::string &body, std::string &decod
 {
     size_t pos = 0;
     decoded.clear();
-    std::cout << "FULL BODY :" << std::endl;
     while (true)
     {
         size_t lineEnd = body.find("\r\n", pos);
@@ -191,14 +189,10 @@ RequestState EpollLoop::dechunkBody( const std::string &body, std::string &decod
         ss << sizeStr; 
         size_t num = 0;
         ss >> std::hex >> num;
-        std::cout << "what is num : " << num << std::endl;
         chunkSize = num; 
         if (decoded.size() + chunkSize > _maxbodysize)
             return REQ_BAD_413;
         
-
-        std::cout << "Real chunk size in non hex: " << chunkSize << std::endl;
-
         size_t dataStart = lineEnd + 2; // +/r/n
         
         if (chunkSize == 0)
@@ -208,7 +202,6 @@ RequestState EpollLoop::dechunkBody( const std::string &body, std::string &decod
                 return REQ_INCOMPLETE;
             if (body.compare(dataStart, 2, "\r\n") != 0)
                 return REQ_BAD;
-            std::cout << "Decoded so full body done here: " << decoded << std::endl;
             return REQ_READY;
         }
         
@@ -238,7 +231,6 @@ RequestState EpollLoop::analyzeRequest( const std::string &acc, std::string &req
     {
         std::string decoded;
         RequestState st = dechunkBody(acc.substr(bodyStart), decoded);
-        std::cout << "ENUM request \n" << st << std::endl;
         if (st != REQ_READY)
             return st; 
         request = rebuildWithContentLength(acc, headerEnd, decoded);
@@ -324,7 +316,6 @@ bool EpollLoop::do_read_fd(
     ssize_t n_read = read(fd, buf, _maxbodysize);
     if (n_read == 0)
     {
-        LOG_ERROR("Client closed connection");
         return (close(fd), false);
     }
     if (n_read == -1)
@@ -334,11 +325,28 @@ bool EpollLoop::do_read_fd(
     }
     std::string &acc = _clientRequestBuffer[fd];
     acc.append(buf, n_read);
-    // if (acc.size() > (size_t)BUF_SIZE)
+
+    // if (acc.size() > (size_t)_maxbodysize)
     // {
-    //     cleanupClient(fd, epollfd);
-    //     return false;
+    //     _clientRequestBuffer.erase(fd);
+    //     _clientResponseBuffer[fd] =
+    //         "HTTP/1.1 413 CONTENT TOO LARGE\r\n"
+    //         "Content-Type: text/html\r\n"
+    //         "Connection: close\r\n"
+    //         "Content-Length: 253\r\n\r\n"
+    //         "<html>\r\n"
+    //         "<head><title>413 CONTENT TOO LARGE</title></head>\r\n"
+    //         "<body>\r\n"
+    //         "<h1>413 - Content Too Large</h1>\r\n"
+    //         "<p>-__-Request is too large to process.-___-</p>\r\n"
+    //         "</body>\r\n"
+    //         "</html>\r\n\r\n";
+    //     ev.events = EPOLLOUT;
+    //     ev.data.fd = fd;
+    //     epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &ev);
+    //     return true;
     // }
+    
 
     std::string request;
     request.append(buf, n_read);

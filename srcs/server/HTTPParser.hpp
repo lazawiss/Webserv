@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/27 16:05:08 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/28 21:00:07 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -198,7 +198,7 @@ public:
     
     std::string                 addSuffix(std::string suffix);
     bool                        compareMethodWithConfigFile(const std::vector<LocationConfig> &locs, int bestIdx);
-    bool                        isRedir();
+    HttpCode                    isRedir();
     bool                        findMethods(const std::vector<LocationConfig> &locs, int bestIdx);
     int                         findAutoIndex(const std::vector<LocationConfig> &locs, int bestIdx);
 
@@ -211,4 +211,5 @@ public:
     void                        resolveConnectionType();
     static size_t               parseBodySize( std::string const & s );
     size_t                      getEffectiveBodyLimit() const;
+    bool                        isAllowedExtension( std::string const & suffix );
 };

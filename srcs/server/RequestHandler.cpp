@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/28 12:22:03 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/28 19:14:25 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -726,18 +726,15 @@ std::string RequestHandler::generateAutoindex(const std::string &fullPath, const
     while ((entry = readdir(dir)) != NULL)
     {
         std::string name = entry->d_name;
-        LOG_INFO(COLOR_PINK + std::string("name dans generateAutoindex: ") + name + COLOR_RESET);
         if (name == ".")
             continue;
         
         std::string entryPath = fullPath;  // check entry a dir
-        LOG_INFO(COLOR_CYAN + std::string("entryPath dans generateAutoindex: ") + entryPath + COLOR_RESET);
         char const *lastSlash = strrchr(entryPath.c_str(), '/');
         if (!lastSlash){
             return "";
         }
         std::string dir = std::string(lastSlash, strlen(lastSlash));
-        //LOG_INFO(COLOR_GREEN + std::string(" HTML: ") + html + COLOR_RESET);
 
         if (entryPath[entryPath.size() - 1] != '/')
             entryPath += "/";
@@ -767,8 +764,6 @@ std::string RequestHandler::generateAutoindex(const std::string &fullPath, const
     closedir(dir);
 
     html += "</ul>\n<hr>\n</body>\n</html>\n";
-    //LOG_INFO(COLOR_GREEN + std::string(" HTML: ") + html + COLOR_RESET);
-
     
     return html;
 }
@@ -799,8 +794,6 @@ void RequestHandler::sendError( HTTPParser & parser, HttpCode code ) {
         buildAlternativErrorPage(code_string);
         return ;
     }
-    
-    LOG_INFO(COLOR_CYAN + std::string("sendError")+ COLOR_RESET);
     
     if (answerFile(file) == false){
         if (errno == EACCES)
@@ -844,18 +837,19 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
                 || HTTPParser.getRequestTarget()[path.size()] == '/' || HTTPParser.getRequestTarget()[path.size()] == '?'))
         {
             bestLen = path.size();
-            bestIdx = (int)i;
+            bestIdx = static_cast<int>(i);
         }
     }
    
     if (bestIdx == -1) {
-        
-    LOG_INFO(COLOR_RED + std::string("ENTER ")+ COLOR_RESET);
-
+        LOG_ERROR("Location does not exist.");
         HTTPParser.setError(true);
         HTTPParser.setCode(HTTP_404);
         HTTPParser.setType("text/html"); 
-        return false;
+        sendError(HTTPParser, HTTPParser.getCode());
+        if (_alterError == false)
+            buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");
+        return true;
     }
     
     _root = locs[bestIdx].getRoot();
@@ -864,8 +858,6 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         
     if (HTTPParser.isCGI()) 
     {   
-        LOG_INFO(COLOR_CYAN + std::string("compare Methods")+ COLOR_RESET);
-
         if (HTTPParser.compareMethodWithConfigFile(locs, bestIdx) == false)
         {
             if (HTTPParser.getCode() == HTTP_405)
@@ -877,9 +869,7 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
                 buildAnswerHeader(HTTPParser.httpCodeToString(HTTPParser.getCode()), "text/html");
             return true;
         }
-        LOG_INFO(COLOR_CYAN + std::string("scriptfilename")+ _scriptFilename + COLOR_RESET);
         _scriptFilename = HTTPParser.getScriptFilename();
-        LOG_INFO(COLOR_CYAN + std::string("scriptfilename after")+ _scriptFilename + COLOR_RESET);
 
         if (_scriptFilename.empty())
         {
@@ -920,12 +910,21 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
 
     }
     // we check for redirection first and foremost, if not a redir, continues to static website
-    else if (HTTPParser.isRedir() == true){
+    HttpCode code = HTTPParser.isRedir();
+    if (code == HTTP_301 || code == HTTP_302){
         
         _pathToFile = HTTPParser.getFileName();
         buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), HTTPParser.getType());
         return true;
     }
+    else if (code == HTTP_404){
+        LOG_ERROR("Location does not exist.");
+        sendError(HTTPParser, code);
+        if (_alterError == false)
+            buildAnswerHeader(HTTPParser.httpCodeToString(code), "text/html");
+        return true;
+    }
+    
     
     int status = HTTPParser.findAutoIndex(locs, bestIdx);
     if (status == 2)
@@ -944,10 +943,11 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
                 
                 // put the listing where epoll reads the response body
                 // (getBuffer()/getNReadIndex()) and let Content-Length mirror
-                if (_body.size() > (size_t)BUF_SIZE)
-                _body.resize(BUF_SIZE);
+                if (_body.size() > static_cast<size_t>(BUF_SIZE))
+                    _body.resize(BUF_SIZE);
+                _buffer.resize(BUF_SIZE,0);
                 _buffer.assign(_body.begin(), _body.end());
-                _n_read_index = (ssize_t)_body.size();
+                _n_read_index = static_cast<ssize_t>(_body.size());
                 buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");
             }
         }
@@ -965,15 +965,16 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     
     if (status == 1)
     {
-        if (HTTPParser.findMethods(locs, bestIdx) == false) {
-        if ( HTTPParser.getCode() == HTTP_405)
-            LOG_ERROR("Method not implemented.");
-        if ( HTTPParser.getCode() == HTTP_404)
-            LOG_ERROR("Location does not exist.");
-        sendError(HTTPParser, HTTPParser.getCode());
-        if (_alterError == false)
-            buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");
-        return true;
+        if (HTTPParser.findMethods(locs, bestIdx) == false)
+        {
+            if (HTTPParser.getCode() == HTTP_405)
+                LOG_ERROR("Method not implemented.");
+
+            sendError(HTTPParser, HTTPParser.getCode());
+            if (_alterError == false)
+                buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");
+
+            return true;
         }
     }
     

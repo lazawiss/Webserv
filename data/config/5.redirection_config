@@ -12,10 +12,10 @@ server {
     error_page 500 /errors/500.html;
 
     location / {
-        root                data/www/html;
-        index               index2.html index.html;
-        methods             GET;
-        autoindex           off;
+       root                data/www/html;
+       index               index2.html index.html;
+       methods             GET;
+       autoindex           off;
     }
 
     location /cgi-bin {
@@ -33,18 +33,12 @@ server {
         autoindex           off;
     }
 
-    location /html/image.html {     # redirection permanent 
-        return              301 /redirection/index.html;       
-    }
+    #location /html/image.html {     # redirection permanent 
+    #    return              301 /redirection/index.html;       
+    #}
 
     location /google {              # redirection externe
         return              302 https://www.google.com;
-    }
-
-    location /redirection {
-        root                data/www/redirection;
-        index               index.html;
-        methods             GET;
     }
 
 }
