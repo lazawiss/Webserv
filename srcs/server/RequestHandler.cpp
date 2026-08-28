@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/28 14:58:44 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/28 15:48:11 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -853,7 +853,10 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         HTTPParser.setError(true);
         HTTPParser.setCode(HTTP_404);
         HTTPParser.setType("text/html"); 
-        return false;
+        sendError(HTTPParser, HTTPParser.getCode());
+        if (_alterError == false)
+            buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");
+        return true;
     }
     
     _root = locs[bestIdx].getRoot();

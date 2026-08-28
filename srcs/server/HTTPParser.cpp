@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/28 14:59:34 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/28 15:47:43 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -1090,14 +1090,14 @@ void HTTPParser::buildFullPath() {
             bestLoc  = &locs[i];
         }
     }
-    // MARQUE
+    
     std::string root;
     if (bestLoc && !bestLoc->getRoot().empty())
         root = bestLoc->getRoot();
     else
         root = _serverConfig.getRoot();
 
-    if (bestLoc->getAutoindex().empty()){
+    if (bestLoc && bestLoc->getAutoindex().empty()){
         if (!_serverConfig.getAutoindex().empty())
         _autoindexOn = (_serverConfig.getAutoindex() == "on");
     }
