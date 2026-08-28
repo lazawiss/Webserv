@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/28 12:25:26 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/28 14:14:17 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -303,24 +303,28 @@ bool HTTPParser::isRequestValid( ListenerManager const & listen ) {
         return LOG_ERROR("Request size exceeds limit"), false;
     
     size_t headerEnd = _request.find("\r\n\r\n");
-    if (headerEnd == std::string::npos)
+    if (varNotFound400 (headerEnd) == false)
         return LOG_ERROR("Malformed request: missing end of header"), false;
     _body = _request.substr(headerEnd + 4);
     
     parseCGI();
     
     size_t i = _request.find("\r\n");
-    if (i == std::string::npos)
+    if (varNotFound400 (i) == false)
         return false;
 
     i += 2;
-    if (i < _request.size() && (_request[i] == ' ' || _request[i] == '\t'))
+    if (i < _request.size() && (_request[i] == ' ' || _request[i] == '\t')){
+        _errors = true;
+        _code = HTTP_400;
+        _type = "text/html";
         return LOG_ERROR("Leading whitespace after request-line"), false;
+    }
 
     while (i < _request.size())
     {
         size_t end = _request.find("\r\n", i);
-        if (end == std::string::npos)
+        if (varNotFound400 (end) == false)
             return LOG_ERROR("Malformed request: missing CRLF"), false;
 
         if (end == i)
@@ -328,7 +332,7 @@ bool HTTPParser::isRequestValid( ListenerManager const & listen ) {
 
         std::string line = _request.substr(i, end - i);
         size_t colon = line.find(":");
-        if (colon == std::string::npos)
+       if (varNotFound400 (colon) == false)
             return LOG_ERROR("Malformed header line: " + line), false;
 
         std::string key = line.substr(0, colon);
@@ -337,15 +341,23 @@ bool HTTPParser::isRequestValid( ListenerManager const & listen ) {
         if (!value.empty() && value[0] == ' ')
             value = value.substr(1);
 
-        if (!value.empty() && (value[0] == ' ' || value[0] == '\t'))
+        if (!value.empty() && (value[0] == ' ')){
+            _errors = true;
+            _code = HTTP_400;
+            _type = "text/html";
             return LOG_ERROR("Invalid whitespace after ':' in header: " + line), false;
+        }
 
         switch (getHeaderType(key))
         {
             case HOST:
 
-                if (_isHostFound == true)
+                if (_isHostFound == true){
+                    _errors = true;
+                    _code = HTTP_400;
+                    _type = "text/html";    
                     return LOG_ERROR("Duplicate 'Host' header"), false;
+                }
 
                 if (checkHost(value, listen) != SERVER_OK)
                     return false;
@@ -361,8 +373,12 @@ bool HTTPParser::isRequestValid( ListenerManager const & listen ) {
 
             case CONTENT_TYPE:
 
-                if (_isContentTypeFound == true)
+                if (_isContentTypeFound == true){
+                    _errors = true;
+                    _code = HTTP_400;
+                    _type = "text/html";    
                     return LOG_ERROR("Duplicate 'Content-type' header"), false;
+                }
 
                 if (checkContentType(value) != SERVER_OK)
                     return false;
@@ -372,8 +388,12 @@ bool HTTPParser::isRequestValid( ListenerManager const & listen ) {
             
             case CONTENT_LENGTH:
 
-                if (_isContentLengthFound)
+                if (_isContentLengthFound){
+                    _errors = true;
+                    _type = "text/html";       
+                    _code = HTTP_400;
                     return LOG_ERROR("Duplicate 'Content-Length' header"), false;
+                }
     
                 if (checkContentLength(value) != SERVER_OK)
                     return false;
@@ -391,12 +411,20 @@ bool HTTPParser::isRequestValid( ListenerManager const & listen ) {
         }
 
         i = end + 2;
-        if (i < _request.size() && (_request[i] == ' ' || _request[i] == '\t'))
+        if (i < _request.size() && (_request[i] == ' ' || _request[i] == '\t')){
+            _errors = true;
+            _code = HTTP_400;
+            _type = "text/html";        
             return LOG_ERROR("Leading whitespace after request-line"), false;
+        }
     }
 
-    if (_isHostFound == false)
+    if (_isHostFound == false){
+        _errors = true;
+        _code = HTTP_400;
+        _type = "text/html";       
         return LOG_ERROR("Host header missing"), false;
+    }
     
     resolveConnectionType();
     buildFullPath();
@@ -859,16 +887,6 @@ int HTTPParser::checkContentLength( std::string const & value ) {
     std::ostringstream oss;
     oss << _content_length;
     LOG_DEBUG("Content-Length: " + oss.str());
-
-    // if (_content_length > 400000){
-        
-    //     LOG_ERROR("Content-Length exceeds limit");
-    //     _errors = true;
-    //     _code   = HTTP_413;
-    //     _type   = "text/html";
-        
-    //     return SERVER_ERROR;
-    // }
 
     return SERVER_OK;
 }
