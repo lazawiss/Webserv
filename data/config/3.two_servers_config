@@ -4,7 +4,7 @@
 # ─────────────────────────────────────────
 
 server {
-    listen          0.0.0.0:8080;
+    listen          0.0.0.0:3000;
     server_name     webserv;
 
     error_page 404 /errors/404.html;

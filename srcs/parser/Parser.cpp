@@ -130,8 +130,6 @@ GlobalConfig Parser::parse()
     if (config.getServers().empty())
         throw std::runtime_error("At least one server is required");
 
-    LOG_INFO(COLOR_RED+ std::string("root : ") +  config.getRoot() + COLOR_RESET);
-
     return config;
 }
 

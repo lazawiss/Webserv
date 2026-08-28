@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HTTPParser.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
+/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/27 20:32:58 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/28 12:25:26 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,9 +35,7 @@ HTTPParser::HTTPParser( std::string const & request,
     _pathInfo(), _scriptName(), _cgiInterpreter(), _autoindexOn(false),
     _rangeHeader(), _isContentLengthFound(false),
     _isHostFound(false), _isContentTypeFound(false), _fileContentType()
-    {
-        LOG_INFO(COLOR_RED + std::string("root constructeur (2) : ") + _httpRoot + COLOR_RESET);
-    }
+    {}
 
 HTTPParser::HTTPParser( HTTPParser const & src ) :
     _request(src._request), _serverConfig(src._serverConfig),
@@ -454,9 +452,7 @@ int HTTPParser::matchLocation(const std::vector<LocationConfig> &locs, const std
             best    = static_cast<int>(i);
         }
     }
-    std::cout << "HERE IS LOC PATH BLOCK: "<< (best == -1 ? std::string("NO INDEX MATCHES") : locs[best].getPath())<< std::endl;
-    std::cout << "WHAT IS BEST LEN OF LOC PATH BLOC: " << bestLen << std::endl;
-
+  
     return best;
 }
 
@@ -891,7 +887,6 @@ size_t HTTPParser::getEffectiveBodyLimit() const
     else
         limit = parseBodySize("1M");
 
-    std::cout << "_HTTPMAXBODYSIZE: " << limit << std::endl;
     return limit;
 }
 
@@ -1139,7 +1134,6 @@ bool HTTPParser::resolveRoot()
     std::string newSlash = uri.substr(0, urilen - len);
     // int index = -1;
     
-    std::cout << "FIRST ROOT - HEREEEEEEEEEEEEE=========1 '" << root << std::endl;
     for (size_t i = 0; i < locs.size(); ++i)
     {
         root = locs[i].getRoot();
@@ -1171,7 +1165,6 @@ bool HTTPParser::resolveRoot()
         filename.erase(filename.begin());
         _fileName = filename;
     }
-    std::cout << "FIRST ROOT - HEREEEEEEEEEEEEE=========2 '" << root << std::endl;
 
     return true;
 
