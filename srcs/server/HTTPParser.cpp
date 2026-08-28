@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/28 14:59:34 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/28 15:29:50 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -1097,7 +1097,7 @@ void HTTPParser::buildFullPath() {
     else
         root = _serverConfig.getRoot();
 
-    if (bestLoc->getAutoindex().empty()){
+    if (bestLoc && bestLoc->getAutoindex().empty()){
         if (!_serverConfig.getAutoindex().empty())
         _autoindexOn = (_serverConfig.getAutoindex() == "on");
     }
@@ -1125,6 +1125,7 @@ void HTTPParser::buildFullPath() {
 
     LOG_DEBUG(std::string("[HTTPParser] _fullPath: '") + _fullPath + "' autoindex=" + (_autoindexOn ? "on" : "off"));
     LOG_DEBUG(std::string("[HTTPParser] _fileName: '") + _fileName);
+    
 }
 
 bool HTTPParser::resolveRoot()

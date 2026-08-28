@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/28 14:58:44 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/28 15:35:39 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -824,8 +824,11 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     
     HTTPParser HTTPParser(_request, _serverConfig);
 
+    LOG_INFO(COLOR_RED + std::string("isRequestValid _code : ") + COLOR_RESET);
     if (HTTPParser.isRequestValid(listen) == false)
     {
+        LOG_INFO(COLOR_RED + std::string("isRequestValid is valid request : ")  + COLOR_RESET);
+
         sendError(HTTPParser, HTTPParser.getCode());
         if (_alterError == false)
             buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");
@@ -859,9 +862,10 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     _root = locs[bestIdx].getRoot();
     if (_root.empty())
         _root = HTTPParser.getPath();
-        
+    LOG_INFO(COLOR_RED + std::string("before CGI : ")  + COLOR_RESET);
     if (HTTPParser.isCGI()) 
     {   
+        LOG_INFO(COLOR_RED + std::string("isCGI : ")  + COLOR_RESET);
         if (HTTPParser.compareMethodWithConfigFile(locs, bestIdx) == false)
         {
             if (HTTPParser.getCode() == HTTP_405)
@@ -913,6 +917,8 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         return true;
 
     }
+    LOG_INFO(COLOR_RED + std::string("after cgi  : ")  + COLOR_RESET);
+
     // we check for redirection first and foremost, if not a redir, continues to static website
     HttpCode code = HTTPParser.isRedir();
     if (code == HTTP_301 || code == HTTP_302){
@@ -928,7 +934,8 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         return true;
     }
     
-    
+        LOG_INFO(COLOR_RED + std::string("after redirection  : ")  + COLOR_RESET);
+
     int status = HTTPParser.findAutoIndex(locs, bestIdx);
     if (status == 2)
     {
