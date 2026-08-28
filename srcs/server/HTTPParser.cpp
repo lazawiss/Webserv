@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/28 17:33:39 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/28 17:43:57 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -1389,41 +1389,41 @@ bool HTTPParser::findMethods(const std::vector<LocationConfig> &locs, int bestId
         if (_method == "GET")
         {
      
-             struct stat path_stat_check;
-             bool isDirRequest = (stat(_fullPath.c_str(), &path_stat_check) != -1
-             && S_ISDIR(path_stat_check.st_mode));
-             
-             if (isDirRequest) {
-                 const std::vector<std::string> &indexVector = locs[bestIdx].getIndex();
-                 if (indexVector.size() > 0){
-                     for (size_t j = 0; j < indexVector.size(); j++)
-                     {
-                         struct stat sb;
-                         
-                         std::string index = _fullPath + "/" + indexVector[j];
-                         
-                         if (stat(index.c_str(), &sb) == 0) {
-                             _fileName = indexVector[j];
-                             _code = HTTP_FILE;
-                             break ;
-                            }
+            struct stat path_stat_check;
+            bool isDirRequest = (stat(_fullPath.c_str(), &path_stat_check) != -1
+            && S_ISDIR(path_stat_check.st_mode));
+            
+            if (isDirRequest) {
+                const std::vector<std::string> &indexVector = locs[bestIdx].getIndex();
+                if (indexVector.size() > 0)
+                {
+                    for (size_t j = 0; j < indexVector.size(); j++)
+                    {
+                        struct stat sb;
+                        
+                        std::string index = _fullPath + "/" + indexVector[j];
+                        
+                        if (stat(index.c_str(), &sb) == 0) {
+                            _fileName = indexVector[j];
+                            _code = HTTP_FILE;
+                            break ;
                         }
                     }
                 }
-                else {
-                    _code = HTTP_INDEX;
-                }
+            }
+            else
+                _code = HTTP_INDEX;
+            {
+                struct stat path_stat;
+                if (stat(_fullPath.c_str(), &path_stat) != -1 && S_ISDIR(path_stat.st_mode))
                 {
-                    struct stat path_stat;
-                    if (stat(_fullPath.c_str(), &path_stat) != -1 && S_ISDIR(path_stat.st_mode))
-                    {
-                        std::string indexPath = _fullPath;
-                        if (indexPath[indexPath.size() - 1] != '/')
-                        indexPath += "/";
-                        indexPath += _fileName;
-                        
-                        struct stat index_stat;
-                        if (stat(indexPath.c_str(), &index_stat) == 0
+                    std::string indexPath = _fullPath;
+                    if (indexPath[indexPath.size() - 1] != '/')
+                    indexPath += "/";
+                    indexPath += _fileName;
+                    
+                    struct stat index_stat;
+                    if (stat(indexPath.c_str(), &index_stat) == 0
                         && S_ISREG(index_stat.st_mode))
                         {
                             _code = HTTP_INDEX;
@@ -1432,9 +1432,7 @@ bool HTTPParser::findMethods(const std::vector<LocationConfig> &locs, int bestId
                             _autoindexOn = false;
                             return true;
                         }
-                    }
-
-        
+                }
             }
             
             if (_requesttarget.find("/images") != std::string::npos)

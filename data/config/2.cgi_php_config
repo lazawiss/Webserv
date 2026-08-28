@@ -39,13 +39,13 @@ server {
         cgi_extension       .php /usr/bin/php-cgi;
         index               index.py;
     }
+    
+    location /upload {
+        client_max_body_size    1M;
 
-    #location /upload {
-    #    client_max_body_size    1M;
-#
-    #    root                data/upload;
-    #    index               index.html;
-    #    methods             GET POST DELETE;
-    #    autoindex           off;
-    #}
+        root                data/upload;
+        index               index.html;
+        methods             GET DELETE;
+        autoindex           off;
+    }
 }

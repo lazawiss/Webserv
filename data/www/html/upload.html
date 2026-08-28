@@ -34,8 +34,8 @@
 
     <script>
         // Load user email
-        const userEmail = localStorage.getItem('userEmail') || 'Unknown';
-        document.getElementById('user-email').textContent = `Logged as: ${userEmail}`;
+        // const userEmail = localStorage.getItem('userEmail') || 'Unknown';
+        // document.getElementById('user-email').textContent = `Logged as: ${userEmail}`;
 
         // Preview selected image
         document.getElementById('photo-input').addEventListener('change', function(e) {
@@ -76,7 +76,6 @@
                     method: "POST",
                     body: formData,
                 });
-                console.log("test");
             fetch(request)
             .then(async (response) => {
                 console.log("Response status:", response.status);
