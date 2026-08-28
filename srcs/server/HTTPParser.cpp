@@ -6,7 +6,7 @@
 /*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/27 20:32:58 by ankim            ###   ########.fr       */
+/*   Updated: 2026/08/27 19:26:46 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -1123,14 +1123,8 @@ bool HTTPParser::resolveRoot()
 
 
     char const *lastSlash = strrchr(uri.c_str(), '/');
-    if (!lastSlash){
-        
-        _errors = true;
-        _code = HTTP_400;
-        _type = "text/html";
-        
+    if (doesCharCExist400(lastSlash) == false)
         return false;
-    }
     
     int len = strlen(lastSlash);
    
@@ -1252,6 +1246,26 @@ bool HTTPParser::compareMethodWithConfigFile(const std::vector<LocationConfig> &
         {
             idx = (int)i;
             break;
+        }
+        
+        if (path == "/"){
+            std::string uri = _requesttarget;
+            
+            char const *lastSlash = strrchr(uri.c_str(), '/');
+            if (doesCharCExist400(lastSlash) == false)
+                return false;
+            int len = strlen(lastSlash);
+            int urilen = uri.size(); 
+            std::string newSlash = uri.substr(0, urilen - len);
+            std::string root = locs[i].getRoot();
+            char const *lastSlashRoot = strrchr(root.c_str(), '/');
+             if (doesCharCExist400(lastSlashRoot) == false)
+                return false;
+            if (newSlash.compare(lastSlashRoot) == 0)
+            {
+                idx = (int)i;
+                break;
+            }
         }
     }
     

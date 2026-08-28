@@ -32,7 +32,7 @@ server {
         // methods         GET POST;
         cgi_extension   .py  /usr/bin/python3;
         //cgi_extension   .php /usr/bin/php-cgi;
-        index           index.py;
+        //index           index.py;
     }
 
     location /api {
