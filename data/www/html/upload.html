@@ -15,7 +15,7 @@
         <p class="subtitle">Plus on en a, mieux c'est.</p>
 
         <div class="upload-section">
-            <input type="file" id="photo-input" accept="image/*" class="input">
+            <input type="file" id="photo-input" class="input">
             <button onclick="uploadPhoto()" class="upload-button" id="upload-btn">
                 Envoyer la photo
             </button>
@@ -34,8 +34,8 @@
 
     <script>
         // Load user email
-        // const userEmail = localStorage.getItem('userEmail') || 'Unknown';
-        // document.getElementById('user-email').textContent = `Logged as: ${userEmail}`;
+        const userEmail = localStorage.getItem('userEmail') || 'Unknown';
+        document.getElementById('user-email').textContent = `Logged as: ${userEmail}`;
 
         // Preview selected image
         document.getElementById('photo-input').addEventListener('change', function(e) {

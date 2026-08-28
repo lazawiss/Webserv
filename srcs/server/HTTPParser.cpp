@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/28 17:43:57 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/28 18:09:39 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -1143,7 +1143,6 @@ bool HTTPParser::resolveRoot()
     int urilen = uri.size(); 
     
     std::string newSlash = uri.substr(0, urilen - len);
-    // int index = -1;
     
     for (size_t i = 0; i < locs.size(); ++i)
     {
@@ -1155,9 +1154,7 @@ bool HTTPParser::resolveRoot()
     
         if (newSlash.compare(lastSlashRoot) == 0)
         {
-            
             _httpRoot = locs[i].getRoot();
-            // index = 1;
             break;
         }
     }
