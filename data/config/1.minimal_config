@@ -5,6 +5,7 @@
 server {
 
     listen          127.0.0.1:8081;
+    server_name     webserv;
 
     error_page 404 /errors/404.html;
 
@@ -14,7 +15,14 @@ server {
         methods     GET;
     }
 
-    location /vsdfsvs {
+  
+    location /a{
+        root        data/www/redirection;
+        index       index.html;
+        methods     GET;
+    }
+
+    location /a{
         root        data/www/redirection;
         index       index.html;
         methods     GET;

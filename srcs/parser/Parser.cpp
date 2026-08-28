@@ -164,7 +164,27 @@ ServerConfig Parser::parseServer()
         else if (current().type == Word && current().value == "server_name")
             parseDirectiveServerName(server);
         else if (current().type == Word && current().value == "location")
+        {
             server.addLocation(parseLocation());
+
+            const std::vector<LocationConfig> tmp = server.getLocations();
+            std::vector<std::string> locs;
+            for (size_t i = 0; i < tmp.size(); ++i)
+            {
+                locs.push_back(tmp[i].getPath());
+            }
+
+            for (size_t i = 0; i < locs.size() - 1; ++i)
+            {
+                if (!locs.empty())
+                   std::sort(locs.begin(), locs.end());
+                std::string left = locs[i];
+                std::string right = locs[i + 1];
+
+                if (left == right)
+                    throw std::runtime_error("Duplicate location " + left);
+            }
+        }
         else if (current().type == Word)
             parseInheritableDirective(server);
         else
