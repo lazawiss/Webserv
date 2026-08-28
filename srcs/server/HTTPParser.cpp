@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HTTPParser.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
+/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/27 17:21:57 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/27 20:32:58 by ankim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,10 @@ HTTPParser::HTTPParser( std::string const & request,
     _body(), _content_type(), _content_int(0),
     _pathInfo(), _scriptName(), _cgiInterpreter(), _autoindexOn(false),
     _rangeHeader(), _isContentLengthFound(false),
-    _isHostFound(false), _isContentTypeFound(false), _fileContentType(){}
+    _isHostFound(false), _isContentTypeFound(false), _fileContentType()
+    {
+        LOG_INFO(COLOR_RED + std::string("root constructeur (2) : ") + _httpRoot + COLOR_RESET);
+    }
 
 HTTPParser::HTTPParser( HTTPParser const & src ) :
     _request(src._request), _serverConfig(src._serverConfig),
@@ -1134,7 +1137,9 @@ bool HTTPParser::resolveRoot()
     int urilen = uri.size(); 
     
     std::string newSlash = uri.substr(0, urilen - len);
+    // int index = -1;
     
+    std::cout << "FIRST ROOT - HEREEEEEEEEEEEEE=========1 '" << root << std::endl;
     for (size_t i = 0; i < locs.size(); ++i)
     {
         root = locs[i].getRoot();
@@ -1145,11 +1150,12 @@ bool HTTPParser::resolveRoot()
     
         if (newSlash.compare(lastSlashRoot) == 0)
         {
+            
             _httpRoot = locs[i].getRoot();
+            // index = 1;
             break;
         }
     }
-
     if (newSlash.size() >= _httpRoot.size()&& _httpRoot.find(newSlash) == std::string::npos)
         _httpRoot += newSlash;
     
@@ -1165,6 +1171,7 @@ bool HTTPParser::resolveRoot()
         filename.erase(filename.begin());
         _fileName = filename;
     }
+    std::cout << "FIRST ROOT - HEREEEEEEEEEEEEE=========2 '" << root << std::endl;
 
     return true;
 
