@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/28 15:48:11 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/28 16:08:22 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -726,18 +726,15 @@ std::string RequestHandler::generateAutoindex(const std::string &fullPath, const
     while ((entry = readdir(dir)) != NULL)
     {
         std::string name = entry->d_name;
-        LOG_INFO(COLOR_PINK + std::string("name dans generateAutoindex: ") + name + COLOR_RESET);
         if (name == ".")
             continue;
         
         std::string entryPath = fullPath;  // check entry a dir
-        LOG_INFO(COLOR_CYAN + std::string("entryPath dans generateAutoindex: ") + entryPath + COLOR_RESET);
         char const *lastSlash = strrchr(entryPath.c_str(), '/');
         if (!lastSlash){
             return "";
         }
         std::string dir = std::string(lastSlash, strlen(lastSlash));
-        //LOG_INFO(COLOR_GREEN + std::string(" HTML: ") + html + COLOR_RESET);
 
         if (entryPath[entryPath.size() - 1] != '/')
             entryPath += "/";
@@ -767,8 +764,6 @@ std::string RequestHandler::generateAutoindex(const std::string &fullPath, const
     closedir(dir);
 
     html += "</ul>\n<hr>\n</body>\n</html>\n";
-    //LOG_INFO(COLOR_GREEN + std::string(" HTML: ") + html + COLOR_RESET);
-
     
     return html;
 }
@@ -799,8 +794,6 @@ void RequestHandler::sendError( HTTPParser & parser, HttpCode code ) {
         buildAlternativErrorPage(code_string);
         return ;
     }
-    
-    LOG_INFO(COLOR_CYAN + std::string("sendError")+ COLOR_RESET);
     
     if (answerFile(file) == false){
         if (errno == EACCES)
@@ -849,7 +842,7 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     }
    
     if (bestIdx == -1) {
-        
+        LOG_ERROR("Location does not exist.");
         HTTPParser.setError(true);
         HTTPParser.setCode(HTTP_404);
         HTTPParser.setType("text/html"); 
@@ -925,6 +918,7 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         return true;
     }
     else if (code == HTTP_404){
+        LOG_ERROR("Location does not exist.");
         sendError(HTTPParser, code);
         if (_alterError == false)
             buildAnswerHeader(HTTPParser.httpCodeToString(code), "text/html");
@@ -949,10 +943,11 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
                 
                 // put the listing where epoll reads the response body
                 // (getBuffer()/getNReadIndex()) and let Content-Length mirror
-                if (_body.size() > (size_t)BUF_SIZE)
-                _body.resize(BUF_SIZE);
+                if (_body.size() > static_cast<size_t>(BUF_SIZE))
+                    _body.resize(BUF_SIZE);
+                _buffer.resize(BUF_SIZE,0);
                 _buffer.assign(_body.begin(), _body.end());
-                _n_read_index = (ssize_t)_body.size();
+                _n_read_index = static_cast<ssize_t>(_body.size());
                 buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");
             }
         }
@@ -971,10 +966,7 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     if (status == 1)
     {
         if (HTTPParser.findMethods(locs, bestIdx) == false) {
-        if ( HTTPParser.getCode() == HTTP_405)
-            LOG_ERROR("Method not implemented.");
-        if ( HTTPParser.getCode() == HTTP_404)
-            LOG_ERROR("Location does not exist.");
+        LOG_ERROR("Method not implemented.");
         sendError(HTTPParser, HTTPParser.getCode());
         if (_alterError == false)
             buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");

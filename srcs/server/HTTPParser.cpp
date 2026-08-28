@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/28 15:47:43 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/28 17:33:39 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -1240,12 +1240,25 @@ std::string HTTPParser::httpCodeToString( HttpCode code )
 bool HTTPParser::compareMethodWithConfigFile(const std::vector<LocationConfig> &locs, int bestIdx) {
 
     const std::vector<std::string> &methodVector = locs[bestIdx].getMethods();
+
+    for (size_t j = 0; j < methodVector.size(); j++)
+    {
+        if (_isCGI && methodVector[j] == "DELETE")
+        {
+            _errors = true;
+            _code = HTTP_405;
+            _type = "text/html";
+            
+            return false;
+        }
+    }
+    
     for (size_t j = 0; j < methodVector.size(); j++)
     {
         if (_method == methodVector[j])
             return true;
     }
-    
+        
     int idx = -1;
     for (size_t i = 0; i < locs.size(); i++)
     {
@@ -1256,25 +1269,10 @@ bool HTTPParser::compareMethodWithConfigFile(const std::vector<LocationConfig> &
             idx = static_cast<int>(i);
             break;
         }
-        
-        if (path == "/"){
-            std::string uri = _requesttarget;
-            
-            char const *lastSlash = strrchr(uri.c_str(), '/');
-            if (doesCharCExist400(lastSlash) == false)
-                return false;
-            int len = strlen(lastSlash);
-            int urilen = uri.size(); 
-            std::string newSlash = uri.substr(0, urilen - len);
-            std::string root = locs[i].getRoot();
-            char const *lastSlashRoot = strrchr(root.c_str(), '/');
-             if (doesCharCExist400(lastSlashRoot) == false)
-                return false;
-            if (newSlash.compare(lastSlashRoot) == 0)
-            {
-                idx = static_cast<int>(i);
-                break;
-            }
+        if (_isCGI == true && _requesttarget.find(path,0) == 0)
+        {
+            idx = static_cast<int>(i);
+            break;
         }
     }
     
