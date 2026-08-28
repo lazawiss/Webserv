@@ -13,4 +13,10 @@ server {
         index       index.html;
         methods     GET;
     }
+
+    location /vsdfsvs {
+        root        data/www/redirection;
+        index       index.html;
+        methods     GET;
+    }
 }

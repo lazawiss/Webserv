@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/28 12:01:44 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/28 19:06:54 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -324,7 +324,6 @@ bool EpollLoop::do_read_fd(
     ssize_t n_read = read(fd, buf, _maxbodysize);
     if (n_read == 0)
     {
-        LOG_ERROR("Client closed connection");
         return (close(fd), false);
     }
     if (n_read == -1)

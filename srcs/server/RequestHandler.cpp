@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/28 16:08:22 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/28 19:14:25 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -965,12 +965,16 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
     
     if (status == 1)
     {
-        if (HTTPParser.findMethods(locs, bestIdx) == false) {
-        LOG_ERROR("Method not implemented.");
-        sendError(HTTPParser, HTTPParser.getCode());
-        if (_alterError == false)
-            buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");
-        return true;
+        if (HTTPParser.findMethods(locs, bestIdx) == false)
+        {
+            if (HTTPParser.getCode() == HTTP_405)
+                LOG_ERROR("Method not implemented.");
+
+            sendError(HTTPParser, HTTPParser.getCode());
+            if (_alterError == false)
+                buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), "text/html");
+
+            return true;
         }
     }
     

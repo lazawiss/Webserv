@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ListenerManager.cpp                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: leazannis <leazannis@student.42.fr>        +#+  +:+       +#+        */
+/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 14:31:24 by lzannis           #+#    #+#             */
-/*   Updated: 2026/07/25 18:42:04 by leazannis        ###   ########.fr       */
+/*   Updated: 2026/08/28 19:01:28 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -139,7 +139,7 @@ bool   ListenerManager::loopBindingSocket(){
         }
         if (bind(_sockfd, _p->ai_addr, _p->ai_addrlen) == 0)
         {
-            LOG_SYSTEM("Socket successfully bound to port " + _service);
+            LOG_DEBUG("Socket successfully bound to port " + _service);
             return true;
         }
         close(_sockfd);
