@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/28 14:14:17 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/28 14:34:22 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -560,7 +560,6 @@ HttpCode HTTPParser::validateCGIRequest() {
     if (stat(_fullPath.c_str(), &st) != 0 || !S_ISREG(st.st_mode))
         return HTTP_500;
         
-
     return HTTP_CGI;
 }
 
@@ -1250,12 +1249,11 @@ bool HTTPParser::compareMethodWithConfigFile(const std::vector<LocationConfig> &
     int idx = -1;
     for (size_t i = 0; i < locs.size(); i++)
     {
-
         const std::string &path = locs[i].getPath();
         
         if (_requesttarget == path)
         {
-            idx = (int)i;
+            idx = static_cast<int>(i);
             break;
         }
         
@@ -1274,7 +1272,7 @@ bool HTTPParser::compareMethodWithConfigFile(const std::vector<LocationConfig> &
                 return false;
             if (newSlash.compare(lastSlashRoot) == 0)
             {
-                idx = (int)i;
+                idx = static_cast<int>(i);
                 break;
             }
         }
@@ -1313,7 +1311,7 @@ bool HTTPParser::isRedir(){
         const std::string &path = locs[i].getPath();
         
         if (_requesttarget.find(path) == 0)
-            bestIdx = (int)i;
+            bestIdx = static_cast<int>(i);
     }
     
     if (bestIdx == -1) {

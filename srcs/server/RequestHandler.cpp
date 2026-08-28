@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/28 12:22:03 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/28 14:35:09 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -844,14 +844,12 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
                 || HTTPParser.getRequestTarget()[path.size()] == '/' || HTTPParser.getRequestTarget()[path.size()] == '?'))
         {
             bestLen = path.size();
-            bestIdx = (int)i;
+            bestIdx = static_cast<int>(i);
         }
     }
    
     if (bestIdx == -1) {
         
-    LOG_INFO(COLOR_RED + std::string("ENTER ")+ COLOR_RESET);
-
         HTTPParser.setError(true);
         HTTPParser.setCode(HTTP_404);
         HTTPParser.setType("text/html"); 
@@ -864,8 +862,6 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
         
     if (HTTPParser.isCGI()) 
     {   
-        LOG_INFO(COLOR_CYAN + std::string("compare Methods")+ COLOR_RESET);
-
         if (HTTPParser.compareMethodWithConfigFile(locs, bestIdx) == false)
         {
             if (HTTPParser.getCode() == HTTP_405)
@@ -877,9 +873,7 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
                 buildAnswerHeader(HTTPParser.httpCodeToString(HTTPParser.getCode()), "text/html");
             return true;
         }
-        LOG_INFO(COLOR_CYAN + std::string("scriptfilename")+ _scriptFilename + COLOR_RESET);
         _scriptFilename = HTTPParser.getScriptFilename();
-        LOG_INFO(COLOR_CYAN + std::string("scriptfilename after")+ _scriptFilename + COLOR_RESET);
 
         if (_scriptFilename.empty())
         {

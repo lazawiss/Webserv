@@ -15,14 +15,14 @@ server {
     
     location /vespera {
         root        data/www/vespera;
-        # index       index.html;
+        index       index.html;
         methods     GET;
         autoindex   on;
     }
 
     location / {
         root        data/www/html;
-        # index       index2.html index.html;
+        index       index2.html index.html;
         methods     GET;
         autoindex   on;
     }
@@ -37,14 +37,14 @@ server {
 
     location /api {
         root        data/www/diary;
-        # index       index2.html index.html;
+        index       index2.html index.html;
         methods     GET;
         autoindex   on;
     }
 
     location /upload {
         root        data/upload;
-        # index       index.html;
+        index       index.html;
         methods     GET POST DELETE;
         autoindex   on;
     }
