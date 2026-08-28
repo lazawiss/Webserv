@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/28 14:34:22 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/28 14:59:34 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -1295,14 +1295,14 @@ bool HTTPParser::compareMethodWithConfigFile(const std::vector<LocationConfig> &
 // Check every location from config file to confirm a match
 // then check map of return<code, name_of_the_new_file>
 // no for cause only one new location per redirection 
-bool HTTPParser::isRedir(){
+HttpCode HTTPParser::isRedir(){
 
     const std::vector<LocationConfig> &locs = _serverConfig.getLocations();
     if (locs.size() == 0) {
         _code = HTTP_INDEX;
         _type = "text/html";
 
-        return true;
+        return _code;
     }
 
     int bestIdx = -1;
@@ -1316,9 +1316,9 @@ bool HTTPParser::isRedir(){
     
     if (bestIdx == -1) {
         _errors = true;
-        _code = HTTP_404 ;
+        _code = HTTP_404;
         _type = "text/html";
-        return false; 
+        return _code; 
     }
     
     const std::map<int, std::string> &returnMap = locs[bestIdx].getReturn();
@@ -1331,17 +1331,17 @@ bool HTTPParser::isRedir(){
             _code = HTTP_301;
             _fileName = it->second;
             _type = "text/html";
-            return true;
+            return _code;
         }
         if (it->first == 302){
             _code = HTTP_302;
             _fileName = it->second;
             _type = "text/uri-list";
-            return true;
+            return _code;
         }
     }
 
-    return false;
+    return _code;
 }
 
 

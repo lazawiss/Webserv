@@ -33,18 +33,12 @@ server {
         autoindex           off;
     }
 
-    location /html/image.html {     # redirection permanent 
-        return              301 /redirection/index.html;       
-    }
+    #location /html/image.html {     # redirection permanent 
+    #    return              301 /redirection/index.html;       
+    #}
 
     location /google {              # redirection externe
         return              302 https://www.google.com;
-    }
-
-    location /redirection {
-        root                data/www/redirection;
-        index               index.html;
-        methods             GET;
     }
 
 }

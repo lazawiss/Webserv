@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/28 14:35:09 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/28 14:58:44 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -914,12 +914,20 @@ bool RequestHandler::handleRequest(  ListenerManager const & listen ) {
 
     }
     // we check for redirection first and foremost, if not a redir, continues to static website
-    else if (HTTPParser.isRedir() == true){
+    HttpCode code = HTTPParser.isRedir();
+    if (code == HTTP_301 || code == HTTP_302){
         
         _pathToFile = HTTPParser.getFileName();
         buildAnswerHeader(HTTPParser::httpCodeToString(HTTPParser.getCode()), HTTPParser.getType());
         return true;
     }
+    else if (code == HTTP_404){
+        sendError(HTTPParser, code);
+        if (_alterError == false)
+            buildAnswerHeader(HTTPParser.httpCodeToString(code), "text/html");
+        return true;
+    }
+    
     
     int status = HTTPParser.findAutoIndex(locs, bestIdx);
     if (status == 2)
