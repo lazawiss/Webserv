@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 15:54:09 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/28 14:55:21 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/28 21:00:07 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -211,4 +211,5 @@ public:
     void                        resolveConnectionType();
     static size_t               parseBodySize( std::string const & s );
     size_t                      getEffectiveBodyLimit() const;
+    bool                        isAllowedExtension( std::string const & suffix );
 };

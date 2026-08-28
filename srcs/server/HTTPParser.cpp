@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 17:20:07 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/28 18:09:39 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/28 21:08:56 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -1202,6 +1202,25 @@ std::string HTTPParser::addSuffix(std::string suffix) {
     return _type;
 }
 
+bool HTTPParser::isAllowedExtension( std::string const & suffix )
+{
+    static const char *allowed[] = {
+        ".jpg", ".jpeg", ".png", ".gif", ".webp",
+        ".txt", ".html", ".css", ".js",
+        NULL
+    };
+
+    std::string lower = suffix;
+    std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+
+    for (int i = 0; allowed[i] != NULL; i++)
+    {
+        if (lower == allowed[i])
+            return true;
+    }
+    return false;
+}
+
 std::string HTTPParser::httpCodeToString( HttpCode code )
 {
     switch (code)
@@ -1544,6 +1563,26 @@ bool HTTPParser::findMethods(const std::vector<LocationConfig> &locs, int bestId
                         LOG_ERROR("POST upload: missing Content-Disposition");
                         return false;
                     }
+                    
+                    char const *lastPoint = strrchr(_fileName.c_str(), '.');
+                    if (!lastPoint)
+                    {
+                        LOG_ERROR("POST upload: no extension in filename");
+                        _errors = true;
+                        _code = HTTP_403;
+                        _type = "text/html";
+                        return false;
+                    }
+                    
+                    std::string suffix(lastPoint, strlen(lastPoint));
+                    if (isAllowedExtension(suffix) == false) {
+                        LOG_ERROR("POST upload: forbidden file extension: " + suffix);
+                        _errors = true;
+                        _code = HTTP_403;
+                        _type = "text/html";
+                        return false;
+                    }
+                    
                     if (gatherFile(curPos) == false) {
                         LOG_ERROR("POST upload: failed to gather file content");
                         return false;
@@ -1566,7 +1605,16 @@ bool HTTPParser::findMethods(const std::vector<LocationConfig> &locs, int bestId
 
                     if (name.empty())
                         return LOG_ERROR("POST upload: empty filename"), false;
-
+                    
+                    std::string new_suffix = std::string(lastPoint, strlen(lastPoint));
+                    if (isAllowedExtension(new_suffix) == false) {
+                        LOG_ERROR("POST upload: forbidden file extension: " + new_suffix);
+                        _errors = true;
+                        _code = HTTP_403;
+                        _type = "text/html";
+                        return false;
+                    }
+                    
                     // ------------ Debug ------------
                     LOG_DEBUG("POST upload target: " + name);
 

@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/28 20:42:52 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/28 20:58:26 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -325,11 +325,28 @@ bool EpollLoop::do_read_fd(
     }
     std::string &acc = _clientRequestBuffer[fd];
     acc.append(buf, n_read);
-    // if (acc.size() > (size_t)BUF_SIZE)
+
+    // if (acc.size() > (size_t)_maxbodysize)
     // {
-    //     cleanupClient(fd, epollfd);
-    //     return false;
+    //     _clientRequestBuffer.erase(fd);
+    //     _clientResponseBuffer[fd] =
+    //         "HTTP/1.1 413 CONTENT TOO LARGE\r\n"
+    //         "Content-Type: text/html\r\n"
+    //         "Connection: close\r\n"
+    //         "Content-Length: 253\r\n\r\n"
+    //         "<html>\r\n"
+    //         "<head><title>413 CONTENT TOO LARGE</title></head>\r\n"
+    //         "<body>\r\n"
+    //         "<h1>413 - Content Too Large</h1>\r\n"
+    //         "<p>-__-Request is too large to process.-___-</p>\r\n"
+    //         "</body>\r\n"
+    //         "</html>\r\n\r\n";
+    //     ev.events = EPOLLOUT;
+    //     ev.data.fd = fd;
+    //     epoll_ctl(epollfd, EPOLL_CTL_MOD, fd, &ev);
+    //     return true;
     // }
+    
 
     std::string request;
     request.append(buf, n_read);
