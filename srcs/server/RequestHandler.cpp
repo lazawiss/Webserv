@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestHandler.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ankim <ankim@student.42.fr>                +#+  +:+       +#+        */
+/*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 13:03:45 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/27 19:54:37 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/28 12:22:03 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,9 +36,7 @@ RequestHandler::RequestHandler(
     _fullPath(), _query_string(), _scriptFilename(),
     _body(), _content_type(), _content_length(),
     _method(), _pathInfo(), _scriptName(), _interpreter()
-{
-    LOG_INFO(COLOR_RED + std::string("root reauestHandler(3) : ") + _root + COLOR_RESET);
-}
+{}
 
 RequestHandler::RequestHandler( RequestHandler const & src ) :
     _request(src._request), _serverConfig(src._serverConfig),

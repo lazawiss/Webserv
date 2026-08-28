@@ -6,7 +6,7 @@
 /*   By: lzannis <lzannis@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/04 13:47:38 by lzannis           #+#    #+#             */
-/*   Updated: 2026/08/27 14:28:12 by lzannis          ###   ########.fr       */
+/*   Updated: 2026/08/28 12:01:44 by lzannis          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -783,24 +783,44 @@ bool EpollLoop::readingSocket(
                 }
                 else 
                 {
-                    
-                    if ( events[n].events & EPOLLIN ) 
-                    {  
 
-                        if (!do_read_fd(events[n].data.fd,
+                    int i = 0;
+                    if ( events[n].events & EPOLLIN )
+                        i = 1;
+                   else if ( events[n].events & EPOLLOUT )
+                        i = 2;
+                    
+                    switch (i){
+                        case(1):
+                        {
+                            if (!do_read_fd(events[n].data.fd,
                                 listeners, config, epollfd, ev))
+                                break;
                             break;
-                    
-                    } 
-                    // else if ( events[n].events & EPOLLOUT ) 
-                    
-                    else
-                    {
-
-                        if (!do_write_fd(events[n].data.fd,
+                        }
+                        case (2):
+                        {
+                            if (!do_write_fd(events[n].data.fd,
                                 epollfd, ev))
+                                break;
                             break;
-                    }
+                        }
+                        }
+                    // if ( events[n].events & EPOLLIN ) 
+                    // {  
+
+                    //     if (!do_read_fd(events[n].data.fd,
+                    //             listeners, config, epollfd, ev))
+                    //         break;
+                    
+                    // } 
+                    // else if ( events[n].events & EPOLLOUT ) 
+                    // {
+
+                    //     if (!do_write_fd(events[n].data.fd,
+                    //             epollfd, ev))
+                    //         break;
+                    // }
                 }
             }
         }
