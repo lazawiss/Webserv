@@ -1,0 +1,18 @@
+# ─────────────────────────────────────────
+#  SERVEUR
+# ─────────────────────────────────────────
+
+server {
+
+    listen          127.0.0.1:8081;
+    server_name     webserv;
+
+    error_page 404 /errors/404.html;
+
+    location / {
+        root        data/www/diary;
+        index       index.html;
+        methods     GET;
+    }
+
+}

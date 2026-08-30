@@ -1,0 +1,45 @@
+# ─────────────────────────────────────────
+#  SERVEUR
+# ─────────────────────────────────────────
+
+server {
+
+    listen                  127.0.0.1:8080;
+    server_name             webserv;
+    root                    data/www;
+
+    error_page 404 /errors/404.html;
+    error_page 500 /errors/500.html;
+
+    location / {
+       root                data/www/html;
+       index               index2.html index.html;
+       methods             GET;
+       autoindex           off;
+    }
+
+    location /cgi-bin {
+        root                data/cgi-bin;
+        methods             POST;
+        cgi_extension       .py  /usr/bin/python3;
+        //cgi_extension       .php /usr/bin/php-cgi;
+        index               index.py;
+    }
+
+    location /upload {
+        root                data/upload;
+        index               index.html;
+        methods             GET POST DELETE;
+        autoindex           off;
+    }
+
+    #location /html/image.html {     # redirection permanent 
+    #    return              301 /redirection/index.html;       
+    #}
+
+    location /google {              # redirection externe
+        return              302 https://www.google.com;
+    }
+
+}
+

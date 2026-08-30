@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galerie</title>
+    <link rel="stylesheet" href="/html/style.css">
+</head>
+<body class="upload-page">
+
+    <div class="upload-container">
+        <a href="/html/index.html" class="back-link">← retour</a>
+
+        <h1>La galerie.</h1>
+        <p class="subtitle">Toutes les photos envoyées par le serveur.</p>
+
+        <div id="photos-container" class="photos-grid"></div>
+
+        <div id="no-photos" style="display: none;">
+            <p class="subtitle">Aucune photo pour l'instant. <a href="/html/upload.html">Envoie la première !</a></p>
+        </div>
+
+        <nav class="nav-links" style="margin-top: 2rem;">
+            <a href="/html/upload.html">Envoyer une photo →</a>
+        </nav>
+    </div>
+
+    <script>
+
+        // Load photos from localStorage
+        function loadPhotos() {
+            const photos = JSON.parse(localStorage.getItem('userPhotos') || '[]');
+            const container = document.getElementById('photos-container');
+            const noPhotosDiv = document.getElementById('no-photos');
+
+            if (photos.length === 0) {
+                noPhotosDiv.style.display = 'block';
+                container.innerHTML = '';
+                return;
+            }
+
+            noPhotosDiv.style.display = 'none';
+            container.innerHTML = photos.map((photoUrl, index) => `
+                <div class="photo-container">
+                    <button onclick="deletePhoto(${index})" class="delete-icon">
+                        ✕
+                    </button>
+                    <img src="${photoUrl}" alt="Photo ${index + 1}" class="photo">
+                </div>
+            `).join('');
+        }
+
+        // Delete photo function
+        async function deletePhoto(index) {
+            const photos = JSON.parse(localStorage.getItem('userPhotos') || '[]');
+            const photoUrl = photos[index];
+            
+            if (!photoUrl) {
+                console.error('Photo not found at index:', index);
+                return;
+            }
+
+            try {
+                console.log('Deleting photo:', photoUrl);
+                
+                // Send DELETE request to server
+                const response = await fetch(photoUrl, {
+                    method: 'DELETE'
+                });
+
+                console.log('Delete response status:', response.status);
+                
+                // Consider both 200 (OK) and 204 (No Content) as success for DELETE
+                if (response.status === 200 || response.status === 204 || response.status === 404) {
+                    console.log('Photo deleted from server successfully');
+                } else {
+                    console.warn(`Server returned status ${response.status} for delete request`);
+                    // You might want to show a warning but still proceed with local deletion
+                }
+
+            } catch (error) {
+                console.error('Error deleting photo from server:', error);
+                // You can choose to either:
+                // 1. Still delete locally (current behavior)
+                // 2. Show error and abort deletion
+                // For now, we'll show error but continue with local deletion
+                alert('Warning: Could not delete photo from server, but will remove from gallery');
+            }
+
+            // Remove from localStorage regardless of server response
+            photos.splice(index, 1);
+            localStorage.setItem('userPhotos', JSON.stringify(photos));
+            loadPhotos();
+        }
+
+        // Load photos on page load
+        loadPhotos();
+
+        // Auto refresh every 5 seconds to see new uploads
+        setInterval(loadPhotos, 5000);
+    </script>
+</body>
+</html>
